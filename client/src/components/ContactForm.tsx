@@ -59,11 +59,10 @@ export default function ContactForm() {
       return;
     }
     setSubmitting(true);
-    // Simulate submission
     setTimeout(() => {
       setSubmitting(false);
       setSubmitted(true);
-      toast.success("Thanks! We'll be in touch soon.");
+      toast.success("Thanks! Eric will be in touch soon.");
     }, 800);
   };
 
@@ -73,8 +72,12 @@ export default function ContactForm() {
         <div className="container">
           <div className="max-w-lg mx-auto text-center py-16">
             <h2 className="font-display text-3xl text-white mb-4">Thank You!</h2>
-            <p className="text-white/50 text-base leading-relaxed">
-              We've received your information and will reach out within 24 hours to start your apartment search.
+            <p className="text-white/50 text-base leading-relaxed mb-6">
+              Eric Johnson has received your information and will reach out within 24 hours to start your apartment search.
+            </p>
+            <p className="text-white/40 text-sm">
+              Need something sooner? Call directly at{" "}
+              <a href="tel:8326037278" className="text-gold hover:underline">(832) 603-7278</a>
             </p>
           </div>
         </div>
@@ -98,7 +101,7 @@ export default function ContactForm() {
               Let's Find Your Apartment
             </h2>
             <p className="text-white/50 text-base leading-relaxed">
-              Tell us a bit about yourself and what you're looking for. We'll take it from there.
+              Tell me a bit about yourself and what you're looking for. I'll take it from there.
             </p>
           </div>
 
@@ -238,7 +241,7 @@ export default function ContactForm() {
 
             {/* Notes */}
             <div>
-              <label className={labelClass}>Anything else we should know?</label>
+              <label className={labelClass}>Anything else I should know?</label>
               <textarea
                 rows={3}
                 placeholder="Amenities you need, specific complexes you're interested in, etc."
