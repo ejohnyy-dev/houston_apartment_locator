@@ -1,4 +1,4 @@
-import { Phone } from "lucide-react";
+import { Phone, Mail } from "lucide-react";
 
 const LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663501304397/4gMGD9qetV63jA9Ts6DXxD/habitat-logo_3360fdb4.png";
 
@@ -31,6 +31,10 @@ export default function Footer() {
             <a href="tel:8326037278" className="flex items-center gap-1.5 text-gold hover:text-gold/80 text-sm transition-colors">
               <Phone size={14} />
               (832) 603-7278
+            </a>
+            <a href="mailto:ericjohnson@txaptfinder.com" className="flex items-center gap-1.5 text-white/40 hover:text-white/70 text-sm transition-colors">
+              <Mail size={14} />
+              ericjohnson@txaptfinder.com
             </a>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Menu, X, Phone } from "lucide-react";
+import { Menu, X, Phone, Mail } from "lucide-react";
 
 const LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663501304397/4gMGD9qetV63jA9Ts6DXxD/habitat-logo_3360fdb4.png";
 
@@ -35,6 +35,10 @@ export default function Navbar() {
               {l.label}
             </a>
           ))}
+          <a href="mailto:ericjohnson@txaptfinder.com" className="flex items-center gap-1.5 text-white/60 hover:text-white text-sm font-medium transition-colors">
+            <Mail size={14} />
+            ericjohnson@txaptfinder.com
+          </a>
           <a href="tel:8326037278" className="flex items-center gap-1.5 text-white/60 hover:text-white text-sm font-medium transition-colors">
             <Phone size={14} />
             (832) 603-7278
@@ -57,6 +61,10 @@ export default function Navbar() {
               {l.label}
             </a>
           ))}
+          <a href="mailto:ericjohnson@txaptfinder.com" onClick={() => setOpen(false)} className="flex items-center gap-1.5 text-white/60 hover:text-white text-sm font-medium">
+            <Mail size={14} />
+            ericjohnson@txaptfinder.com
+          </a>
           <a href="tel:8326037278" onClick={() => setOpen(false)} className="flex items-center gap-1.5 text-white/60 hover:text-white text-sm font-medium">
             <Phone size={14} />
             (832) 603-7278
