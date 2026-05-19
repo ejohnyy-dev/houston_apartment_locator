@@ -1,0 +1,37 @@
+{
+  "build_command": "pnpm run build",
+  "capabilities": [],
+  "dev_command": "pnpm run dev",
+  "env_vars": {},
+  "experiments": [
+    "no_db_push"
+  ],
+  "git_remote": {
+    "repo_url": "s3://vida-prod-gitrepo/webdev-git/310519663501304397/4gMGD9qetV63jA9Ts6DXxD",
+    "access_key_id": "ASIAZV3A2ECZEGSXDAAG",
+    "secret_access_key": "MN1C14GL2/0pq9+IDWzHwoaLvxwLTN01FuW1k2Um",
+    "session_token": "IQoJb3JpZ2luX2VjEBYaCXVzLWVhc3QtMSJHMEUCIQCX9R+mhTLb0+HyOLDnsqfLx0L12mVvdimCh5+l6rIAswIgdAo7bWTwVaKmfY81tcRvxjzfmn6NXzdYFL8Kp4TDgnAq/wMI3///////////ARAEGgw2NjUzODYwOTg4NjYiDFdfLAqILMgu1aforSrTA9zNt0dVwy56BfEaexqbNbQDOHWY9NnKgsW8uhj2gLi+8wqko7thE+v9G99YfTZtb8EPEy9U0DNDk8Ny/YlcY+zasEtDo3y1bHoBd0sc85XjuFc7uidttEIXUI0sQWCel8l8CwxJQ3z6677IGp4J97PHdv4aaoE9s/LwXdGFKRejRHWVdGuBPk/DKU/l96W4NvUu/RPeGdboy5cNtmxZvku9UdBO5K53oA/jkm+uwhOYL90HHrWte5aVqRtykSltH7CXJ6/4dQZ04Jyr1w5QU19oa2SAPm+n5DB9jjOw8mRhWB5z46P9xgpxLAJTSYB2nM1P3dgFgdl7Xlbh8ZbC2DWUkoLQ+NV1HjS/0+Ctv8I3tKC0u+e3HM9EsyKKid/ZuW1vGYVBU9Oei+4E8UPa4SsVY73oIuXPKpWy6tGnsxLohd9AoRmXy2IYDatK4WfzKmK6UBAX5PxpnFgxuKnPgGj9LI5FMC/jcXnw4bkqHXBRFHDwe0VmekIDHDrmTka7rGYwYkflCYiol82ot55EROMoudtTIGLs1F65p+Gv6nKhLG8TOEDOKLwBowJfGXXvSdUxy+yfDnNLNENpv4bGBSQwISIvJlISrSjICAFPNBiDoXm4MOq7s9AGOp0BUiYHwj0nzRpV2iSPpPg2jclVTvvdBj89kO9hhCEsSB9+jRfHZ7sdHhni05oM2/Pu5rKHFlCgxTdx7iIpW0kuEp4etJKNh+XGUM/f38b/0kljlOy46JE54S4804N+AE24t/PVHGmnN8lD+zMEE6ME6ofON5WG92S/HKF9d7ZUnk5qd7TaSpvwFLq9LMOsX6T9Bwc8szFX1aJ74o6qpw==",
+    "expiration": "2026-05-20T10:02:18.000Z"
+  },
+  "name": "houston_apartment_locator",
+  "path": "/home/ubuntu/houston_apartment_locator",
+  "port": 3000,
+  "secrets": {
+    "BUILT_IN_FORGE_API_KEY": "Zn34UMS8zPD2hmhMViKakH",
+    "BUILT_IN_FORGE_API_URL": "https://forge.manus.ai",
+    "JWT_SECRET": "JrRLbfA7wKKwkyYE2MmiZx",
+    "OAUTH_SERVER_URL": "https://api.manus.im",
+    "OWNER_NAME": "Eric Johnson",
+    "OWNER_OPEN_ID": "mYhMBTPXswDDchG8X4wdvp",
+    "VITE_ANALYTICS_ENDPOINT": "https://manus-analytics.com",
+    "VITE_ANALYTICS_WEBSITE_ID": "22fad27b-d2d1-4b26-97c5-02f1c776d59f",
+    "VITE_APP_ID": "4gMGD9qetV63jA9Ts6DXxD",
+    "VITE_APP_LOGO": "https://files.manuscdn.com/user_upload_by_module/web_dev_logo/310519663501304397/tgASYQRfoZSaCbNp.png",
+    "VITE_APP_TITLE": "Houston Apartment Locator",
+    "VITE_FRONTEND_FORGE_API_KEY": "WUJEJSA7szTFxteB4UFZf9",
+    "VITE_FRONTEND_FORGE_API_URL": "https://forge.manus.ai",
+    "VITE_OAUTH_PORTAL_URL": "https://manus.im"
+  },
+  "template_id": "web-static",
+  "test_command": "pnpm test"
+}
