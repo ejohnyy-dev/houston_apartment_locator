@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 
-const GOOGLE_SHEETS_ENDPOINT = "https://script.google.com/macros/s/AKfycbwQSkILc6_BEGKFdtnx6XXomGdS4cigfY8wv7pafIZufKBEQ1znWH6mYQLcJokMrtpI1g/exec";
+const GOOGLE_SHEETS_ENDPOINT = "https://script.google.com/macros/s/AKfycbzEJ8L45l_FwTOj2QsccgbzoZuLDwVOUraD_KeF8QQwzaEO4yAv4Sx4GLrj04roBgQ/exec";
 
 const budgetOptions = [
   "Under $1,000",
