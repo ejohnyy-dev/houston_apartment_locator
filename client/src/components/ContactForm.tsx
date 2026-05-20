@@ -36,7 +36,7 @@ const areaOptions = [
 ];
 
 export default function ContactForm() {
-  const [form, setForm] = useState({
+  const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
@@ -49,11 +49,11 @@ export default function ContactForm() {
     notes: "",
     smsConsent: false,
   });
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const update = (field: string, value: string) =>
-    setForm((prev) => ({ ...prev, [field]: value }));
+  const handleInputChange = (field: string, value: string | boolean) =>
+    setFormData((prev) => ({ ...prev, [field]: value }));
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -107,7 +107,7 @@ export default function ContactForm() {
     }
   };
 
-  if (submitted) {
+  if (isSubmitted) {
     return (
       <section id="contact" className="py-20 md:py-28 bg-dark-card">
         <div className="container">
@@ -154,8 +154,8 @@ export default function ContactForm() {
                 <input
                   type="text"
                   placeholder="John"
-                  value={form.firstName}
-                  onChange={(e) => update("firstName", e.target.value)}
+                  value={formData.firstName}
+                  onChange={(e) => handleInputChange("firstName", e.target.value)}
                   className={inputClass}
                   required
                 />
@@ -165,8 +165,8 @@ export default function ContactForm() {
                 <input
                   type="text"
                   placeholder="Doe"
-                  value={form.lastName}
-                  onChange={(e) => update("lastName", e.target.value)}
+                  value={formData.lastName}
+                  onChange={(e) => handleInputChange("lastName", e.target.value)}
                   className={inputClass}
                 />
               </div>
@@ -179,8 +179,8 @@ export default function ContactForm() {
                 <input
                   type="email"
                   placeholder="john@example.com"
-                  value={form.email}
-                  onChange={(e) => update("email", e.target.value)}
+                  value={formData.email}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
                   className={inputClass}
                   required
                 />
@@ -190,8 +190,8 @@ export default function ContactForm() {
                 <input
                   type="tel"
                   placeholder="(555) 123-4567"
-                  value={form.phone}
-                  onChange={(e) => update("phone", e.target.value)}
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange("phone", e.target.value)}
                   className={inputClass}
                   required
                 />
@@ -208,8 +208,8 @@ export default function ContactForm() {
               <div>
                 <label className={labelClass}>Monthly Budget</label>
                 <select
-                  value={form.budget}
-                  onChange={(e) => update("budget", e.target.value)}
+                  value={formData.budget}
+                  onChange={(e) => handleInputChange("budget", e.target.value)}
                   className={selectClass}
                 >
                   <option value="">Select budget</option>
@@ -221,8 +221,8 @@ export default function ContactForm() {
               <div>
                 <label className={labelClass}>Bedrooms</label>
                 <select
-                  value={form.bedrooms}
-                  onChange={(e) => update("bedrooms", e.target.value)}
+                  value={formData.bedrooms}
+                  onChange={(e) => handleInputChange("bedrooms", e.target.value)}
                   className={selectClass}
                 >
                   <option value="">Select bedrooms</option>
@@ -238,8 +238,8 @@ export default function ContactForm() {
               <div>
                 <label className={labelClass}>Move-In Timeline</label>
                 <select
-                  value={form.moveIn}
-                  onChange={(e) => update("moveIn", e.target.value)}
+                  value={formData.moveIn}
+                  onChange={(e) => handleInputChange("moveIn", e.target.value)}
                   className={selectClass}
                 >
                   <option value="">Select timeline</option>
@@ -251,8 +251,8 @@ export default function ContactForm() {
               <div>
                 <label className={labelClass}>Preferred Area</label>
                 <select
-                  value={form.areas}
-                  onChange={(e) => update("areas", e.target.value)}
+                  value={formData.areas}
+                  onChange={(e) => handleInputChange("areas", e.target.value)}
                   className={selectClass}
                 >
                   <option value="">Select area</option>
@@ -267,8 +267,8 @@ export default function ContactForm() {
             <div>
               <label className={labelClass}>Do you have pets?</label>
               <select
-                value={form.pets}
-                onChange={(e) => update("pets", e.target.value)}
+                value={formData.pets}
+                onChange={(e) => handleInputChange("pets", e.target.value)}
                 className={selectClass}
               >
                 <option value="">Select</option>
@@ -286,34 +286,34 @@ export default function ContactForm() {
               <textarea
                 rows={3}
                 placeholder="Amenities you need, specific complexes you're interested in, etc."
-                value={form.notes}
-                onChange={(e) => update("notes", e.target.value)}
+                value={formData.notes}
+                onChange={(e) => handleInputChange("notes", e.target.value)}
                 className={`${inputClass} resize-none`}
               />
             </div>
 
-            {/* Submit */}
-        <label className="flex items-start gap-3 text-white/40 text-xs leading-relaxed">
-          <input
-            type="checkbox"
-            checked={formData.smsConsent}
-            onChange={(event) => handleInputChange("smsConsent", event.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-white/20 bg-dark text-gold focus:ring-gold/40"
-            required
-          />
-          <span>
-            I agree to be contacted by call, text, or email about apartment options.
-            Message/data rates may apply. Reply STOP to opt out.
-          </span>
-        </label>
+            {/* SMS Consent Checkbox */}
+            <label className="flex items-start gap-3 text-white/40 text-xs leading-relaxed">
+              <input
+                type="checkbox"
+                checked={formData.smsConsent}
+                onChange={(event) => handleInputChange("smsConsent", event.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-white/20 bg-dark text-gold focus:ring-gold/40"
+                required
+              />
+              <span>
+                I agree to be contacted by call, text, or email about apartment options.
+                Message/data rates may apply. Reply STOP to opt out.
+              </span>
+            </label>
 
-
+            {/* Submit Button */}
             <button
               type="submit"
-              disabled={submitting}
+              disabled={isSubmitting}
               className="w-full py-3.5 bg-gold text-dark font-semibold text-sm rounded hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              {submitting ? "Sending..." : "Submit"}
+              {isSubmitting ? "Sending..." : "Submit"}
             </button>
 
             <p className="text-white/25 text-xs text-center">
