@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { toast } from "sonner";
 
+const GOOGLE_SHEETS_ENDPOINT = "https://script.google.com/macros/s/AKfycbwQSkILc6_BEGKFdtnx6XXomGdS4cigfY8wv7pafIZufKBEQ1znWH6mYQLcJokMrtpI1g/exec";
+
 const budgetOptions = [
   "Under $1,000",
   "$1,000 – $1,500",
@@ -45,6 +47,7 @@ export default function ContactForm() {
     areas: "",
     pets: "",
     notes: "",
+    smsConsent: false,
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -52,18 +55,56 @@ export default function ContactForm() {
   const update = (field: string, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.firstName || !form.email || !form.phone) {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!formData.firstName || !formData.email || !formData.phone) {
       toast.error("Please fill in your name, email, and phone number.");
       return;
     }
-    setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
-      setSubmitted(true);
+
+    if (!formData.smsConsent) {
+      toast.error("Please agree to be contacted so I can follow up.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const payload = new URLSearchParams({
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      phone: formData.phone,
+      budget: formData.budget,
+      bedrooms: formData.bedrooms,
+      moveIn: formData.moveIn,
+      areas: formData.areas,
+      pets: formData.pets,
+      notes: formData.notes,
+      smsConsent: String(formData.smsConsent),
+      sms_consent: String(formData.smsConsent),
+      contact_consent: String(formData.smsConsent),
+      consent_source: "txaptfinder.com contact form",
+      consent_timestamp: new Date().toISOString(),
+      _source: "txaptfinder.com",
+      page_url: window.location.href,
+      user_agent: navigator.userAgent,
+    });
+
+    try {
+      await fetch(GOOGLE_SHEETS_ENDPOINT, {
+        method: "POST",
+        mode: "no-cors",
+        body: payload,
+      });
+
       toast.success("Thanks! Eric will be in touch soon.");
-    }, 800);
+      setIsSubmitted(true);
+    } catch (error) {
+      toast.error("Could not save your information. Please call or text Eric.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -252,6 +293,21 @@ export default function ContactForm() {
             </div>
 
             {/* Submit */}
+        <label className="flex items-start gap-3 text-white/40 text-xs leading-relaxed">
+          <input
+            type="checkbox"
+            checked={formData.smsConsent}
+            onChange={(event) => handleInputChange("smsConsent", event.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-white/20 bg-dark text-gold focus:ring-gold/40"
+            required
+          />
+          <span>
+            I agree to be contacted by call, text, or email about apartment options.
+            Message/data rates may apply. Reply STOP to opt out.
+          </span>
+        </label>
+
+
             <button
               type="submit"
               disabled={submitting}
