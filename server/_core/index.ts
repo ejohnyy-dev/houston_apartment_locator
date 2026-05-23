@@ -116,6 +116,7 @@ async function startServer() {
           String(email)
         )}?idProperty=email`;
 
+        // Try to update existing contact
         const hubspotResponse = await fetch(updateUrl, {
           method: "PATCH",
           headers: {
@@ -125,13 +126,36 @@ async function startServer() {
           body: JSON.stringify({ properties }),
         });
 
-        if (!hubspotResponse.ok) {
+        if (hubspotResponse.status === 404) {
+          // Contact doesn't exist, create it
+          console.log("Contact not found, creating new contact:", email);
+          const createUrl = "https://api.hubapi.com/crm/v3/objects/contacts";
+          const createResponse = await fetch(createUrl, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${hubspotToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ properties }),
+          });
+
+          if (!createResponse.ok) {
+            const errorData = await createResponse.text();
+            hubspotError = `HubSpot create error: ${createResponse.status}`;
+            console.error("HubSpot create error:", createResponse.status, errorData);
+          } else {
+            hubspotSuccess = true;
+            console.log("Lead successfully created in HubSpot:", email);
+          }
+        } else if (hubspotResponse.ok) {
+          // Contact updated successfully
+          hubspotSuccess = true;
+          console.log("Lead successfully updated in HubSpot:", email);
+        } else {
+          // Other error
           const errorData = await hubspotResponse.text();
           hubspotError = `HubSpot error: ${hubspotResponse.status}`;
           console.error("HubSpot API error:", hubspotResponse.status, errorData);
-        } else {
-          hubspotSuccess = true;
-          console.log("Lead successfully sent to HubSpot:", email);
         }
       } catch (hubspotError) {
         console.error("HubSpot fetch error:", hubspotError);
