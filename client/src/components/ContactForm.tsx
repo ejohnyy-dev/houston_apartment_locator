@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 
-const GOOGLE_SHEETS_ENDPOINT = "https://script.google.com/macros/s/AKfycbzEJ8L45l_FwTOj2QsccgbzoZuLDwVOUraD_KeF8QQwzaEO4yAv4Sx4GLrj04roBgQ/exec";
+
 
 const budgetOptions = [
   "Under $1,000",
@@ -70,33 +70,32 @@ export default function ContactForm() {
 
     setIsSubmitting(true);
 
-    const payload = new URLSearchParams({
-      firstName: formData.firstName,
-      lastName: formData.lastName,
+    const payload = {
+      first_name: formData.firstName,
+      last_name: formData.lastName,
       email: formData.email,
       phone: formData.phone,
       budget: formData.budget,
       bedrooms: formData.bedrooms,
-      moveIn: formData.moveIn,
-      areas: formData.areas,
+      move_in_timeline: formData.moveIn,
+      preferred_area: formData.areas,
       pets: formData.pets,
       notes: formData.notes,
-      smsConsent: String(formData.smsConsent),
-      sms_consent: String(formData.smsConsent),
-      contact_consent: String(formData.smsConsent),
-      consent_source: "txaptfinder.com contact form",
-      consent_timestamp: new Date().toISOString(),
-      _source: "txaptfinder.com",
-      page_url: window.location.href,
-      user_agent: navigator.userAgent,
-    });
+      smsConsent: formData.smsConsent,
+    };
 
     try {
-      await fetch(GOOGLE_SHEETS_ENDPOINT, {
+      const response = await fetch("/api/leads", {
         method: "POST",
-        mode: "no-cors",
-        body: payload,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
       });
+
+      if (!response.ok) {
+        throw new Error("Failed to submit form");
+      }
 
       toast.success("Thanks! Eric will be in touch soon.");
       setIsSubmitted(true);
