@@ -1,17 +1,24 @@
 {
   "build_command": "pnpm run build",
-  "capabilities": [],
+  "capabilities": [
+    "db",
+    "server",
+    "user"
+  ],
   "dev_command": "pnpm run dev",
-  "env_vars": {},
+  "env_vars": {
+    "DATABASE_URL": "mysql://qawXYpXNR9rcXuk.32e8ed20f5a0:5Tibq56xvww9UsDf8V4l@gateway05.us-east-1.prod.aws.tidbcloud.com:4000/4gMGD9qetV63jA9Ts6DXxD?ssl={\"rejectUnauthorized\":true}",
+    "DRIZZLE_DATABASE_URL": "mysql://qawXYpXNR9rcXuk.32e8ed20f5a0:5Tibq56xvww9UsDf8V4l@gateway05.us-east-1.prod.aws.tidbcloud.com:4000/4gMGD9qetV63jA9Ts6DXxD?ssl={\"rejectUnauthorized\":true}"
+  },
   "experiments": [
     "no_db_push"
   ],
   "git_remote": {
     "repo_url": "s3://vida-prod-gitrepo/webdev-git/310519663501304397/4gMGD9qetV63jA9Ts6DXxD",
-    "access_key_id": "ASIAZV3A2ECZEGSXDAAG",
-    "secret_access_key": "MN1C14GL2/0pq9+IDWzHwoaLvxwLTN01FuW1k2Um",
-    "session_token": "IQoJb3JpZ2luX2VjEBYaCXVzLWVhc3QtMSJHMEUCIQCX9R+mhTLb0+HyOLDnsqfLx0L12mVvdimCh5+l6rIAswIgdAo7bWTwVaKmfY81tcRvxjzfmn6NXzdYFL8Kp4TDgnAq/wMI3///////////ARAEGgw2NjUzODYwOTg4NjYiDFdfLAqILMgu1aforSrTA9zNt0dVwy56BfEaexqbNbQDOHWY9NnKgsW8uhj2gLi+8wqko7thE+v9G99YfTZtb8EPEy9U0DNDk8Ny/YlcY+zasEtDo3y1bHoBd0sc85XjuFc7uidttEIXUI0sQWCel8l8CwxJQ3z6677IGp4J97PHdv4aaoE9s/LwXdGFKRejRHWVdGuBPk/DKU/l96W4NvUu/RPeGdboy5cNtmxZvku9UdBO5K53oA/jkm+uwhOYL90HHrWte5aVqRtykSltH7CXJ6/4dQZ04Jyr1w5QU19oa2SAPm+n5DB9jjOw8mRhWB5z46P9xgpxLAJTSYB2nM1P3dgFgdl7Xlbh8ZbC2DWUkoLQ+NV1HjS/0+Ctv8I3tKC0u+e3HM9EsyKKid/ZuW1vGYVBU9Oei+4E8UPa4SsVY73oIuXPKpWy6tGnsxLohd9AoRmXy2IYDatK4WfzKmK6UBAX5PxpnFgxuKnPgGj9LI5FMC/jcXnw4bkqHXBRFHDwe0VmekIDHDrmTka7rGYwYkflCYiol82ot55EROMoudtTIGLs1F65p+Gv6nKhLG8TOEDOKLwBowJfGXXvSdUxy+yfDnNLNENpv4bGBSQwISIvJlISrSjICAFPNBiDoXm4MOq7s9AGOp0BUiYHwj0nzRpV2iSPpPg2jclVTvvdBj89kO9hhCEsSB9+jRfHZ7sdHhni05oM2/Pu5rKHFlCgxTdx7iIpW0kuEp4etJKNh+XGUM/f38b/0kljlOy46JE54S4804N+AE24t/PVHGmnN8lD+zMEE6ME6ofON5WG92S/HKF9d7ZUnk5qd7TaSpvwFLq9LMOsX6T9Bwc8szFX1aJ74o6qpw==",
-    "expiration": "2026-05-20T10:02:18.000Z"
+    "access_key_id": "ASIAZV3A2ECZBL3GQ4ZQ",
+    "secret_access_key": "qMl9W7KJvubpNc3VNenojXU5Qoa8d/R758Fg1uXY",
+    "session_token": "IQoJb3JpZ2luX2VjEHcaCXVzLWVhc3QtMSJIMEYCIQDH83+B4KxYWi39Ud8aLjga7W4PxJedNfrczFqXXz2fkgIhAKB+aA55bd/AJYFLcvuAKgdNG9vSm+PqlSWYFpO0Qsh1KvYDCD8QBBoMNjY1Mzg2MDk4ODY2IgwyqdE9wxBKYsSW9Dkq0wMpEy7PTIGDyuHpjMD/xQkHmPxcfCRjdpy9UrTXoRBdAT3BcG5r6dnfHUBaf3YrxLoRrqgzrAopHOWekKGLo9Yx9UBfLpu0dF+lNcfcQIl6p9Sz8ucz2t6nPw6A+DYZZjeO/Ib/zv/wHOvFK+trvtpLnOUUFdOEMraNcAGQtNvVqGy3WnXI5KWnRisc3MfVglWwAlYFQMovjH4EF545VhTJifhgrSQwrYp8gYsJHEbBrZRs67iO472Jfhc+SgYWeGkshFt81AEPkdDDbAwna0MlRD6AETPlP3KGcQ1ExKFJd9VGV6vI3XWPzT8+hvMOpr6u1ozFLKZhHNdcRQtVkNiXp8yYrfLdAStYhOSjPaEcf0Rle7/rwUmtVvVO2kbY3mgLyuwr350OlfUqNYowRol3TIxZig/n10SqDON/OYn6qMzmSpZebcMVJFxXiofGB5goTFvPJvrkarcwlfpzPbENb/Dt3OvPDUSFHkQuEPxXkTPnbZX4ZX7JuHBICKcohPozES44HuXo1WzSVM/DPC2Ddo9BnMRNhHZ1ZYsTvdlOGxg6a/Y48N7xltf3b3m5KPqXKWlLB5Q5m0aebolGgQWyB/7V806m9b58NywjAgRonrrsITCCy8jQBjqcAbcE5apzHbS6A9vICAaA0H1ayYLMnEKbVqNT3PZcd5Dn3HCoofXHumFqkkF2d33lD5AeJ+O+P94fi5A6Bp5ZioQv6PmNhd5jNcQ2Ot6jvo3IWxFQKk6yxQF2+WDgwFNs++BJ2904AHUCZnsqMzqpzBjMTieyrsI2i4U8IdtnGet3wL7Nfn7x4nhboztdLSLc6hZfMyP/0V54O2FQpg==",
+    "expiration": "2026-05-24T10:09:06.000Z"
   },
   "name": "houston_apartment_locator",
   "path": "/home/ubuntu/houston_apartment_locator",
@@ -19,6 +26,7 @@
   "secrets": {
     "BUILT_IN_FORGE_API_KEY": "Zn34UMS8zPD2hmhMViKakH",
     "BUILT_IN_FORGE_API_URL": "https://forge.manus.ai",
+    "HUBSPOT_PRIVATE_APP_TOKEN": "pat-na2-6b90ad46-9755-4f53-a40f-2a2fd136e146",
     "JWT_SECRET": "JrRLbfA7wKKwkyYE2MmiZx",
     "OAUTH_SERVER_URL": "https://api.manus.im",
     "OWNER_NAME": "Eric Johnson",
