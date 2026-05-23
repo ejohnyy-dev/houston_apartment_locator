@@ -21,7 +21,7 @@ async function startServer() {
 
   app.use(express.static(staticPath));
 
-  // POST /api/leads - Send to both Google Sheets and HubSpot
+  // POST /api/leads - Send to HubSpot (required) and Google Sheets (optional)
   app.post("/api/leads", async (req, res) => {
     try {
       const body = (req.body as Record<string, unknown>) ?? {};
@@ -42,7 +42,78 @@ async function startServer() {
         return res.status(400).json({ ok: false, error: "Email is required" });
       }
 
-      // Send to Google Sheets
+      let hubspotSuccess = false;
+      let hubspotError: string | null = null;
+
+      // Send to HubSpot (REQUIRED)
+      const hubspotToken = process.env.HUBSPOT_PRIVATE_APP_TOKEN;
+      if (!hubspotToken) {
+        console.error("HubSpot token not configured");
+        return res.status(500).json({
+          ok: false,
+          error: "HubSpot token is not configured",
+        });
+      }
+
+      try {
+        const properties: Record<string, string> = {
+          email: String(email),
+          firstname: String(
+            first_name ||
+              (typeof name === "string" ? name.split(" ")?.[0] : "") ||
+              ""
+          ),
+          lastname: String(
+            last_name ||
+              (typeof name === "string" ? name.split(" ")?.slice(1).join(" ") : "") ||
+              ""
+          ),
+          phone: String(phone || ""),
+          budget: String(budget || ""),
+          bedrooms: String(bedrooms || ""),
+          movein_timeline: String(move_in_timeline || ""),
+          preferred_area: String(preferred_area || ""),
+          pets: String(pets || ""),
+          notes: String(notes || ""),
+        };
+
+        // Remove empty properties
+        Object.keys(properties).forEach((key) => {
+          if (!properties[key]) {
+            delete properties[key];
+          }
+        });
+
+        const updateUrl = `https://api.hubapi.com/crm/v3/objects/contacts/${encodeURIComponent(
+          String(email)
+        )}?idProperty=email`;
+
+        const hubspotResponse = await fetch(updateUrl, {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${hubspotToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ properties }),
+        });
+
+        if (!hubspotResponse.ok) {
+          const errorData = await hubspotResponse.text();
+          hubspotError = `HubSpot error: ${hubspotResponse.status}`;
+          console.error("HubSpot API error:", hubspotResponse.status, errorData);
+        } else {
+          hubspotSuccess = true;
+          console.log("Lead successfully sent to HubSpot:", email);
+        }
+      } catch (hubspotError) {
+        console.error("HubSpot fetch error:", hubspotError);
+        return res.status(500).json({
+          ok: false,
+          error: "Failed to send lead to HubSpot",
+        });
+      }
+
+      // Send to Google Sheets (OPTIONAL)
       const googleSheetsUrl = process.env.GOOGLE_SHEETS_ENDPOINT;
       if (googleSheetsUrl) {
         try {
@@ -72,66 +143,34 @@ async function startServer() {
             mode: "no-cors",
             body: googlePayload,
           });
+
+          console.log("Lead successfully sent to Google Sheets:", email);
         } catch (googleError) {
           console.error("Google Sheets error:", googleError);
+          // Don't fail the request if Google Sheets fails
         }
+      } else {
+        console.warn("Google Sheets endpoint not configured, skipping");
       }
 
-      // Send to HubSpot
-      const hubspotToken = process.env.HUBSPOT_PRIVATE_APP_TOKEN;
-      if (hubspotToken) {
-        try {
-          const properties: Record<string, string> = {
-            email: String(email),
-            firstname: String(first_name || (typeof name === "string" ? name.split(" ")?.[0] : "") || ""),
-            lastname: String(last_name || (typeof name === "string" ? name.split(" ")?.slice(1).join(" ") : "") || ""),
-            phone: String(phone || ""),
-            budget: String(budget || ""),
-            bedrooms: String(bedrooms || ""),
-            movein_timeline: String(move_in_timeline || ""),
-            preferred_area: String(preferred_area || ""),
-            pets: String(pets || ""),
-            notes: String(notes || ""),
-          };
-
-          // Remove empty properties
-          Object.keys(properties).forEach((key) => {
-            if (!properties[key]) {
-              delete properties[key];
-            }
-          });
-
-          const updateUrl = `https://api.hubapi.com/crm/v3/objects/contacts/${encodeURIComponent(
-            String(email)
-          )}?idProperty=email`;
-
-          const hubspotResponse = await fetch(updateUrl, {
-            method: "PATCH",
-            headers: {
-              Authorization: `Bearer ${hubspotToken}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ properties }),
-          });
-
-          if (!hubspotResponse.ok) {
-            const errorData = await hubspotResponse.text();
-            console.error("HubSpot error:", hubspotResponse.status, errorData);
-          }
-        } catch (hubspotError) {
-          console.error("HubSpot API error:", hubspotError);
-        }
-      }
-
-      return res.status(200).json({ ok: true, message: "Lead saved" });
-      } catch (error) {
-        console.error("API error:", error);
-        const errorMessage = error instanceof Error ? error.message : "Internal server error";
+      // Return success if HubSpot succeeded
+      if (hubspotSuccess) {
+        return res.status(200).json({ ok: true, message: "Lead saved to HubSpot" });
+      } else {
         return res.status(500).json({
           ok: false,
-          error: errorMessage,
+          error: hubspotError || "Failed to save lead",
         });
       }
+    } catch (error) {
+      console.error("API error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Internal server error";
+      return res.status(500).json({
+        ok: false,
+        error: errorMessage,
+      });
+    }
   });
 
   // Handle client-side routing - serve index.html for all routes
