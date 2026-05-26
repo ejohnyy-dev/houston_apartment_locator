@@ -63,6 +63,42 @@ export default function HoustonSection() {
             </div>
           ))}
         </div>
+
+        {/* Neighborhood Links */}
+        <div className="mt-16 pt-12 border-t border-gray-200">
+          <div className="text-center max-w-xl mx-auto mb-10">
+            <h3 className="font-display text-2xl md:text-3xl text-gray-900 mb-3">Popular Neighborhoods</h3>
+            <p className="text-gray-500 text-sm">Explore apartments in Houston's most sought-after areas</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              { name: "Downtown Houston", slug: "downtown-houston-apartments", desc: "Urban living with high-rise apartments and walkable streets" },
+              { name: "Midtown Houston", slug: "midtown-houston-apartments", desc: "Vibrant nightlife, dining, and modern apartment complexes" },
+              { name: "The Heights", slug: "the-heights-apartments", desc: "Trendy neighborhood with historic charm and new development" },
+              { name: "Galleria Area", slug: "galleria-apartments", desc: "Upscale shopping, dining, and premium apartment communities" },
+              { name: "Medical Center", slug: "medical-center-apartments", desc: "Close to Texas Medical Center with diverse housing options" },
+            ].map((n) => (
+              <a
+                key={n.slug}
+                href={`/neighborhoods/${n.slug}`}
+                className="p-4 rounded border border-gray-200 hover:border-gold hover:bg-gold/5 transition-all"
+              >
+                <h4 className="font-display text-lg text-gray-900 mb-1">{n.name}</h4>
+                <p className="text-gray-500 text-sm">{n.desc}</p>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* CTA Links */}
+        <div className="mt-12 flex flex-col sm:flex-row gap-3 justify-center">
+          <a href="/houston-apartment-move-in-specials" className="px-6 py-3 bg-gold text-dark font-semibold rounded hover:opacity-90 transition-opacity text-center">
+            View Move-In Specials
+          </a>
+          <a href="/faq" className="px-6 py-3 border border-gray-300 text-gray-900 font-semibold rounded hover:bg-gray-50 transition-colors text-center">
+            Read FAQ
+          </a>
+        </div>
       </div>
     </section>
   );

@@ -9,6 +9,7 @@ import MoveInSpecials from "./pages/MoveInSpecials";
 import FAQ from "./pages/FAQ";
 import NeighborhoodPage from "./pages/NeighborhoodPage";
 import ScrollToTop from "./components/ScrollToTop";
+import MobileStickyBottomCTA from "./components/MobileStickyBottomCTA";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -34,6 +35,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Router />
+          <MobileStickyBottomCTA />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
