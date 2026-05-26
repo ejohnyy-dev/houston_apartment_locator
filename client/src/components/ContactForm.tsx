@@ -138,7 +138,7 @@ export default function ContactForm() {
           <div className="text-center mb-12">
             <p className="text-gold text-xs font-medium tracking-widest uppercase mb-3">Get Started</p>
             <h2 className="font-display text-3xl md:text-4xl text-white mb-4">
-              Let's Find Your Apartment
+              Start Your Houston Apartment Search Today
             </h2>
             <p className="text-white/50 text-base leading-relaxed">
               Tell me a bit about yourself and what you're looking for. I'll take it from there.

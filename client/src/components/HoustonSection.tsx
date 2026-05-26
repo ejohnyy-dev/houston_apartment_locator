@@ -28,7 +28,7 @@ export default function HoustonSection() {
         <div className="text-center max-w-xl mx-auto mb-14">
           <p className="text-gold text-xs font-medium tracking-widest uppercase mb-3">Discover Houston</p>
           <h2 className="font-display text-3xl md:text-4xl text-gray-900 mb-4">
-            Why Houston Is Home
+            Top Houston Neighborhoods for Renters
           </h2>
           <p className="text-gray-500 text-base leading-relaxed">
             Affordable, diverse, and full of opportunity — the fourth-largest city in the U.S. has something for everyone.

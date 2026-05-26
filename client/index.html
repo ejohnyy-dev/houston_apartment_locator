@@ -3,24 +3,131 @@
 
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
     <title>Houston Apartment Locator | Free Service | Habitat</title>
     <meta name="description" content="Free Houston apartment locator service by Eric Johnson. We find your perfect apartment, negotiate deals, and guide you from search to move-in." />
     <meta name="keywords" content="Houston apartment locator, free apartment finder Houston, Houston TX apartments, apartment search Houston, Habitat Apartment Locators, Eric Johnson apartment locator" />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://txaptfinder.com/" />
+    
+    <!-- Open Graph Tags -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Houston Apartment Locator | Free Service | Habitat" />
+    <meta property="og:description" content="Free Houston apartment locator service by Eric Johnson. We find your perfect apartment, negotiate deals, and guide you from search to move-in." />
+    <meta property="og:url" content="https://txaptfinder.com/" />
+    <meta property="og:image" content="https://txaptfinder.com/og-image.png" />
+    <meta property="og:site_name" content="Habitat Apartment Locators" />
+    
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Houston Apartment Locator | Free Service | Habitat" />
+    <meta name="twitter:description" content="Free Houston apartment locator service by Eric Johnson. We find your perfect apartment, negotiate deals, and guide you from search to move-in." />
+    <meta name="twitter:image" content="https://txaptfinder.com/og-image.png" />
+    
+    <!-- Geo Tags -->
+    <meta name="geo.placename" content="Houston, Texas" />
+    <meta name="geo.region" content="US-TX" />
+    <meta name="geo.position" content="29.7604;-95.3698" />
+    <meta name="ICBM" content="29.7604, -95.3698" />
+    
+    <!-- Additional Meta Tags -->
+    <meta name="author" content="Eric Johnson" />
+    <meta name="robots" content="index, follow" />
+    <meta name="language" content="English" />
+    
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    
+    <!-- JSON-LD Schema Markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "Habitat Apartment Locators",
+      "description": "Free Houston apartment locator service specializing in finding perfect apartments and negotiating move-in deals.",
+      "url": "https://txaptfinder.com",
+      "telephone": "(832) 603-7278",
+      "email": "ericjohnson@txaptfinder.com",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Houston",
+        "addressRegion": "TX",
+        "addressCountry": "US"
+      },
+      "areaServed": {
+        "@type": "City",
+        "name": "Houston",
+        "addressCountry": "US",
+        "addressRegion": "TX"
+      },
+      "priceRange": "Free",
+      "image": "https://txaptfinder.com/og-image.png",
+      "sameAs": []
+    }
+    </script>
+    
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "RealEstateAgent",
+      "name": "Eric Johnson",
+      "jobTitle": "Apartment Locator",
+      "worksFor": {
+        "@type": "Organization",
+        "name": "Habitat Apartment Locators"
+      },
+      "telephone": "(832) 603-7278",
+      "email": "ericjohnson@txaptfinder.com",
+      "areaServed": {
+        "@type": "City",
+        "name": "Houston",
+        "addressCountry": "US",
+        "addressRegion": "TX"
+      }
+    }
+    </script>
+    
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Habitat Apartment Locators",
+      "url": "https://txaptfinder.com",
+      "description": "Free Houston apartment locator service",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://txaptfinder.com/?search={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
   </head>
 
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script
-      defer
-      src="%VITE_ANALYTICS_ENDPOINT%/umami"
-      data-website-id="%VITE_ANALYTICS_WEBSITE_ID%"></script>
+    
+    <!-- Analytics Script with Guard -->
+    <script>
+      (function() {
+        const endpoint = import.meta.env.VITE_ANALYTICS_ENDPOINT;
+        const websiteId = import.meta.env.VITE_ANALYTICS_WEBSITE_ID;
+        
+        if (endpoint && websiteId) {
+          const script = document.createElement('script');
+          script.defer = true;
+          script.src = endpoint + '/umami';
+          script.setAttribute('data-website-id', websiteId);
+          document.head.appendChild(script);
+        }
+      })();
+    </script>
   </body>
 
 </html>

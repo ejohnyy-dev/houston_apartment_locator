@@ -40,7 +40,7 @@ export default function ServicesSection() {
         <div className="text-center max-w-xl mx-auto mb-14">
           <p className="text-gold text-xs font-medium tracking-widest uppercase mb-3">What We Offer</p>
           <h2 className="font-display text-3xl md:text-4xl text-white mb-4">
-            Your Apartment Search, Simplified
+            How Our Free Houston Apartment Locator Service Works
           </h2>
           <p className="text-white/50 text-base leading-relaxed">
             We handle every detail so you can focus on starting your next chapter in Houston.
