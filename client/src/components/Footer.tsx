@@ -18,10 +18,12 @@ export default function Footer() {
           {/* Links */}
           <div className="flex flex-col gap-2">
             <p className="text-white/60 text-xs font-medium tracking-wide uppercase mb-1">Quick Links</p>
-            <a href="#services" className="text-white/40 hover:text-white/70 text-sm transition-colors">Services</a>
-            <a href="#houston" className="text-white/40 hover:text-white/70 text-sm transition-colors">Houston</a>
-            <a href="#how-it-works" className="text-white/40 hover:text-white/70 text-sm transition-colors">How It Works</a>
-            <a href="#contact" className="text-white/40 hover:text-white/70 text-sm transition-colors">Contact</a>
+            <a href="/#services" className="text-white/40 hover:text-white/70 text-sm transition-colors">Services</a>
+            <a href="/#houston" className="text-white/40 hover:text-white/70 text-sm transition-colors">Houston</a>
+            <a href="/#how-it-works" className="text-white/40 hover:text-white/70 text-sm transition-colors">How It Works</a>
+            <a href="/houston-apartment-move-in-specials" className="text-white/40 hover:text-white/70 text-sm transition-colors">Move-In Specials</a>
+            <a href="/faq" className="text-white/40 hover:text-white/70 text-sm transition-colors">FAQ</a>
+            <a href="/#contact" className="text-white/40 hover:text-white/70 text-sm transition-colors">Contact</a>
           </div>
 
           {/* Contact */}

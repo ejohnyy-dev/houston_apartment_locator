@@ -4,10 +4,12 @@ import { Menu, X, Phone, Mail } from "lucide-react";
 const LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663501304397/4gMGD9qetV63jA9Ts6DXxD/habitat-logo_3360fdb4.png";
 
 const links = [
-  { label: "Services", href: "#services" },
-  { label: "Houston", href: "#houston" },
-  { label: "How It Works", href: "#how-it-works" },
-  { label: "Contact", href: "#contact" },
+  { label: "Services", href: "/#services" },
+  { label: "Houston", href: "/#houston" },
+  { label: "How It Works", href: "/#how-it-works" },
+  { label: "Specials", href: "/houston-apartment-move-in-specials" },
+  { label: "FAQ", href: "/faq" },
+  { label: "Contact", href: "/#contact" },
 ];
 
 export default function Navbar() {
