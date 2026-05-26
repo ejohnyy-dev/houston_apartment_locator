@@ -116,10 +116,10 @@
     <!-- Analytics Script with Guard -->
     <script>
       (function() {
-        const endpoint = import.meta.env.VITE_ANALYTICS_ENDPOINT;
-        const websiteId = import.meta.env.VITE_ANALYTICS_WEBSITE_ID;
+        const endpoint = '%VITE_ANALYTICS_ENDPOINT%';
+        const websiteId = '%VITE_ANALYTICS_WEBSITE_ID%';
         
-        if (endpoint && websiteId) {
+        if (endpoint && endpoint !== '%VITE_ANALYTICS_ENDPOINT%' && websiteId && websiteId !== '%VITE_ANALYTICS_WEBSITE_ID%') {
           const script = document.createElement('script');
           script.defer = true;
           script.src = endpoint + '/umami';
