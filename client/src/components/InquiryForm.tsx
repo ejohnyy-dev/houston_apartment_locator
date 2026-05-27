@@ -70,7 +70,7 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-lg font-semibold text-gray-900">Sign Up for {apartmentName}</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Inquire About {apartmentName}</h2>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 transition-colors"
@@ -84,12 +84,9 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
           {submitStatus === "success" ? (
             <div className="text-center py-8">
               <div className="text-green-600 text-4xl mb-3">✓</div>
-              <p className="text-gray-900 font-semibold mb-2">You're All Set!</p>
-              <p className="text-sm text-gray-600 mb-2">
-                Thanks for signing up. I'll reach out to you soon with more information about this apartment and other options that match your needs.
-              </p>
-              <p className="text-xs text-gray-500">
-                Check your email for updates.
+              <p className="text-gray-900 font-semibold mb-2">Inquiry Submitted!</p>
+              <p className="text-sm text-gray-600">
+                We'll get back to you soon with more information about this apartment.
               </p>
             </div>
           ) : submitStatus === "error" ? (
@@ -193,7 +190,7 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
                   disabled={isSubmitting}
                   className="flex-1 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? "Signing Up..." : "Sign Up"}
+                  {isSubmitting ? "Sending..." : "Send Inquiry"}
                 </button>
               </div>
             </form>
