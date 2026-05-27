@@ -15,10 +15,10 @@
   ],
   "git_remote": {
     "repo_url": "s3://vida-prod-gitrepo/webdev-git/310519663501304397/4gMGD9qetV63jA9Ts6DXxD",
-    "access_key_id": "ASIAZV3A2ECZL7YBNABC",
-    "secret_access_key": "XVrSCpTqlg+Fes+24jNFRhgc/TI3cJLAWo6O59j2",
-    "session_token": "IQoJb3JpZ2luX2VjEM7//////////wEaCXVzLWVhc3QtMSJGMEQCIDVJKc0ocRxhP2NcRsmJIOWHtH9ZhOduae4uFfs09VsiAiBYZhV9hT9mAxcTjQSEjigLe8KdugTO8oicpg2+D15m1yr/AwiX//////////8BEAQaDDY2NTM4NjA5ODg2NiIMXL2qSv48axaDHIt/KtMDT/0xXTtLZrJeuyUhDfB25F97ZAFzg/34EtYydlroSCPmt6pBu4iQz3fktb7/LnjHMbSgqZG8QWId+5wZGzp1H4qWEt3ZrRnPFpPUf60XSUQi6TiPIy3rq/x3yddFdutx9wX7qRCffguLtkv5t04h6+qpw5KTFl1KWLNIrl756O3m7Qz8mahGyLUIVQP1fs5gfq+TcY/MmqCA+wE6DjWBwJqSaCFnfUXgILQYLosuscctPNB60oqZ7/tjfJ+fLGZzGH9sCwQQse9PGXi6oHT1EMGY5DX+wDZ4N4hwF5RrW/nOX96Haj3i7IOwlylu+J7EZgC8qJb0Sv5byXQL2/b18/1calLbSdmdHv3O3W2Oo6VwoxjVeC08DkP8aloNU27gZOf1XCBpkOyhJJNERm+W776l83vXVVyiwBFt7OEQYfurol/yKFQeKo0Bvmn3w+wlN1mLTl2jvYq8R40WBMPfGhYx91Lfp2Zb9DSoJS/WCcLQJXaKwGt5CIaUbpqUxONlyF+e+Pgc1FSJQyf6AG2EiaLVwKojeydNId/pS9n07omAKo9W+nmZeVL1wAvVIap5prD2Wr9Q+1/4On6nsGKHppxRfxSeUXOgpPNiDaBBDgHHIq0w7uLb0AY6ngGQgTd8rF6LQWAzoAzZ4df+GlPIwXpYumTMbzFFqDc4UZabiVmUvYT94AvAHyLzTGWwwTYwYO0xujbus/WuwRsDwLMEOWxNtcAx2Y86irTlpWBo2DtNK7xS2uxRYfPIS+RRGIQnRvVC2JA2VxZWj0gHvtLaTFfafRu3UpMXnkIwxzX0E4XklBtceoYeYICQLNalgjzxYp13u1Fl8yh/6w==",
-    "expiration": "2026-05-28T01:28:14.000Z"
+    "access_key_id": "ASIAZV3A2ECZKYHNQ2LJ",
+    "secret_access_key": "XqcWEC6YiTe/LEJG9Omz/vonY/T/jJyy0ts5sq93",
+    "session_token": "IQoJb3JpZ2luX2VjENb//////////wEaCXVzLWVhc3QtMSJIMEYCIQDSezujj4CkPOkzwhBMVqDsJ0JphnWwaUEps5mzkvWRNQIhAO9gebm5Be/bd4hkid/TbHpI89ovc01zaaqyOgNOvU4GKv8DCJ7//////////wEQBBoMNjY1Mzg2MDk4ODY2IgzjKICu7uJX+gr2Tr8q0wMhsebdmhwf/ySVlmi9bVDDoRdetd+pdVUK+HbBIoQAqlbBPPlirrx79YiqoP+X0tzHadarfWe2mjVVFMMaDs2Q6t2K8aYnF7X2BaU/ILvTTsvTLsFNNs63WEf3VGNJDd/krdnC5gbHRatyNAMHqJ6qyqxAh6isO13cC+pXmPRuhDzFYtbByFFulPpgXAvOd/L6H5bYOBgnFEWz8PVBg9I7r0cXu2RsL4jw6UwGZ424Hv507g+1HfX3xxy5ZbvE2x2biG8EiFV6G0hMtfiAzSVvB3sm4h5aMBSYqhQUpwF49HcIGQVwzmPb6OIZKnpT1Q2gDHNkGztNJQz1RbJqoDnVft0qZUcQLNYDDyui7Km+S3ybaCmaGNG/EGnA7XHjZOQeOsZ7stB8GA8IzjSZX22WsdOoZbwIuHDedTu9DHF2sHLp1UH2DEYsL1R9raSRTUDIhk4yHwsaClz9j/exFeZ4ERvEbob9iG0HeE+Eksd7qU79UoK96wSi+LdBpd5uCjpHuMNaUCdTyZ9RXLthqc3ZtUYl5brCHICqxf2L9DmVUZeaxKP8JynePWilfGGzDlq+m+/R1RJjt61x24gWf38U34XnHvPZss4rT3xVYVtHNKqWoDCHud3QBjqcAW/gHDd0IJ1mO2Hgnwk9ppwFiHkDrKYyre+RdfzIvmBFwZyHBOHLIlyxDsb3oo30CVUaAMsgn70eNMxz4w28KdLO1ahsyZUOQ7IIl7O+u2pq6GO+RlP7mqd99Ro6ViqBPzJ/vQtIenlsCmjTso0nfabK8+kovLahpkgaJLgBs1q9ubIGkxuRLVUJXWVoxpuqxAT0/Ra9n+gHMQyyew==",
+    "expiration": "2026-05-28T09:05:11.000Z"
   },
   "name": "houston_apartment_locator",
   "path": "/home/ubuntu/houston_apartment_locator",
@@ -26,6 +26,7 @@
   "secrets": {
     "BUILT_IN_FORGE_API_KEY": "Zn34UMS8zPD2hmhMViKakH",
     "BUILT_IN_FORGE_API_URL": "https://forge.manus.ai",
+    "GOOGLE_SHEETS_ENDPOINT": "https://script.google.com/macros/s/AKfycbzEJ8L45l_FwTOj2QsccgbzoZuLDwVOUraD_KeF8QQwzaEO4yAv4Sx4GLrj04roBgQ/exec",
     "HUBSPOT_PRIVATE_APP_TOKEN": "pat-na2-6b90ad46-9755-4f53-a40f-2a2fd136e146",
     "JWT_SECRET": "JrRLbfA7wKKwkyYE2MmiZx",
     "OAUTH_SERVER_URL": "https://api.manus.im",

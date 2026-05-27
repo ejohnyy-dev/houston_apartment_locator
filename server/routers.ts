@@ -1,5 +1,4 @@
-import { COOKIE_NAME } from "@shared/const";
-import { getSessionCookieOptions } from "./_core/cookies";
+import { getSessionCookieOptions, COOKIE_NAME } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
@@ -80,6 +79,7 @@ export const appRouter = router({
   inquiries: router({
     /**
      * Create a new apartment inquiry (lead capture)
+     * Sends to Google Sheets, HubSpot, and notifies owner
      */
     create: publicProcedure
       .input(
@@ -95,6 +95,75 @@ export const appRouter = router({
       )
       .mutation(async ({ input }) => {
         try {
+          // Parse name into first and last
+          const nameParts = input.name.trim().split(/\s+/);
+          const firstName = nameParts[0] || "";
+          const lastName = nameParts.slice(1).join(" ") || "";
+
+          // Prepare payload for Google Sheets and HubSpot
+          const payload = {
+            firstName,
+            lastName,
+            name: input.name,
+            email: input.email,
+            phone: input.phone,
+            apartmentName: input.apartmentName,
+            apartmentId: input.apartmentId,
+            moveInDate: input.moveInDate || "",
+            message: input.message || "",
+            source: "website",
+            smsConsent: true,
+            consentSource: "txaptfinder.com",
+            pageUrl: "https://txaptfinder.com",
+          };
+
+          // Send to Google Sheets
+          const googleSheetsUrl = process.env.GOOGLE_SHEETS_ENDPOINT;
+          if (googleSheetsUrl) {
+            try {
+              await fetch(googleSheetsUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              });
+              console.log("[Google Sheets] Lead submitted successfully");
+            } catch (googleError) {
+              console.error("[Google Sheets] Error:", googleError);
+            }
+          }
+
+          // Send to HubSpot
+          const hubspotToken = process.env.HUBSPOT_PRIVATE_APP_TOKEN;
+          if (hubspotToken) {
+            try {
+              const hubspotPayload = {
+                properties: {
+                  firstname: firstName,
+                  lastname: lastName,
+                  email: input.email,
+                  phone: input.phone,
+                  apartment_name: input.apartmentName,
+                  apartment_id: input.apartmentId,
+                  move_in_date: input.moveInDate || "",
+                  message: input.message || "",
+                  lifecyclestage: "lead",
+                },
+              };
+
+              await fetch("https://api.hubapi.com/crm/v3/objects/contacts", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${hubspotToken}`,
+                },
+                body: JSON.stringify(hubspotPayload),
+              });
+              console.log("[HubSpot] Lead submitted successfully");
+            } catch (hubspotError) {
+              console.error("[HubSpot] Error:", hubspotError);
+            }
+          }
+
           // Notify owner of new inquiry
           await notifyOwner({
             title: `New Apartment Inquiry: ${input.apartmentName}`,

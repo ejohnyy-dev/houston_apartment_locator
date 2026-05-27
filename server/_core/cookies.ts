@@ -1,6 +1,9 @@
 import type { CookieOptions, Request } from "express";
+import { COOKIE_NAME } from "../../shared/const";
 
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
+
+export { COOKIE_NAME };
 
 function isIpAddress(host: string) {
   // Basic IPv4 check and IPv6 presence detection.
