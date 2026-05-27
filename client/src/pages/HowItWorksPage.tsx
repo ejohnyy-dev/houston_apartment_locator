@@ -4,8 +4,10 @@ import Breadcrumb from '@/components/Breadcrumb';
 import HowItWorksSection from '@/components/HowItWorksSection';
 import ContactForm from '@/components/ContactForm';
 import Footer from '@/components/Footer';
+import { useBreadcrumbSchema } from '@/hooks/useBreadcrumbSchema';
 
 export default function HowItWorksPage() {
+  useBreadcrumbSchema([{ label: 'How It Works', href: '/how-it-works' }]);
   useEffect(() => {
     document.title = 'How It Works | Houston Apartment Locator';
   }, []);

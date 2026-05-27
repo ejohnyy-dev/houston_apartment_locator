@@ -4,8 +4,10 @@ import Breadcrumb from '@/components/Breadcrumb';
 import ServicesSection from '@/components/ServicesSection';
 import ContactForm from '@/components/ContactForm';
 import Footer from '@/components/Footer';
+import { useBreadcrumbSchema } from '@/hooks/useBreadcrumbSchema';
 
 export default function Services() {
+  useBreadcrumbSchema([{ label: 'Services', href: '/services' }]);
   useEffect(() => {
     document.title = 'Our Services | Houston Apartment Locator';
   }, []);
