@@ -83,6 +83,48 @@ const AREA_COORDS: Record<string, { lat: number; lng: number }> = {
   "Missouri City": { lat: 29.6186, lng: -95.5377 },
 };
 
+// Houston neighborhood boundaries (approximate lat/lng ranges)
+const HOUSTON_NEIGHBORHOODS: Array<{
+  name: string;
+  minLat: number;
+  maxLat: number;
+  minLng: number;
+  maxLng: number;
+}> = [
+  { name: "Downtown", minLat: 29.7400, maxLat: 29.7700, minLng: -95.4000, maxLng: -95.3400 },
+  { name: "Midtown", minLat: 29.7300, maxLat: 29.7600, minLng: -95.4100, maxLng: -95.3600 },
+  { name: "Montrose", minLat: 29.7200, maxLat: 29.7600, minLng: -95.4300, maxLng: -95.3700 },
+  { name: "Upper Kirby", minLat: 29.7100, maxLat: 29.7500, minLng: -95.4500, maxLng: -95.3900 },
+  { name: "Uptown", minLat: 29.7400, maxLat: 29.7800, minLng: -95.4600, maxLng: -95.4000 },
+  { name: "Galleria Area", minLat: 29.7000, maxLat: 29.7600, minLng: -95.4800, maxLng: -95.4100 },
+  { name: "Heights", minLat: 29.7600, maxLat: 29.8000, minLng: -95.4300, maxLng: -95.3700 },
+  { name: "Bellaire", minLat: 29.6800, maxLat: 29.7200, minLng: -95.4700, maxLng: -95.4000 },
+  { name: "West University", minLat: 29.6600, maxLat: 29.7100, minLng: -95.4900, maxLng: -95.4200 },
+  { name: "Pearland", minLat: 29.5300, maxLat: 29.6000, minLng: -95.3500, maxLng: -95.2400 },
+  { name: "Sugar Land", minLat: 29.5800, maxLat: 29.6500, minLng: -95.6800, maxLng: -95.5800 },
+  { name: "Stafford", minLat: 29.6000, maxLat: 29.6600, minLng: -95.6200, maxLng: -95.5000 },
+  { name: "Katy", minLat: 29.7400, maxLat: 29.8300, minLng: -95.9000, maxLng: -95.7500 },
+  { name: "Cypress", minLat: 29.9000, maxLat: 30.0300, minLng: -95.8000, maxLng: -95.6000 },
+  { name: "Spring", minLat: 30.0200, maxLat: 30.1400, minLng: -95.5500, maxLng: -95.3500 },
+  { name: "The Woodlands", minLat: 30.1200, maxLat: 30.2200, minLng: -95.5800, maxLng: -95.3800 },
+  { name: "Kingwood", minLat: 29.9600, maxLat: 30.1200, minLng: -95.3000, maxLng: -95.1000 },
+  { name: "Humble", minLat: 29.9200, maxLat: 30.0800, minLng: -95.4000, maxLng: -95.1500 },
+];
+
+function getHoustonNeighborhood(lat: number, lng: number): string {
+  for (const neighborhood of HOUSTON_NEIGHBORHOODS) {
+    if (
+      lat >= neighborhood.minLat &&
+      lat <= neighborhood.maxLat &&
+      lng >= neighborhood.minLng &&
+      lng <= neighborhood.maxLng
+    ) {
+      return neighborhood.name;
+    }
+  }
+  return "Houston";
+}
+
 function parseCsv(text: string): CsvRow[] {
   const rows: string[][] = [];
   let row: string[] = [];
@@ -179,6 +221,15 @@ function areaCoords(city: string): { lat: number; lng: number } {
   return AREA_COORDS[city] ?? AREA_COORDS.Houston;
 }
 
+function getDisplayNeighborhood(city: string, lat: number, lng: number): string {
+  // For Houston area properties, use neighborhood mapping
+  if (city === "Houston" || city === "" || !city) {
+    return getHoustonNeighborhood(lat, lng);
+  }
+  // For other cities, return the city name
+  return city;
+}
+
 function cleanText(value: string | undefined): string | null {
   const text = value?.trim();
   if (!text || text === "Tags:") return null;
@@ -187,7 +238,7 @@ function cleanText(value: string | undefined): string | null {
 
 function buildDescription(row: CsvRow): string | null {
   const pieces = [
-    cleanText(row.special) ? `Current special: ${cleanText(row.special)}.` : null,
+    cleanText(row.property_name),
     cleanText(row.availability) ? `Available floor plans include ${cleanText(row.availability)}.` : null,
     cleanText(row.feature_highlights),
     cleanText(row.exterior_amenities) ? `Community features: ${cleanText(row.exterior_amenities)}.` : null,
@@ -206,11 +257,12 @@ function toApartment(row: CsvRow, index: number, usedIds: Set<number>): Property
   const imageUrls = splitList(row.image_urls);
   const primaryPhoto = cleanText(row.primary_image_url);
   const photos = primaryPhoto ? [primaryPhoto, ...imageUrls.filter(url => url !== primaryPhoto)] : imageUrls;
+  const displayNeighborhood = getDisplayNeighborhood(city, coords.lat, coords.lng);
 
   return {
     id: stableNumericId(row, index, usedIds),
     name: cleanText(row.property_name) ?? `Property ${index + 1}`,
-    neighborhood: city,
+    neighborhood: displayNeighborhood,
     bedrooms: parseBedrooms(row.availability),
     bathrooms: parseBathrooms(row.availability),
     rentMin: minRent,
@@ -237,93 +289,67 @@ function hasCompleteProfile(row: CsvRow, apartment: PropertyApartment): boolean 
 
 async function readPropertyDatabase() {
   const source = process.env.PROPERTY_DATABASE_CSV || DEFAULT_PROPERTY_CSV;
-  const stat = await fs.stat(source);
+  const stat = await fs.stat(source)
+    .catch(() => null);
 
-  if (cache && cache.source === source && cache.mtimeMs === stat.mtimeMs) {
+  if (cache && stat && cache.mtimeMs === stat.mtimeMs) {
     return cache;
   }
 
-  const text = await fs.readFile(source, "utf8");
+  const text = await fs.readFile(source, "utf-8");
   const rows = parseCsv(text);
   const usedIds = new Set<number>();
   const apartments = rows
     .map((row, index) => ({ row, apartment: toApartment(row, index, usedIds) }))
     .filter(({ row, apartment }) => hasCompleteProfile(row, apartment))
     .map(({ apartment }) => apartment);
+
   const cities = new Set(apartments.map(apartment => apartment.neighborhood).filter(Boolean));
-  const generatedAt = rows.map(row => row.generated_at).find(Boolean) ?? null;
+  const stats: PropertyStats = {
+    source: source.split("/").pop() || source,
+    status: "ready",
+    totalProperties: rows.length,
+    eligibleProperties: apartments.length,
+    withPricing: apartments.filter(a => a.rentMin > 0).length,
+    withPhotos: apartments.filter(a => a.photos.length > 0).length,
+    withSpecials: apartments.filter(a => a.special).length,
+    cities: cities.size,
+    lastUpdated: new Date(stat?.mtimeMs || Date.now()).toISOString(),
+  };
 
   cache = {
     source,
-    mtimeMs: stat.mtimeMs,
+    mtimeMs: stat?.mtimeMs || Date.now(),
     rows,
     apartments,
-    stats: {
-      source: path.basename(source),
-      totalProperties: rows.length,
-      eligibleProperties: apartments.length,
-      withPricing: apartments.filter(apartment => apartment.rentMin > 0).length,
-      withPhotos: apartments.filter(apartment => apartment.photos.length > 0).length,
-      withSpecials: apartments.filter(apartment => Boolean(apartment.special)).length,
-      cities: cities.size,
-      lastUpdated: generatedAt,
-    },
+    stats,
   };
 
   return cache;
 }
 
-export async function getEligiblePropertyDatabaseRecords(): Promise<
-  Array<{ row: CsvRow; apartment: PropertyApartment }>
-> {
-  const source = process.env.PROPERTY_DATABASE_CSV || DEFAULT_PROPERTY_CSV;
-  const text = await fs.readFile(source, "utf8");
-  const rows = parseCsv(text);
-  const usedIds = new Set<number>();
-
+export async function getEligiblePropertyDatabaseRecords() {
+  const { rows, apartments } = await readPropertyDatabase();
+  const usedIds = new Set(apartments.map(a => a.id));
   return rows
     .map((row, index) => ({ row, apartment: toApartment(row, index, usedIds) }))
     .filter(({ row, apartment }) => hasCompleteProfile(row, apartment));
 }
 
-export async function hasPropertyDatabase(): Promise<boolean> {
-  try {
-    await fs.access(process.env.PROPERTY_DATABASE_CSV || DEFAULT_PROPERTY_CSV);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 export async function getPropertyDatabaseStats(): Promise<PropertyStats> {
-  try {
-    const database = await readPropertyDatabase();
-    return database.stats;
-  } catch {
-    return {
-      source: null,
-      totalProperties: 0,
-      eligibleProperties: 0,
-      withPricing: 0,
-      withPhotos: 0,
-      withSpecials: 0,
-      cities: 0,
-      lastUpdated: null,
-    };
-  }
+  const { stats } = await readPropertyDatabase();
+  return stats;
 }
 
-export async function getPropertyDatabaseApartments(
-  filters?: PropertyFilters
-): Promise<PropertyApartment[]> {
-  const database = await readPropertyDatabase();
+export async function queryPropertyDatabase(filters?: PropertyFilters): Promise<PropertyApartment[]> {
+  const { apartments } = await readPropertyDatabase();
 
-  return database.apartments.filter(apartment => {
+  return apartments.filter(apartment => {
     if (filters?.neighborhood && apartment.neighborhood !== filters.neighborhood) return false;
-    if (filters?.minBedrooms !== undefined && apartment.bedrooms < filters.minBedrooms) return false;
-    if (filters?.maxBedrooms !== undefined && apartment.bedrooms > filters.maxBedrooms) return false;
-    if (filters?.minRent !== undefined && apartment.rentMin < filters.minRent) return false;
-    if (filters?.maxRent !== undefined && apartment.rentMin > filters.maxRent) return false;
+    if (filters?.minBedrooms && apartment.bedrooms < filters.minBedrooms) return false;
+    if (filters?.maxBedrooms && apartment.bedrooms > filters.maxBedrooms) return false;
+    if (filters?.minRent && apartment.rentMin < filters.minRent) return false;
+    if (filters?.maxRent && apartment.rentMin > filters.maxRent) return false;
     return true;
   });
 }
