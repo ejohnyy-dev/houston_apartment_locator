@@ -1,0 +1,101 @@
+import { useEffect, useRef, useCallback } from "react";
+import { trpc } from "@/lib/trpc";
+import { cn } from "@/lib/utils";
+
+declare global {
+  interface Window {
+    google: any;
+  }
+}
+
+function loadMapScript() {
+  return new Promise<void>((resolve) => {
+    if (window.google?.maps) {
+      resolve();
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_FRONTEND_FORGE_API_KEY}&libraries=marker,places,geocoding,routes,drawing,visualization,geometry&callback=initMap`;
+    script.async = true;
+    script.defer = true;
+    window.initMap = () => resolve();
+    script.onload = () => {
+      resolve();
+      script.remove();
+    };
+    script.onerror = () => {
+      console.error("Failed to load Google Maps script");
+    };
+    document.head.appendChild(script);
+  });
+}
+
+interface HomeMapViewProps {
+  className?: string;
+}
+
+export function HomeMapView({ className }: HomeMapViewProps) {
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<google.maps.Map | null>(null);
+  const { data: apartments } = trpc.apartments.list.useQuery({
+    minPrice: 0,
+    maxPrice: 10000,
+  });
+
+  const initMap = useCallback(async () => {
+    await loadMapScript();
+    if (!mapContainer.current) {
+      console.error("Map container not found");
+      return;
+    }
+
+    // Houston center coordinates
+    const houstonCenter = { lat: 29.7604, lng: -95.3698 };
+
+    map.current = new window.google.maps.Map(mapContainer.current, {
+      zoom: 11,
+      center: houstonCenter,
+      mapTypeControl: true,
+      fullscreenControl: true,
+      zoomControl: true,
+      streetViewControl: true,
+      mapId: "DEMO_MAP_ID",
+    });
+
+    // Add apartment markers
+    if (apartments && apartments.length > 0) {
+      apartments.forEach((apt) => {
+        if (apt.lat && apt.lng) {
+          // Create marker
+          const marker = new window.google.maps.marker.AdvancedMarkerElement({
+            map: map.current,
+            position: { lat: apt.lat, lng: apt.lng },
+            title: apt.name,
+          });
+
+          // Add click listener to show info window
+          const infoWindow = new window.google.maps.InfoWindow({
+            content: `
+              <div class="p-2 max-w-xs">
+                <h3 class="font-semibold text-sm">${apt.name}</h3>
+                <p class="text-xs text-gray-600">${apt.neighborhood || "Houston"}</p>
+                <p class="text-sm font-medium text-gold mt-1">$${apt.minRent?.toLocaleString() || "N/A"} - $${apt.maxRent?.toLocaleString() || "N/A"}</p>
+                <p class="text-xs text-gray-600 mt-1">${apt.bedrooms || "?"} bed${apt.bedrooms !== 1 ? "s" : ""}</p>
+              </div>
+            `,
+          });
+
+          marker.addListener("click", () => {
+            infoWindow.open(map.current, marker);
+          });
+        }
+      });
+    }
+  }, [apartments]);
+
+  useEffect(() => {
+    initMap();
+  }, [initMap]);
+
+  return <div ref={mapContainer} className={cn("w-full h-full", className)} />;
+}
