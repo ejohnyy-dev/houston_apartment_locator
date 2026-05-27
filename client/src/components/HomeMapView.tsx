@@ -68,22 +68,26 @@ export function HomeMapView({ className }: HomeMapViewProps) {
 
     // Add apartment markers
     if (apartments && apartments.length > 0) {
+      console.log(`Adding ${apartments.length} markers to map`);
+      let markerCount = 0;
+      
       apartments.forEach((apt) => {
         // Use latitude/longitude from apartment data
-        const lat = (apt as any).latitude || 29.7604;
-        const lng = (apt as any).longitude || -95.3698;
+        const lat = (apt as any).latitude;
+        const lng = (apt as any).longitude;
         
-        if (lat && lng) {
-          // Create marker
-          const marker = new window.google.maps.marker.AdvancedMarkerElement({
+        if (lat && lng && lat !== 0 && lng !== 0) {
+          // Create standard Marker
+          const marker = new window.google.maps.Marker({
             map: map.current,
             position: { lat, lng },
             title: apt.name,
           });
+          markerCount++;
 
           // Add click listener to show info window
-          const minRent = (apt as any).minRent || apt.minPrice;
-          const maxRent = (apt as any).maxRent || apt.maxPrice;
+          const minRent = (apt as any).rentMin || (apt as any).minPrice;
+          const maxRent = (apt as any).rentMax || (apt as any).maxPrice;
           const infoWindow = new window.google.maps.InfoWindow({
             content: `
               <div class="p-2 max-w-xs">
@@ -100,6 +104,7 @@ export function HomeMapView({ className }: HomeMapViewProps) {
           });
         }
       });
+      console.log(`Successfully added ${markerCount} markers to map`);
     }
   }, [apartments]);
 
