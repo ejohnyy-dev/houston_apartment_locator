@@ -7,6 +7,7 @@ import {
   getRentCastDatabaseApartments,
   getRentCastDatabaseStats,
 } from "./rentcastDatabase";
+import { notifyOwner } from "./_core/notification";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -73,6 +74,42 @@ export const appRouter = router({
         throw new Error('Unable to fetch database statistics. Please try again.');
       }
     }),
+  }),
+
+  // ============= INQUIRIES ROUTER =============
+  inquiries: router({
+    /**
+     * Create a new apartment inquiry (lead capture)
+     */
+    create: publicProcedure
+      .input(
+        z.object({
+          apartmentId: z.string(),
+          apartmentName: z.string(),
+          name: z.string().min(1, "Name is required"),
+          email: z.string().email("Valid email is required"),
+          phone: z.string().min(10, "Valid phone number is required"),
+          moveInDate: z.string().optional(),
+          message: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        try {
+          // Notify owner of new inquiry
+          await notifyOwner({
+            title: `New Apartment Inquiry: ${input.apartmentName}`,
+            content: `Name: ${input.name}\nEmail: ${input.email}\nPhone: ${input.phone}\nMove-in Date: ${input.moveInDate || "Not specified"}\nMessage: ${input.message || "No additional message"}`,
+          });
+
+          return {
+            success: true,
+            message: "Inquiry submitted successfully",
+          };
+        } catch (error) {
+          console.error("Failed to create inquiry:", error);
+          throw new Error("Failed to submit inquiry. Please try again.");
+        }
+      }),
   }),
 });
 
