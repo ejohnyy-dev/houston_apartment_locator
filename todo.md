@@ -11,13 +11,16 @@
 - [x] Commission filtering - hide commission data from visitors (verified with tests)
 - [x] Fixed TypeScript compilation errors
 - [x] Inquire Now button in map marker popups (UI added with event dispatch)
+- [x] Search/filter bar for the map (with search text, bedrooms, and rent filters)
+- [x] Marker clustering for improved performance (CDN-based with fallback)
+- [x] Empty state handling when filters return no results
+- [x] Error state handling when map fails to load
 
 ## In Progress
-- [ ] Marker clustering for improved performance (CDN-based implementation with fallback, needs runtime validation)
-- [ ] Search/filter bar for the map
+- [ ] Wire Inquire Now button to lead capture form submission
 
 ## Next Steps
-- Test marker clustering in production environment
-- Wire Inquire Now button to lead capture form submission
-- Add search/filter functionality to map
-- Monitor map performance with 530+ markers
+- Implement lead capture form to handle apartment inquiries
+- Add analytics tracking for user interactions
+- Monitor map performance in production
+- Optimize clustering algorithm for large datasets

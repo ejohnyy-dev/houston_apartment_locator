@@ -1,8 +1,14 @@
 import { HomeMapView } from "./HomeMapView";
+import { MapSearchFilter, type MapFilters } from "./MapSearchFilter";
 
 const HERO_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663501304397/4gMGD9qetV63jA9Ts6DXxD/DiWnH726c4RI_566565c1.jpg";
 
-export default function HeroSection() {
+interface HeroSectionProps {
+  mapFilters?: MapFilters;
+  onFilterChange?: (filters: MapFilters) => void;
+}
+
+export default function HeroSection({ mapFilters, onFilterChange }: HeroSectionProps) {
   return (
     <section className="relative py-20">
       {/* Background */}
@@ -25,10 +31,15 @@ export default function HeroSection() {
           </p>
         </div>
 
+        {/* Search Filter */}
+        <div className="max-w-4xl mx-auto mb-6">
+          <MapSearchFilter onFilterChange={onFilterChange} />
+        </div>
+
         {/* Map Section */}
         <div className="max-w-4xl mx-auto mb-8">
           <div className="rounded-xl overflow-hidden shadow-2xl border border-gold/20 h-96 bg-slate-800">
-            <HomeMapView className="rounded-lg" />
+            <HomeMapView className="rounded-lg" filters={mapFilters} />
           </div>
         </div>
 
