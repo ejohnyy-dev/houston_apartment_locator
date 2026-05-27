@@ -25,9 +25,6 @@ export default function HeroSection() {
             <a href="/search" className="inline-flex items-center justify-center px-7 py-3 bg-gold text-dark font-semibold text-sm rounded hover:opacity-90 transition-opacity">
               Search Apartments
             </a>
-            <a href="tel:8326037278" className="inline-flex items-center justify-center px-7 py-3 border border-white/20 text-white font-medium text-sm rounded hover:border-white/40 transition-colors">
-              Call (832) 603-7278
-            </a>
           </div>
         </div>
       </div>
