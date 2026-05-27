@@ -13,7 +13,7 @@ export default function HeroSection({ mapFilters, onFilterChange }: HeroSectionP
     <section className="relative py-20">
       {/* Background */}
       <div className="absolute inset-0">
-        <img src={HERO_BG} alt="Houston skyline" className="w-full h-full object-cover" />
+        <img src={HERO_BG} alt="Houston skyline with downtown apartment buildings" className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-black/60" />
       </div>
 
@@ -30,6 +30,11 @@ export default function HeroSection({ mapFilters, onFilterChange }: HeroSectionP
             I'm Eric Johnson, your dedicated Houston apartment locator. My service is 100% free — I do the work so you don't have to.
           </p>
         </div>
+
+        {/* H2 Heading for Search Section */}
+        <h2 className="text-2xl sm:text-3xl font-semibold text-white text-center mb-8 max-w-3xl mx-auto">
+          Search 530+ Available Apartments on the Map
+        </h2>
 
         {/* Search Filter */}
         <div className="max-w-4xl mx-auto mb-0">
