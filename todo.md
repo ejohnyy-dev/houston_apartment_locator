@@ -10,13 +10,14 @@
 - [x] Removed redundant buttons from hero section
 - [x] Commission filtering - hide commission data from visitors (verified with tests)
 - [x] Fixed TypeScript compilation errors
+- [x] Inquire Now button in map marker popups (UI added with event dispatch)
 
 ## In Progress
-- [ ] Marker clustering for improved performance with 530+ markers
-- [ ] 'View Details' or 'Inquire' popup in map markers
+- [ ] Marker clustering for improved performance (CDN-based implementation with fallback, needs runtime validation)
 - [ ] Search/filter bar for the map
 
 ## Next Steps
-- Implement marker clustering to improve map performance
-- Add lead capture functionality in map popups
-- Optimize map rendering for large number of markers
+- Test marker clustering in production environment
+- Wire Inquire Now button to lead capture form submission
+- Add search/filter functionality to map
+- Monitor map performance with 530+ markers
