@@ -794,7 +794,7 @@ export default function ApartmentSearch() {
                 onClick={handleContactOwner}
               >
                 <MessageCircle className="w-4 h-4 mr-2" />
-                Request Full Details from Owner
+                See Full Property Details
               </Button>
 
               <p className="text-xs text-slate-400 text-center mt-2">
