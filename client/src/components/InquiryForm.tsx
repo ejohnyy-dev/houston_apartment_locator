@@ -63,28 +63,28 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
+      <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-lg font-semibold text-gray-900">{apartmentName}</h2>
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b sticky top-0 bg-white">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 truncate pr-2">{apartmentName}</h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 transition-colors"
+            className="text-gray-500 hover:text-gray-700 transition-colors flex-shrink-0 p-1 hover:bg-gray-100 rounded-lg"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {stage === "info" ? (
             <div className="space-y-4">
               {/* Address Info Box */}
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
                 <div className="flex items-start gap-3">
-                  <div className="text-amber-600 text-xl mt-1">🔒</div>
-                  <div className="text-left">
+                  <div className="text-amber-600 text-xl mt-1 flex-shrink-0">🔒</div>
+                  <div className="text-left min-w-0">
                     <p className="font-semibold text-amber-900 text-sm">Exact address & landlord contact available upon request</p>
                     <p className="text-xs text-amber-800 mt-1">The full street address, landlord name, phone, and unit availability are provided directly by the owner after you make an inquiry.</p>
                   </div>
@@ -94,7 +94,7 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
               {/* Button */}
               <button
                 onClick={() => setStage("signup")}
-                className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2"
+                className="w-full px-4 py-4 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors font-medium flex items-center justify-center gap-2 min-h-[48px] sm:min-h-auto text-base sm:text-sm"
               >
                 <span>👁️</span>
                 See Full Property Details
@@ -108,7 +108,7 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
           ) : stage === "signup" ? (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Full Name *
                 </label>
                 <input
@@ -117,13 +117,14 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-base min-h-[44px]"
                   placeholder="John Doe"
+                  autoComplete="name"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Email *
                 </label>
                 <input
@@ -132,13 +133,14 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-base min-h-[44px]"
                   placeholder="john@example.com"
+                  autoComplete="email"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Phone *
                 </label>
                 <input
@@ -147,8 +149,9 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
                   value={formData.phone}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-base min-h-[44px]"
                   placeholder="(555) 123-4567"
+                  autoComplete="tel"
                 />
               </div>
 
@@ -156,14 +159,14 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
                 <button
                   type="button"
                   onClick={() => setStage("info")}
-                  className="flex-1 px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-3 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors font-medium min-h-[44px] text-base"
                 >
                   Back
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium min-h-[44px] text-base"
                 >
                   {isSubmitting ? "Signing Up..." : "Sign Up"}
                 </button>
@@ -171,24 +174,26 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
             </form>
           ) : stage === "success" ? (
             <div className="text-center py-8 space-y-4">
-              <div className="text-green-600 text-4xl">✓</div>
+              <div className="text-green-600 text-5xl">✓</div>
               <div>
-                <p className="text-gray-900 font-semibold text-sm mb-2">You're All Set!</p>
-                <p className="text-xs text-gray-600">
+                <p className="text-gray-900 font-semibold text-base mb-2">You're All Set!</p>
+                <p className="text-sm text-gray-600">
                   I'll reach out with the full details shortly!
                 </p>
               </div>
             </div>
           ) : (
-            <div className="text-center py-8">
-              <div className="text-red-600 text-4xl mb-3">✕</div>
-              <p className="text-gray-900 font-semibold mb-2">Something went wrong</p>
-              <p className="text-sm text-gray-600 mb-4">
-                Please try again or contact us directly.
-              </p>
+            <div className="text-center py-8 space-y-4">
+              <div className="text-red-600 text-5xl">✕</div>
+              <div>
+                <p className="text-gray-900 font-semibold text-base mb-2">Something went wrong</p>
+                <p className="text-sm text-gray-600 mb-4">
+                  Please try again or contact us directly.
+                </p>
+              </div>
               <button
                 onClick={() => setStage("signup")}
-                className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                className="w-full px-4 py-3 bg-blue-600 text-white text-base rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors font-medium min-h-[44px]"
               >
                 Try Again
               </button>
