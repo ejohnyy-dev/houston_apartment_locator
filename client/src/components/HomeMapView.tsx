@@ -224,13 +224,20 @@ export function HomeMapView({ className, filters }: HomeMapViewProps) {
 
   return (
     <div className={cn("w-full h-full relative", className)}>
+      <noscript>
+        <div className="w-full h-full bg-gray-100 flex items-center justify-center p-4">
+          <p className="text-center text-gray-600">Interactive map requires JavaScript. Please enable JavaScript to view the apartment map.</p>
+        </div>
+      </noscript>
       <div 
         ref={mapContainer} 
         className="w-full h-full" 
         title="Interactive map showing 530+ available apartments in Houston with filtering options"
         role="region"
-        aria-label="Houston apartment map"
+        aria-label="Houston apartment map showing 530+ available apartments with search and filter options"
+        aria-describedby="map-description"
       />
+      <div id="map-description" style={{display: 'none'}}>Interactive Google Map displaying 530+ available apartments in Houston. Use the search bar to filter by neighborhood or apartment name. Use the filter icon to filter by number of bedrooms and rent price. Click on any apartment marker to view details and request full property information.</div>
       {isLoading && (
         <div className="absolute inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center rounded-lg">
           <div className="text-center">
