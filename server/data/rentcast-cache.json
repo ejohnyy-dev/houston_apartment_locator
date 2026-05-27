@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-05-27T13:59:51.134Z",
+  "generatedAt": "2026-05-27T14:05:00.462Z",
   "status": "ready",
   "entries": [
     {
@@ -2206,6 +2206,225 @@
             "listedDate": "2024-09-28T00:00:00.000Z",
             "removedDate": null,
             "daysOnMarket": 607
+          }
+        }
+      }
+    },
+    {
+      "propertyId": 1038,
+      "propertyName": "2222 Smith Street, Houston, TX",
+      "address": "2222 Smith Street, Houston, TX",
+      "photos": [
+        "/manus-storage/01_73004729.jpg",
+        "/manus-storage/02_d52c97d1.jpg",
+        "/manus-storage/03_59f64bbd.jpg",
+        "/manus-storage/04_4d430fc9.jpg",
+        "/manus-storage/05_4f33e7b4.jpg"
+      ],
+      "fetchedAt": "2026-05-27T14:04:56.207Z",
+      "status": "matched",
+      "listing": {
+        "id": "2222-Smith-St,-Houston,-TX-77002",
+        "formattedAddress": "2222 Smith St, Houston, TX 77002",
+        "addressLine1": "2222 Smith St",
+        "addressLine2": null,
+        "city": "Houston",
+        "state": "TX",
+        "stateFips": "48",
+        "zipCode": "77002",
+        "county": "Harris",
+        "countyFips": "201",
+        "latitude": 29.74997,
+        "longitude": -95.37578,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 717,
+        "yearBuilt": 2003,
+        "status": "Active",
+        "price": 1177,
+        "listingType": "Standard",
+        "listedDate": "2026-01-21T00:00:00.000Z",
+        "removedDate": null,
+        "createdDate": "2019-11-02T09:28:42.794Z",
+        "lastSeenDate": "2026-05-27T02:20:44.693Z",
+        "daysOnMarket": 127,
+        "history": {
+          "2024-07-25": {
+            "event": "Rental Listing",
+            "price": 850,
+            "listingType": "Standard",
+            "listedDate": "2024-07-25T00:00:00.000Z",
+            "removedDate": "2025-05-24T00:00:00.000Z",
+            "daysOnMarket": 303
+          },
+          "2026-01-21": {
+            "event": "Rental Listing",
+            "price": 1177,
+            "listingType": "Standard",
+            "listedDate": "2026-01-21T00:00:00.000Z",
+            "removedDate": null,
+            "daysOnMarket": 127
+          }
+        }
+      }
+    },
+    {
+      "propertyId": 1039,
+      "propertyName": "230 West Alabama, Houston, TX",
+      "address": "230 West Alabama, Houston, TX",
+      "photos": [
+        "/manus-storage/01_73004729.jpg"
+      ],
+      "fetchedAt": "2026-05-27T14:04:57.578Z",
+      "status": "matched",
+      "listing": {
+        "id": "230-W-Alabama-St,-Houston,-TX-77006",
+        "formattedAddress": "230 W Alabama St, Houston, TX 77006",
+        "addressLine1": "230 W Alabama St",
+        "addressLine2": null,
+        "city": "Houston",
+        "state": "TX",
+        "stateFips": "48",
+        "zipCode": "77006",
+        "county": "Harris",
+        "countyFips": "201",
+        "latitude": 29.73917,
+        "longitude": -95.38344,
+        "propertyType": "Apartment",
+        "bedrooms": 0,
+        "bathrooms": 1,
+        "squareFootage": 420,
+        "yearBuilt": 1965,
+        "status": "Active",
+        "price": 999,
+        "listingType": "Standard",
+        "listedDate": "2024-04-12T00:00:00.000Z",
+        "removedDate": null,
+        "createdDate": "2019-11-02T09:33:58.343Z",
+        "lastSeenDate": "2026-05-27T03:17:28.799Z",
+        "daysOnMarket": 776,
+        "history": {
+          "2024-04-12": {
+            "event": "Rental Listing",
+            "price": 999,
+            "listingType": "Standard",
+            "listedDate": "2024-04-12T00:00:00.000Z",
+            "removedDate": null,
+            "daysOnMarket": 776
+          }
+        }
+      }
+    },
+    {
+      "propertyId": 1040,
+      "propertyName": "2626 Fountain View, Houston, TX",
+      "address": "2626 Fountain View, Houston, TX",
+      "photos": [
+        "/manus-storage/01_73004729.jpg",
+        "/manus-storage/02_d52c97d1.jpg",
+        "/manus-storage/03_59f64bbd.jpg",
+        "/manus-storage/04_4d430fc9.jpg",
+        "/manus-storage/05_4f33e7b4.jpg"
+      ],
+      "fetchedAt": "2026-05-27T14:04:58.374Z",
+      "status": "matched",
+      "listing": {
+        "id": "2626-Fountain-View-Dr,-Houston,-TX-77057",
+        "formattedAddress": "2626 Fountain View Dr, Houston, TX 77057",
+        "addressLine1": "2626 Fountain View Dr",
+        "addressLine2": null,
+        "city": "Houston",
+        "state": "TX",
+        "stateFips": "48",
+        "zipCode": "77057",
+        "county": "Harris",
+        "countyFips": "201",
+        "latitude": 29.74036,
+        "longitude": -95.48549,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 815,
+        "yearBuilt": 2015,
+        "status": "Active",
+        "price": 1273,
+        "listingType": "Standard",
+        "listedDate": "2024-12-18T00:00:00.000Z",
+        "removedDate": null,
+        "createdDate": "2019-11-02T09:35:40.581Z",
+        "lastSeenDate": "2026-05-27T02:56:37.039Z",
+        "daysOnMarket": 526,
+        "history": {
+          "2024-12-18": {
+            "event": "Rental Listing",
+            "price": 1273,
+            "listingType": "Standard",
+            "listedDate": "2024-12-18T00:00:00.000Z",
+            "removedDate": null,
+            "daysOnMarket": 526
+          }
+        }
+      }
+    },
+    {
+      "propertyId": 1041,
+      "propertyName": "2800 Tranquility, Houston, TX",
+      "address": "2800 Tranquility, Houston, TX",
+      "photos": [
+        "/manus-storage/01_73004729.jpg"
+      ],
+      "fetchedAt": "2026-05-27T14:04:59.468Z",
+      "status": "error",
+      "error": "RentCast API returned 404: {\"status\":404,\"error\":\"resource/not-found\",\"message\":\"No data found for address '2800 Tranquility, Houston, TX'\"}"
+    },
+    {
+      "propertyId": 1042,
+      "propertyName": "2900 West Dallas, Houston, TX",
+      "address": "2900 West Dallas, Houston, TX",
+      "photos": [
+        "/manus-storage/01_73004729.jpg",
+        "/manus-storage/02_d52c97d1.jpg",
+        "/manus-storage/03_59f64bbd.jpg",
+        "/manus-storage/04_4d430fc9.jpg",
+        "/manus-storage/05_4f33e7b4.jpg"
+      ],
+      "fetchedAt": "2026-05-27T14:05:00.448Z",
+      "status": "matched",
+      "listing": {
+        "id": "2900-W-Dallas-St,-Houston,-TX-77019",
+        "formattedAddress": "2900 W Dallas St, Houston, TX 77019",
+        "addressLine1": "2900 W Dallas St",
+        "addressLine2": null,
+        "city": "Houston",
+        "state": "TX",
+        "stateFips": "48",
+        "zipCode": "77019",
+        "county": "Harris",
+        "countyFips": "201",
+        "latitude": 29.75775,
+        "longitude": -95.39634,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 755,
+        "yearBuilt": 2013,
+        "status": "Active",
+        "price": 1810,
+        "listingType": "Standard",
+        "listedDate": "2024-06-11T00:00:00.000Z",
+        "removedDate": null,
+        "createdDate": "2019-11-02T09:32:52.264Z",
+        "lastSeenDate": "2026-05-27T02:41:24.813Z",
+        "daysOnMarket": 716,
+        "history": {
+          "2024-06-11": {
+            "event": "Rental Listing",
+            "price": 1810,
+            "listingType": "Standard",
+            "listedDate": "2024-06-11T00:00:00.000Z",
+            "removedDate": null,
+            "daysOnMarket": 716
           }
         }
       }
