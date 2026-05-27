@@ -14,6 +14,7 @@ import {
   X, Eye, MessageCircle
 } from 'lucide-react';
 import { MapView } from '@/components/Map';
+import { InquiryForm } from '@/components/InquiryForm';
 import { toast } from 'sonner';
 import { Link } from 'wouter';
 
@@ -221,6 +222,7 @@ export default function ApartmentSearch() {
   const [pendingApartment, setPendingApartment] = useState<ApartmentTeased | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [showPinPreview, setShowPinPreview] = useState(false);
+  const [showInquiryForm, setShowInquiryForm] = useState(false);
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
 
@@ -340,7 +342,8 @@ export default function ApartmentSearch() {
   };
 
   const handleContactOwner = () => {
-    toast.success('Your inquiry has been recorded. The owner will contact you shortly!');
+    setShowDetails(false);
+    setShowInquiryForm(true);
   };
 
   const resetFilters = () => {
@@ -690,6 +693,15 @@ export default function ApartmentSearch() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ── Inquiry Form Modal ── */}
+      {showInquiryForm && selectedApartment && (
+        <InquiryForm
+          apartmentId={selectedApartment.id.toString()}
+          apartmentName={selectedApartment.name}
+          onClose={() => setShowInquiryForm(false)}
+        />
+      )}
 
       {/* ── Apartment Details Dialog (Lead-only) ── */}
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
