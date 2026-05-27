@@ -39,12 +39,21 @@ function loadMapScript() {
 
 interface HomeMapViewProps {
   className?: string;
+  filters?: {
+    searchText: string;
+    minBedrooms: number | null;
+    maxBedrooms: number | null;
+    minRent: number | null;
+    maxRent: number | null;
+  };
 }
 
-export function HomeMapView({ className }: HomeMapViewProps) {
+export function HomeMapView({ className, filters }: HomeMapViewProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<google.maps.Map | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [filteredCount, setFilteredCount] = useState(0);
+  const [hasError, setHasError] = useState(false);
   const { data: apartments } = trpc.apartments.list.useQuery({
     minRent: 0,
     maxRent: 10000,
@@ -65,16 +74,19 @@ export function HomeMapView({ className }: HomeMapViewProps) {
   const initMap = useCallback(async () => {
     try {
       setIsLoading(true);
+      setHasError(false);
       await loadMapScript();
       await loadMarkerClustererLibrary();
       
       if (!mapContainer.current) {
         console.error("Map container not found");
+        setHasError(true);
         return;
       }
 
       if (!window.google?.maps) {
         console.error("Google Maps API not loaded");
+        setHasError(true);
         return;
       }
 
@@ -93,11 +105,33 @@ export function HomeMapView({ className }: HomeMapViewProps) {
 
       // Add apartment markers with clustering
       if (apartments && apartments.length > 0) {
-        console.log(`Adding ${apartments.length} markers to map with clustering`);
+        // Apply filters
+        const filteredApartments = apartments.filter((apt) => {
+          // Filter by search text (name or neighborhood)
+          if (filters?.searchText) {
+            const searchLower = filters.searchText.toLowerCase();
+            const nameMatch = apt.name.toLowerCase().includes(searchLower);
+            const neighborhoodMatch = (apt.neighborhood || "").toLowerCase().includes(searchLower);
+            if (!nameMatch && !neighborhoodMatch) return false;
+          }
+
+          // Filter by bedrooms
+          if (filters && filters.minBedrooms !== null && apt.bedrooms < filters.minBedrooms) return false;
+          if (filters && filters.maxBedrooms !== null && apt.bedrooms > filters.maxBedrooms) return false;
+
+          // Filter by rent
+          if (filters && filters.minRent !== null && apt.rentMin < filters.minRent) return false;
+          if (filters && filters.maxRent !== null && apt.rentMin > filters.maxRent) return false;
+
+          return true;
+        });
+
+        setFilteredCount(filteredApartments.length);
+        console.log(`Adding ${filteredApartments.length} filtered markers to map with clustering`);
         const markers: google.maps.Marker[] = [];
         const infoWindows: Map<google.maps.Marker, google.maps.InfoWindow> = new Map();
         
-        apartments.forEach((apt) => {
+        filteredApartments.forEach((apt) => {
           // Use latitude/longitude from apartment data
           const lat = (apt as any).latitude;
           const lng = (apt as any).longitude;
@@ -156,10 +190,11 @@ export function HomeMapView({ className }: HomeMapViewProps) {
       }
     } catch (error) {
       console.error("Error initializing map:", error);
+      setHasError(true);
     } finally {
       setIsLoading(false);
     }
-  }, [apartments]);
+  }, [apartments, filters]);
 
   useEffect(() => {
     initMap();
@@ -173,6 +208,22 @@ export function HomeMapView({ className }: HomeMapViewProps) {
           <div className="text-center">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-600"></div>
             <p className="text-sm text-gray-600 mt-2">Loading map...</p>
+          </div>
+        </div>
+      )}
+      {hasError && (
+        <div className="absolute inset-0 bg-red-50 bg-opacity-90 flex items-center justify-center rounded-lg">
+          <div className="text-center">
+            <p className="text-sm text-red-600 font-semibold">Unable to load map</p>
+            <p className="text-xs text-red-500 mt-1">Please try refreshing the page</p>
+          </div>
+        </div>
+      )}
+      {!isLoading && !hasError && filteredCount === 0 && apartments && apartments.length > 0 && (
+        <div className="absolute inset-0 bg-blue-50 bg-opacity-90 flex items-center justify-center rounded-lg">
+          <div className="text-center">
+            <p className="text-sm text-blue-600 font-semibold">No apartments match your filters</p>
+            <p className="text-xs text-blue-500 mt-1">Try adjusting your search criteria</p>
           </div>
         </div>
       )}
