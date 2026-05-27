@@ -522,7 +522,7 @@ async function loadRentCastData() {
     apartments = [...apartments, ...uniqueLocal];
     log.info('Blended apartments', { rentcast: apartments.length - uniqueLocal.length, local: uniqueLocal.length, total: apartments.length });
   } catch (error) {
-    log.warn('Could not load local property database', error);
+    log.error('Could not load local property database', error);
   }
   const cities = new Set(apartments.map(apartment => apartment.neighborhood).filter(Boolean));
   const matches = cache.entries.filter(entry => entry.status === "matched").length;
