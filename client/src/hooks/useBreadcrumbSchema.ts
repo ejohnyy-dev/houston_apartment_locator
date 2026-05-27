@@ -31,14 +31,16 @@ export function useBreadcrumbSchema(items: BreadcrumbItem[]) {
     };
 
     // Create or update script tag
-    let scriptElement = document.getElementById('breadcrumb-schema');
+    let scriptElement = document.getElementById('breadcrumb-schema') as HTMLScriptElement | null;
     if (!scriptElement) {
       scriptElement = document.createElement('script');
       scriptElement.id = 'breadcrumb-schema';
       scriptElement.type = 'application/ld+json';
       document.head.appendChild(scriptElement);
     }
-    scriptElement.textContent = JSON.stringify(schema);
+    if (scriptElement) {
+      scriptElement.textContent = JSON.stringify(schema);
+    }
 
     return () => {
       // Clean up on unmount
