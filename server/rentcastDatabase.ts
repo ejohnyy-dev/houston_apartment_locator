@@ -504,12 +504,24 @@ async function loadRentCastData() {
   await writeCache(cache);
 
   const targetPhotosById = new Map(targets.map(target => [target.id, target.photos]));
-  const apartments = cache.entries
+  let apartments = cache.entries
     .filter(entry => entry.status === "matched" && entry.listing)
     .map((entry, index) =>
       listingToApartment(entry.listing!, index, entry.photos ?? targetPhotosById.get(entry.propertyId) ?? [])
     )
     .filter((apartment): apartment is PropertyApartment => Boolean(apartment));
+  
+  // Fallback to local property database if RentCast has no results
+  if (apartments.length === 0) {
+    try {
+      const { getEligiblePropertyDatabaseRecords } = await import('./propertyDatabase');
+      const records = await getEligiblePropertyDatabaseRecords();
+      apartments = records.map(({ apartment }) => apartment);
+      log.info('Loaded apartments from local property database', { count: apartments.length });
+    } catch (error) {
+      log.error('Failed to load local property database', error);
+    }
+  }
   const cities = new Set(apartments.map(apartment => apartment.neighborhood).filter(Boolean));
   const matches = cache.entries.filter(entry => entry.status === "matched").length;
   const usage = await readUsage();
