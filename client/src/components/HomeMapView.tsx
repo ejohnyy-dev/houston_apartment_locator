@@ -4,7 +4,8 @@ import { cn } from "@/lib/utils";
 
 declare global {
   interface Window {
-    google: any;
+    google?: any;
+    initMap?: () => void;
   }
 }
 
@@ -65,21 +66,27 @@ export function HomeMapView({ className }: HomeMapViewProps) {
     // Add apartment markers
     if (apartments && apartments.length > 0) {
       apartments.forEach((apt) => {
-        if (apt.lat && apt.lng) {
+        // Use city center coordinates as fallback
+        const lat = (apt as any).lat || 29.7604;
+        const lng = (apt as any).lng || -95.3698;
+        
+        if (lat && lng) {
           // Create marker
           const marker = new window.google.maps.marker.AdvancedMarkerElement({
             map: map.current,
-            position: { lat: apt.lat, lng: apt.lng },
+            position: { lat, lng },
             title: apt.name,
           });
 
           // Add click listener to show info window
+          const minRent = (apt as any).minRent || apt.minPrice;
+          const maxRent = (apt as any).maxRent || apt.maxPrice;
           const infoWindow = new window.google.maps.InfoWindow({
             content: `
               <div class="p-2 max-w-xs">
                 <h3 class="font-semibold text-sm">${apt.name}</h3>
                 <p class="text-xs text-gray-600">${apt.neighborhood || "Houston"}</p>
-                <p class="text-sm font-medium text-gold mt-1">$${apt.minRent?.toLocaleString() || "N/A"} - $${apt.maxRent?.toLocaleString() || "N/A"}</p>
+                <p class="text-sm font-medium text-gold mt-1">$${minRent?.toLocaleString() || "N/A"} - $${maxRent?.toLocaleString() || "N/A"}</p>
                 <p class="text-xs text-gray-600 mt-1">${apt.bedrooms || "?"} bed${apt.bedrooms !== 1 ? "s" : ""}</p>
               </div>
             `,
