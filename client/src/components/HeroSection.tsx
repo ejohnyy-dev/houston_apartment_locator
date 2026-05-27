@@ -38,8 +38,8 @@ export default function HeroSection({ mapFilters, onFilterChange }: HeroSectionP
 
         {/* Map Section */}
         <div className="max-w-4xl mx-auto mb-8">
-          <div className="rounded-xl overflow-hidden shadow-2xl border border-gold/20 h-96 bg-slate-800">
-            <HomeMapView className="rounded-lg" filters={mapFilters} />
+          <div className="rounded-2xl overflow-hidden shadow-2xl border border-white/10 h-96 bg-slate-800 ring-1 ring-white/5">
+            <HomeMapView className="rounded-2xl" filters={mapFilters} />
           </div>
         </div>
 

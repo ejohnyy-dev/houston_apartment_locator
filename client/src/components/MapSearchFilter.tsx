@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Search, Sliders } from "lucide-react";
+import { Search, Sliders, X } from "lucide-react";
 
 interface MapSearchFilterProps {
   onFilterChange?: (filters: MapFilters) => void;
@@ -44,23 +44,34 @@ export function MapSearchFilter({ onFilterChange }: MapSearchFilterProps) {
     onFilterChange?.(resetFilters);
   }, [onFilterChange]);
 
+  const hasActiveFilters = 
+    filters.searchText || 
+    filters.minBedrooms !== null || 
+    filters.maxBedrooms !== null || 
+    filters.minRent !== null || 
+    filters.maxRent !== null;
+
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 mb-4">
+    <div className="bg-white rounded-xl shadow-lg p-5 mb-4 border border-gray-100">
       {/* Search Bar */}
-      <div className="flex gap-2 items-center mb-4">
+      <div className="flex gap-3 items-center mb-4">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-yellow-600 w-5 h-5" />
           <input
             type="text"
-            placeholder="Search by name or neighborhood..."
+            placeholder="Search apartments by name or neighborhood..."
             value={filters.searchText}
             onChange={(e) => handleFilterChange({ searchText: e.target.value })}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-600 text-sm"
+            className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-sm bg-gray-50 hover:bg-white transition-colors"
           />
         </div>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+          className={`p-3 rounded-lg transition-all duration-200 ${
+            isExpanded
+              ? "bg-yellow-100 text-yellow-700"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
           title="Toggle advanced filters"
         >
           <Sliders className="w-5 h-5" />
@@ -69,94 +80,102 @@ export function MapSearchFilter({ onFilterChange }: MapSearchFilterProps) {
 
       {/* Advanced Filters */}
       {isExpanded && (
-        <div className="border-t pt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-          {/* Bedrooms */}
-          <div>
-            <label className="text-xs font-semibold text-gray-700 block mb-1">
-              Min Bedrooms
-            </label>
-            <select
-              value={filters.minBedrooms ?? ""}
-              onChange={(e) =>
-                handleFilterChange({
-                  minBedrooms: e.target.value ? Number(e.target.value) : null,
-                })
-              }
-              className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-yellow-600"
-            >
-              <option value="">Any</option>
-              <option value="0">Studio</option>
-              <option value="1">1+</option>
-              <option value="2">2+</option>
-              <option value="3">3+</option>
-              <option value="4">4+</option>
-            </select>
-          </div>
+        <div className="border-t border-gray-100 pt-5 space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Bedrooms */}
+            <div>
+              <label className="text-xs font-bold text-gray-700 block mb-2 uppercase tracking-wide">
+                Min Bedrooms
+              </label>
+              <select
+                value={filters.minBedrooms ?? ""}
+                onChange={(e) =>
+                  handleFilterChange({
+                    minBedrooms: e.target.value ? Number(e.target.value) : null,
+                  })
+                }
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent bg-gray-50 hover:bg-white transition-colors cursor-pointer"
+              >
+                <option value="">Any</option>
+                <option value="0">Studio</option>
+                <option value="1">1+</option>
+                <option value="2">2+</option>
+                <option value="3">3+</option>
+                <option value="4">4+</option>
+              </select>
+            </div>
 
-          <div>
-            <label className="text-xs font-semibold text-gray-700 block mb-1">
-              Max Bedrooms
-            </label>
-            <select
-              value={filters.maxBedrooms ?? ""}
-              onChange={(e) =>
-                handleFilterChange({
-                  maxBedrooms: e.target.value ? Number(e.target.value) : null,
-                })
-              }
-              className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-yellow-600"
-            >
-              <option value="">Any</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5+</option>
-            </select>
-          </div>
+            <div>
+              <label className="text-xs font-bold text-gray-700 block mb-2 uppercase tracking-wide">
+                Max Bedrooms
+              </label>
+              <select
+                value={filters.maxBedrooms ?? ""}
+                onChange={(e) =>
+                  handleFilterChange({
+                    maxBedrooms: e.target.value ? Number(e.target.value) : null,
+                  })
+                }
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent bg-gray-50 hover:bg-white transition-colors cursor-pointer"
+              >
+                <option value="">Any</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5+</option>
+              </select>
+            </div>
 
-          {/* Rent Range */}
-          <div>
-            <label className="text-xs font-semibold text-gray-700 block mb-1">
-              Min Rent
-            </label>
-            <input
-              type="number"
-              placeholder="Min"
-              value={filters.minRent ?? ""}
-              onChange={(e) =>
-                handleFilterChange({
-                  minRent: e.target.value ? Number(e.target.value) : null,
-                })
-              }
-              className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-yellow-600"
-            />
-          </div>
+            {/* Rent Range */}
+            <div>
+              <label className="text-xs font-bold text-gray-700 block mb-2 uppercase tracking-wide">
+                Min Rent
+              </label>
+              <input
+                type="number"
+                placeholder="$"
+                value={filters.minRent ?? ""}
+                onChange={(e) =>
+                  handleFilterChange({
+                    minRent: e.target.value ? Number(e.target.value) : null,
+                  })
+                }
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent bg-gray-50 hover:bg-white transition-colors"
+              />
+            </div>
 
-          <div>
-            <label className="text-xs font-semibold text-gray-700 block mb-1">
-              Max Rent
-            </label>
-            <input
-              type="number"
-              placeholder="Max"
-              value={filters.maxRent ?? ""}
-              onChange={(e) =>
-                handleFilterChange({
-                  maxRent: e.target.value ? Number(e.target.value) : null,
-                })
-              }
-              className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-yellow-600"
-            />
+            <div>
+              <label className="text-xs font-bold text-gray-700 block mb-2 uppercase tracking-wide">
+                Max Rent
+              </label>
+              <input
+                type="number"
+                placeholder="$"
+                value={filters.maxRent ?? ""}
+                onChange={(e) =>
+                  handleFilterChange({
+                    maxRent: e.target.value ? Number(e.target.value) : null,
+                  })
+                }
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent bg-gray-50 hover:bg-white transition-colors"
+              />
+            </div>
           </div>
 
           {/* Reset Button */}
-          <div className="col-span-2 md:col-span-4 flex justify-end">
+          <div className="flex justify-end pt-2">
             <button
               onClick={handleReset}
-              className="px-4 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded transition-colors"
+              disabled={!hasActiveFilters}
+              className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                hasActiveFilters
+                  ? "bg-red-50 text-red-700 hover:bg-red-100 cursor-pointer"
+                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
+              }`}
             >
-              Reset Filters
+              <X className="w-4 h-4" />
+              Clear Filters
             </button>
           </div>
         </div>
