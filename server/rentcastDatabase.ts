@@ -460,7 +460,6 @@ function listingToApartment(listing: RentCastListing, index: number, fallbackPho
 
   const descriptionParts = [
     listing.description,
-    listing.formattedAddress ? `Address: ${listing.formattedAddress}.` : null,
     listing.propertyType ? `Property type: ${listing.propertyType}.` : null,
     listing.status ? `RentCast status: ${listing.status}.` : null,
     listing.daysOnMarket != null ? `Listed for ${listing.daysOnMarket} days.` : null,
