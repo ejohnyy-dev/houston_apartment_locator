@@ -511,16 +511,18 @@ async function loadRentCastData() {
     )
     .filter((apartment): apartment is PropertyApartment => Boolean(apartment));
   
-  // Fallback to local property database if RentCast has no results
-  if (apartments.length === 0) {
-    try {
-      const { getEligiblePropertyDatabaseRecords } = await import('./propertyDatabase');
-      const records = await getEligiblePropertyDatabaseRecords();
-      apartments = records.map(({ apartment }) => apartment);
-      log.info('Loaded apartments from local property database', { count: apartments.length });
-    } catch (error) {
-      log.error('Failed to load local property database', error);
-    }
+  // Blend local property database with RentCast results
+  try {
+    const { getEligiblePropertyDatabaseRecords } = await import('./propertyDatabase');
+    const records = await getEligiblePropertyDatabaseRecords();
+    const localApartments = records.map(({ apartment }) => apartment);
+    // Add local properties that don't duplicate RentCast listings
+    const rentcastAddresses = new Set(apartments.map(a => a.name.toLowerCase()));
+    const uniqueLocal = localApartments.filter(apt => !rentcastAddresses.has(apt.name.toLowerCase()));
+    apartments = [...apartments, ...uniqueLocal];
+    log.info('Blended apartments', { rentcast: apartments.length - uniqueLocal.length, local: uniqueLocal.length, total: apartments.length });
+  } catch (error) {
+    log.warn('Could not load local property database', error);
   }
   const cities = new Set(apartments.map(apartment => apartment.neighborhood).filter(Boolean));
   const matches = cache.entries.filter(entry => entry.status === "matched").length;
