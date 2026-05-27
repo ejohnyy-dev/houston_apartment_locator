@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 declare global {
   interface Window {
-    google?: any;
+    google: any;
     initMap?: () => void;
   }
 }
@@ -42,8 +42,8 @@ export function HomeMapView({ className }: HomeMapViewProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<google.maps.Map | null>(null);
   const { data: apartments } = trpc.apartments.list.useQuery({
-    minPrice: 0,
-    maxPrice: 10000,
+    minRent: 0,
+    maxRent: 10000,
   });
 
   const initMap = useCallback(async () => {

@@ -236,6 +236,15 @@ function cleanText(value: string | undefined): string | null {
   return text;
 }
 
+function filterCommissionFromSpecial(special: string | null): string | null {
+  if (!special) return null;
+  // Remove commission information from special field
+  if (special.toLowerCase().includes('commission')) {
+    return null;
+  }
+  return special;
+}
+
 function buildDescription(row: CsvRow): string | null {
   const pieces = [
     cleanText(row.property_name),
@@ -271,7 +280,7 @@ function toApartment(row: CsvRow, index: number, usedIds: Set<number>): Property
     latitude: coords.lat,
     longitude: coords.lng,
     photos,
-    special: cleanText(row.special),
+    special: filterCommissionFromSpecial(cleanText(row.special)),
     availability: cleanText(row.availability),
     minSqft: numberFrom(row.min_sqft),
     maxSqft: numberFrom(row.max_sqft),
