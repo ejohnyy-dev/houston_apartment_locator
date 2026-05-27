@@ -1,0 +1,979 @@
+{
+  "version": 1,
+  "generatedAt": "2026-05-27T13:29:03.594Z",
+  "status": "ready",
+  "entries": [
+    {
+      "propertyId": 1,
+      "propertyName": "1 Riva Row, The Woodlands, TX",
+      "address": "1 Riva Row, The Woodlands, TX",
+      "photos": [
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/3919CP01.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/3919CP02.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/3919CP03.JPG"
+      ],
+      "fetchedAt": "2026-05-27T13:28:37.680Z",
+      "status": "error",
+      "error": "RentCast API returned 404: {\"status\":404,\"error\":\"resource/not-found\",\"message\":\"No data found for address '1 Riva Row, The Woodlands, TX'\"}"
+    },
+    {
+      "propertyId": 2,
+      "propertyName": "4711 LJ Pkwy, Sugar Land, TX",
+      "address": "4711 LJ Pkwy, Sugar Land, TX",
+      "photos": [
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/5091AP01.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/5091AP02.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/5091AP03.JPG"
+      ],
+      "fetchedAt": "2026-05-27T13:28:40.417Z",
+      "status": "matched",
+      "listing": {
+        "id": "4711-Lj-Pkwy,-Sugar-Land,-TX-77479",
+        "formattedAddress": "4711 Lj Pkwy, Sugar Land, TX 77479",
+        "addressLine1": "4711 Lj Pkwy",
+        "addressLine2": null,
+        "city": "Sugar Land",
+        "state": "TX",
+        "stateFips": "48",
+        "zipCode": "77479",
+        "county": "Fort Bend",
+        "countyFips": "157",
+        "latitude": 29.550756,
+        "longitude": -95.58828,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 624,
+        "yearBuilt": 2017,
+        "status": "Inactive",
+        "price": 1164,
+        "listingType": "Standard",
+        "listedDate": "2024-04-12T00:00:00.000Z",
+        "removedDate": "2025-12-12T00:00:00.000Z",
+        "createdDate": "2019-11-02T09:29:24.173Z",
+        "lastSeenDate": "2025-12-11T00:05:29.250Z",
+        "daysOnMarket": 609,
+        "history": {
+          "2024-04-12": {
+            "event": "Rental Listing",
+            "price": 1164,
+            "listingType": "Standard",
+            "listedDate": "2024-04-12T00:00:00.000Z",
+            "removedDate": "2025-12-12T00:00:00.000Z",
+            "daysOnMarket": 609
+          }
+        }
+      }
+    },
+    {
+      "propertyId": 3,
+      "propertyName": "1414 Texas Ave, Houston, TX",
+      "address": "1414 Texas Ave, Houston, TX",
+      "photos": [
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/5084AP01.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/5084AP02.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/5084AP03.JPG"
+      ],
+      "fetchedAt": "2026-05-27T13:28:41.894Z",
+      "status": "matched",
+      "listing": {
+        "id": "1414-Texas-Ave,-Houston,-TX-77002",
+        "formattedAddress": "1414 Texas Ave, Houston, TX 77002",
+        "addressLine1": "1414 Texas Ave",
+        "addressLine2": null,
+        "city": "Houston",
+        "state": "TX",
+        "stateFips": "48",
+        "zipCode": "77002",
+        "county": "Harris",
+        "countyFips": "201",
+        "latitude": 29.75729,
+        "longitude": -95.35905,
+        "propertyType": "Apartment",
+        "bedrooms": 0,
+        "bathrooms": 1,
+        "squareFootage": 591,
+        "yearBuilt": 2017,
+        "status": "Active",
+        "price": 1483,
+        "listingType": "Standard",
+        "listedDate": "2024-06-11T00:00:00.000Z",
+        "removedDate": null,
+        "createdDate": "2019-11-01T15:52:56.651Z",
+        "lastSeenDate": "2026-05-27T01:14:23.061Z",
+        "daysOnMarket": 716,
+        "history": {
+          "2024-06-11": {
+            "event": "Rental Listing",
+            "price": 1483,
+            "listingType": "Standard",
+            "listedDate": "2024-06-11T00:00:00.000Z",
+            "removedDate": null,
+            "daysOnMarket": 716
+          }
+        }
+      }
+    },
+    {
+      "propertyId": 4,
+      "propertyName": "11107 W Airport Blvd, Stafford, TX",
+      "address": "11107 W Airport Blvd, Stafford, TX",
+      "photos": [
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/1534AP01.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/1534AP02.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/1534AP03.JPG"
+      ],
+      "fetchedAt": "2026-05-27T13:28:43.023Z",
+      "status": "matched",
+      "listing": {
+        "id": "11107-W-Airport-Blvd,-Stafford,-TX-77477",
+        "formattedAddress": "11107 W Airport Blvd, Stafford, TX 77477",
+        "addressLine1": "11107 W Airport Blvd",
+        "addressLine2": null,
+        "city": "Stafford",
+        "state": "TX",
+        "stateFips": "48",
+        "zipCode": "77477",
+        "county": "Fort Bend",
+        "countyFips": "157",
+        "latitude": 29.639141,
+        "longitude": -95.570529,
+        "propertyType": "Apartment",
+        "bedrooms": 0,
+        "bathrooms": 1,
+        "squareFootage": 533,
+        "yearBuilt": 2019,
+        "status": "Active",
+        "price": 1233,
+        "listingType": "Standard",
+        "listedDate": "2024-04-12T00:00:00.000Z",
+        "removedDate": null,
+        "createdDate": "2019-11-02T09:29:53.180Z",
+        "lastSeenDate": "2026-05-27T00:26:37.185Z",
+        "daysOnMarket": 776,
+        "history": {
+          "2024-04-12": {
+            "event": "Rental Listing",
+            "price": 1233,
+            "listingType": "Standard",
+            "listedDate": "2024-04-12T00:00:00.000Z",
+            "removedDate": null,
+            "daysOnMarket": 776
+          }
+        }
+      }
+    },
+    {
+      "propertyId": 5,
+      "propertyName": "1900 Yorktown St, Houston, TX",
+      "address": "1900 Yorktown St, Houston, TX",
+      "photos": [
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4850AP01.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4850AP02.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4850AP03.JPG"
+      ],
+      "fetchedAt": "2026-05-27T13:28:44.248Z",
+      "status": "matched",
+      "listing": {
+        "id": "1900-Yorktown-St,-Houston,-TX-77056",
+        "formattedAddress": "1900 Yorktown St, Houston, TX 77056",
+        "addressLine1": "1900 Yorktown St",
+        "addressLine2": null,
+        "city": "Houston",
+        "state": "TX",
+        "stateFips": "48",
+        "zipCode": "77056",
+        "county": "Harris",
+        "countyFips": "201",
+        "latitude": 29.74617,
+        "longitude": -95.47128,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 755,
+        "yearBuilt": 2015,
+        "status": "Active",
+        "price": 1840,
+        "listingType": "Standard",
+        "listedDate": "2024-06-11T00:00:00.000Z",
+        "removedDate": null,
+        "createdDate": "2019-11-02T09:30:26.454Z",
+        "lastSeenDate": "2026-05-27T03:13:11.791Z",
+        "daysOnMarket": 716,
+        "history": {
+          "2024-06-11": {
+            "event": "Rental Listing",
+            "price": 1840,
+            "listingType": "Standard",
+            "listedDate": "2024-06-11T00:00:00.000Z",
+            "removedDate": null,
+            "daysOnMarket": 716
+          }
+        }
+      }
+    },
+    {
+      "propertyId": 6,
+      "propertyName": "2222 Smith, Houston, TX",
+      "address": "2222 Smith, Houston, TX",
+      "photos": [
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4230AP01.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4230AP02.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4230AP03.JPG"
+      ],
+      "fetchedAt": "2026-05-27T13:28:45.654Z",
+      "status": "matched",
+      "listing": {
+        "id": "2222-Smith-St,-Houston,-TX-77002",
+        "formattedAddress": "2222 Smith St, Houston, TX 77002",
+        "addressLine1": "2222 Smith St",
+        "addressLine2": null,
+        "city": "Houston",
+        "state": "TX",
+        "stateFips": "48",
+        "zipCode": "77002",
+        "county": "Harris",
+        "countyFips": "201",
+        "latitude": 29.74997,
+        "longitude": -95.37578,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 717,
+        "yearBuilt": 2003,
+        "status": "Active",
+        "price": 1177,
+        "listingType": "Standard",
+        "listedDate": "2026-01-21T00:00:00.000Z",
+        "removedDate": null,
+        "createdDate": "2019-11-02T09:28:42.794Z",
+        "lastSeenDate": "2026-05-27T02:20:44.693Z",
+        "daysOnMarket": 127,
+        "history": {
+          "2024-07-25": {
+            "event": "Rental Listing",
+            "price": 850,
+            "listingType": "Standard",
+            "listedDate": "2024-07-25T00:00:00.000Z",
+            "removedDate": "2025-05-24T00:00:00.000Z",
+            "daysOnMarket": 303
+          },
+          "2026-01-21": {
+            "event": "Rental Listing",
+            "price": 1177,
+            "listingType": "Standard",
+            "listedDate": "2026-01-21T00:00:00.000Z",
+            "removedDate": null,
+            "daysOnMarket": 127
+          }
+        }
+      }
+    },
+    {
+      "propertyId": 7,
+      "propertyName": "230 W Alabama St, Houston, TX",
+      "address": "230 W Alabama St, Houston, TX",
+      "photos": [
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/1019AP01.JPG"
+      ],
+      "fetchedAt": "2026-05-27T13:28:47.331Z",
+      "status": "matched",
+      "listing": {
+        "id": "230-W-Alabama-St,-Houston,-TX-77006",
+        "formattedAddress": "230 W Alabama St, Houston, TX 77006",
+        "addressLine1": "230 W Alabama St",
+        "addressLine2": null,
+        "city": "Houston",
+        "state": "TX",
+        "stateFips": "48",
+        "zipCode": "77006",
+        "county": "Harris",
+        "countyFips": "201",
+        "latitude": 29.73917,
+        "longitude": -95.38344,
+        "propertyType": "Apartment",
+        "bedrooms": 0,
+        "bathrooms": 1,
+        "squareFootage": 420,
+        "yearBuilt": 1965,
+        "status": "Active",
+        "price": 999,
+        "listingType": "Standard",
+        "listedDate": "2024-04-12T00:00:00.000Z",
+        "removedDate": null,
+        "createdDate": "2019-11-02T09:33:58.343Z",
+        "lastSeenDate": "2026-05-27T03:17:28.799Z",
+        "daysOnMarket": 776,
+        "history": {
+          "2024-04-12": {
+            "event": "Rental Listing",
+            "price": 999,
+            "listingType": "Standard",
+            "listedDate": "2024-04-12T00:00:00.000Z",
+            "removedDate": null,
+            "daysOnMarket": 776
+          }
+        }
+      }
+    },
+    {
+      "propertyId": 8,
+      "propertyName": "2626 Fountain View Dr, Houston, TX",
+      "address": "2626 Fountain View Dr, Houston, TX",
+      "photos": [
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4897AP01.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4897AP02.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4897AP03.JPG"
+      ],
+      "fetchedAt": "2026-05-27T13:28:48.448Z",
+      "status": "matched",
+      "listing": {
+        "id": "2626-Fountain-View-Dr,-Houston,-TX-77057",
+        "formattedAddress": "2626 Fountain View Dr, Houston, TX 77057",
+        "addressLine1": "2626 Fountain View Dr",
+        "addressLine2": null,
+        "city": "Houston",
+        "state": "TX",
+        "stateFips": "48",
+        "zipCode": "77057",
+        "county": "Harris",
+        "countyFips": "201",
+        "latitude": 29.74036,
+        "longitude": -95.48549,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 815,
+        "yearBuilt": 2015,
+        "status": "Active",
+        "price": 1273,
+        "listingType": "Standard",
+        "listedDate": "2024-12-18T00:00:00.000Z",
+        "removedDate": null,
+        "createdDate": "2019-11-02T09:35:40.581Z",
+        "lastSeenDate": "2026-05-27T02:56:37.039Z",
+        "daysOnMarket": 526,
+        "history": {
+          "2024-12-18": {
+            "event": "Rental Listing",
+            "price": 1273,
+            "listingType": "Standard",
+            "listedDate": "2024-12-18T00:00:00.000Z",
+            "removedDate": null,
+            "daysOnMarket": 526
+          }
+        }
+      }
+    },
+    {
+      "propertyId": 9,
+      "propertyName": "2800 Tranquility Lake Blvd, Pearland, TX",
+      "address": "2800 Tranquility Lake Blvd, Pearland, TX",
+      "photos": [
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4163AP01.JPG"
+      ],
+      "fetchedAt": "2026-05-27T13:28:49.763Z",
+      "status": "matched",
+      "listing": {
+        "id": "2800-Tranquility-Lake-Blvd,-Pearland,-TX-77584",
+        "formattedAddress": "2800 Tranquility Lake Blvd, Pearland, TX 77584",
+        "addressLine1": "2800 Tranquility Lake Blvd",
+        "addressLine2": null,
+        "city": "Pearland",
+        "state": "TX",
+        "stateFips": "48",
+        "zipCode": "77584",
+        "county": "Brazoria",
+        "countyFips": "039",
+        "latitude": 29.556764,
+        "longitude": -95.342405,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 740,
+        "yearBuilt": 2001,
+        "status": "Active",
+        "price": 1225,
+        "listingType": "Standard",
+        "listedDate": "2025-06-11T00:00:00.000Z",
+        "removedDate": null,
+        "createdDate": "2019-11-03T01:25:07.083Z",
+        "lastSeenDate": "2026-05-27T00:37:51.100Z",
+        "daysOnMarket": 351,
+        "history": {
+          "2024-07-25": {
+            "event": "Rental Listing",
+            "price": 718,
+            "listingType": "Standard",
+            "listedDate": "2024-07-25T00:00:00.000Z",
+            "removedDate": "2025-06-12T00:00:00.000Z",
+            "daysOnMarket": 322
+          },
+          "2025-06-11": {
+            "event": "Rental Listing",
+            "price": 1225,
+            "listingType": "Standard",
+            "listedDate": "2025-06-11T00:00:00.000Z",
+            "removedDate": null,
+            "daysOnMarket": 351
+          }
+        }
+      }
+    },
+    {
+      "propertyId": 10,
+      "propertyName": "2900 W Dallas St, Houston, TX",
+      "address": "2900 W Dallas St, Houston, TX",
+      "photos": [
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4780AP01.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4780AP02.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4780AP03.JPG"
+      ],
+      "fetchedAt": "2026-05-27T13:28:51.477Z",
+      "status": "matched",
+      "listing": {
+        "id": "2900-W-Dallas-St,-Houston,-TX-77019",
+        "formattedAddress": "2900 W Dallas St, Houston, TX 77019",
+        "addressLine1": "2900 W Dallas St",
+        "addressLine2": null,
+        "city": "Houston",
+        "state": "TX",
+        "stateFips": "48",
+        "zipCode": "77019",
+        "county": "Harris",
+        "countyFips": "201",
+        "latitude": 29.75775,
+        "longitude": -95.39634,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 755,
+        "yearBuilt": 2013,
+        "status": "Active",
+        "price": 1810,
+        "listingType": "Standard",
+        "listedDate": "2024-06-11T00:00:00.000Z",
+        "removedDate": null,
+        "createdDate": "2019-11-02T09:32:52.264Z",
+        "lastSeenDate": "2026-05-27T02:41:24.813Z",
+        "daysOnMarket": 716,
+        "history": {
+          "2024-06-11": {
+            "event": "Rental Listing",
+            "price": 1810,
+            "listingType": "Standard",
+            "listedDate": "2024-06-11T00:00:00.000Z",
+            "removedDate": null,
+            "daysOnMarket": 716
+          }
+        }
+      }
+    },
+    {
+      "propertyId": 11,
+      "propertyName": "299 W Gray St, Houston, TX",
+      "address": "299 W Gray St, Houston, TX",
+      "photos": [
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/1370AP01.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/1370AP02.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/1370AP03.JPG"
+      ],
+      "fetchedAt": "2026-05-27T13:28:52.831Z",
+      "status": "matched",
+      "listing": {
+        "id": "299-W-Gray-St,-Houston,-TX-77019",
+        "formattedAddress": "299 W Gray St, Houston, TX 77019",
+        "addressLine1": "299 W Gray St",
+        "addressLine2": null,
+        "city": "Houston",
+        "state": "TX",
+        "stateFips": "48",
+        "zipCode": "77019",
+        "county": "Harris",
+        "countyFips": "201",
+        "latitude": 29.7531,
+        "longitude": -95.38536,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 642,
+        "yearBuilt": 2018,
+        "status": "Active",
+        "price": 1312,
+        "listingType": "Standard",
+        "listedDate": "2026-02-07T00:00:00.000Z",
+        "removedDate": null,
+        "createdDate": "2019-11-02T09:35:43.716Z",
+        "lastSeenDate": "2026-05-27T02:36:51.142Z",
+        "daysOnMarket": 110,
+        "history": {
+          "2024-04-12": {
+            "event": "Rental Listing",
+            "price": 1428,
+            "listingType": "Standard",
+            "listedDate": "2024-04-12T00:00:00.000Z",
+            "removedDate": "2025-11-03T00:00:00.000Z",
+            "daysOnMarket": 570
+          },
+          "2026-02-07": {
+            "event": "Rental Listing",
+            "price": 1312,
+            "listingType": "Standard",
+            "listedDate": "2026-02-07T00:00:00.000Z",
+            "removedDate": null,
+            "daysOnMarket": 110
+          }
+        }
+      }
+    },
+    {
+      "propertyId": 12,
+      "propertyName": "3333 Weslayan, Houston, TX",
+      "address": "3333 Weslayan, Houston, TX",
+      "photos": [
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4599AP01.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4599AP02.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4599AP03.JPG"
+      ],
+      "fetchedAt": "2026-05-27T13:28:53.998Z",
+      "status": "matched",
+      "listing": {
+        "id": "3333-Weslayan-St,-Houston,-TX-77027",
+        "formattedAddress": "3333 Weslayan St, Houston, TX 77027",
+        "addressLine1": "3333 Weslayan St",
+        "addressLine2": null,
+        "city": "Houston",
+        "state": "TX",
+        "stateFips": "48",
+        "zipCode": "77027",
+        "county": "Harris",
+        "countyFips": "201",
+        "latitude": 29.7352,
+        "longitude": -95.44027,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 721,
+        "yearBuilt": 2010,
+        "status": "Active",
+        "price": 1200,
+        "listingType": "Standard",
+        "listedDate": "2024-06-11T00:00:00.000Z",
+        "removedDate": null,
+        "createdDate": "2019-11-01T15:48:05.971Z",
+        "lastSeenDate": "2026-05-27T01:14:23.062Z",
+        "daysOnMarket": 716,
+        "history": {
+          "2024-06-11": {
+            "event": "Rental Listing",
+            "price": 1200,
+            "listingType": "Standard",
+            "listedDate": "2024-06-11T00:00:00.000Z",
+            "removedDate": null,
+            "daysOnMarket": 716
+          }
+        }
+      }
+    },
+    {
+      "propertyId": 13,
+      "propertyName": "3660 Richmond Ave, Houston, TX",
+      "address": "3660 Richmond Ave, Houston, TX",
+      "photos": [
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4390AP01.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4390AP02.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4390AP03.JPG"
+      ],
+      "fetchedAt": "2026-05-27T13:28:55.405Z",
+      "status": "matched",
+      "listing": {
+        "id": "3660-Richmond-Ave,-Houston,-TX-77046",
+        "formattedAddress": "3660 Richmond Ave, Houston, TX 77046",
+        "addressLine1": "3660 Richmond Ave",
+        "addressLine2": null,
+        "city": "Houston",
+        "state": "TX",
+        "stateFips": "48",
+        "zipCode": "77046",
+        "county": "Harris",
+        "countyFips": "201",
+        "latitude": 29.73415,
+        "longitude": -95.43272,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 691,
+        "yearBuilt": 2006,
+        "status": "Active",
+        "price": 1199,
+        "listingType": "Standard",
+        "listedDate": "2026-03-30T00:00:00.000Z",
+        "removedDate": null,
+        "createdDate": "2019-11-02T09:41:53.126Z",
+        "lastSeenDate": "2026-05-27T02:29:35.652Z",
+        "daysOnMarket": 59,
+        "history": {
+          "2026-03-30": {
+            "event": "Rental Listing",
+            "price": 1199,
+            "listingType": "Standard",
+            "listedDate": "2026-03-30T00:00:00.000Z",
+            "removedDate": null,
+            "daysOnMarket": 59
+          }
+        }
+      }
+    },
+    {
+      "propertyId": 14,
+      "propertyName": "3800 Main St, Houston, TX",
+      "address": "3800 Main St, Houston, TX",
+      "photos": [
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4834AP01.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4834AP02.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4834AP03.JPG"
+      ],
+      "fetchedAt": "2026-05-27T13:28:56.699Z",
+      "status": "matched",
+      "listing": {
+        "id": "3800-Main-St,-Houston,-TX-77002",
+        "formattedAddress": "3800 Main St, Houston, TX 77002",
+        "addressLine1": "3800 Main St",
+        "addressLine2": null,
+        "city": "Houston",
+        "state": "TX",
+        "stateFips": "48",
+        "zipCode": "77002",
+        "county": "Harris",
+        "countyFips": "201",
+        "latitude": 29.737801,
+        "longitude": -95.380726,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 649,
+        "yearBuilt": 2014,
+        "status": "Active",
+        "price": 1199,
+        "listingType": "Standard",
+        "listedDate": "2024-04-12T00:00:00.000Z",
+        "removedDate": null,
+        "createdDate": "2019-11-02T09:39:27.569Z",
+        "lastSeenDate": "2026-05-27T01:14:23.185Z",
+        "daysOnMarket": 776,
+        "history": {
+          "2024-04-12": {
+            "event": "Rental Listing",
+            "price": 1199,
+            "listingType": "Standard",
+            "listedDate": "2024-04-12T00:00:00.000Z",
+            "removedDate": null,
+            "daysOnMarket": 776
+          }
+        }
+      }
+    },
+    {
+      "propertyId": 15,
+      "propertyName": "5110 Azalea Trace Dr, Houston, TX",
+      "address": "5110 Azalea Trace Dr, Houston, TX",
+      "photos": [
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/2301AP01.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/2301AP02.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/2301AP03.JPG"
+      ],
+      "fetchedAt": "2026-05-27T13:28:57.945Z",
+      "status": "matched",
+      "listing": {
+        "id": "5110-Azalea-Trace-Dr,-Houston,-TX-77066",
+        "formattedAddress": "5110 Azalea Trace Dr, Houston, TX 77066",
+        "addressLine1": "5110 Azalea Trace Dr",
+        "addressLine2": null,
+        "city": "Houston",
+        "state": "TX",
+        "stateFips": "48",
+        "zipCode": "77066",
+        "county": "Harris",
+        "countyFips": "201",
+        "latitude": 29.960381,
+        "longitude": -95.495884,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1.5,
+        "squareFootage": 817,
+        "yearBuilt": 1983,
+        "status": "Active",
+        "price": 765,
+        "listingType": "Standard",
+        "listedDate": "2025-10-23T00:00:00.000Z",
+        "removedDate": null,
+        "createdDate": "2019-11-02T09:28:36.039Z",
+        "lastSeenDate": "2026-05-27T02:56:35.035Z",
+        "daysOnMarket": 217,
+        "history": {
+          "2025-10-23": {
+            "event": "Rental Listing",
+            "price": 765,
+            "listingType": "Standard",
+            "listedDate": "2025-10-23T00:00:00.000Z",
+            "removedDate": null,
+            "daysOnMarket": 217
+          }
+        }
+      }
+    },
+    {
+      "propertyId": 16,
+      "propertyName": "722 International Blvd, Houston, TX",
+      "address": "722 International Blvd, Houston, TX",
+      "photos": [
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/1696AP01.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/1696AP02.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/1696AP03.JPG"
+      ],
+      "fetchedAt": "2026-05-27T13:28:59.067Z",
+      "status": "matched",
+      "listing": {
+        "id": "722-International-Blvd,-Houston,-TX-77024",
+        "formattedAddress": "722 International Blvd, Houston, TX 77024",
+        "addressLine1": "722 International Blvd",
+        "addressLine2": null,
+        "city": "Houston",
+        "state": "TX",
+        "stateFips": "48",
+        "zipCode": "77024",
+        "county": "Harris",
+        "countyFips": "201",
+        "latitude": 29.78022,
+        "longitude": -95.47825,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 705,
+        "yearBuilt": 1968,
+        "status": "Active",
+        "price": 865,
+        "listingType": "Standard",
+        "listedDate": "2024-06-11T00:00:00.000Z",
+        "removedDate": null,
+        "createdDate": "2019-11-02T09:35:42.865Z",
+        "lastSeenDate": "2026-05-27T03:13:11.797Z",
+        "daysOnMarket": 716,
+        "history": {
+          "2024-06-11": {
+            "event": "Rental Listing",
+            "price": 865,
+            "listingType": "Standard",
+            "listedDate": "2024-06-11T00:00:00.000Z",
+            "removedDate": null,
+            "daysOnMarket": 716
+          }
+        }
+      }
+    },
+    {
+      "propertyId": 17,
+      "propertyName": "20102 Cypress Rosehill Rd, Tomball, TX",
+      "address": "20102 Cypress Rosehill Rd, Tomball, TX",
+      "photos": [
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/3578CP01.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/3578CP02.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/3578CP03.JPG"
+      ],
+      "fetchedAt": "2026-05-27T13:29:00.238Z",
+      "status": "matched",
+      "listing": {
+        "id": "20102-Cypress-Rosehill-Rd,-Tomball,-TX-77377",
+        "formattedAddress": "20102 Cypress Rosehill Rd, Tomball, TX 77377",
+        "addressLine1": "20102 Cypress Rosehill Rd",
+        "addressLine2": null,
+        "city": "Tomball",
+        "state": "TX",
+        "stateFips": "48",
+        "zipCode": "77377",
+        "county": "Harris",
+        "countyFips": "201",
+        "latitude": 30.055178,
+        "longitude": -95.693077,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 599,
+        "yearBuilt": 2024,
+        "status": "Active",
+        "price": 1359,
+        "listingType": "Standard",
+        "listedDate": "2026-01-28T00:00:00.000Z",
+        "removedDate": null,
+        "createdDate": "2025-07-05T00:00:00.000Z",
+        "lastSeenDate": "2026-05-27T02:50:42.247Z",
+        "daysOnMarket": 120,
+        "history": {
+          "2024-07-26": {
+            "event": "Rental Listing",
+            "price": 849,
+            "listingType": "Standard",
+            "listedDate": "2024-07-26T00:00:00.000Z",
+            "removedDate": "2025-09-14T00:00:00.000Z",
+            "daysOnMarket": 415
+          },
+          "2026-01-28": {
+            "event": "Rental Listing",
+            "price": 1359,
+            "listingType": "Standard",
+            "listedDate": "2026-01-28T00:00:00.000Z",
+            "removedDate": null,
+            "daysOnMarket": 120
+          }
+        }
+      }
+    },
+    {
+      "propertyId": 18,
+      "propertyName": "5555 Long Prairie Trace, Richmond, TX",
+      "address": "5555 Long Prairie Trace, Richmond, TX",
+      "photos": [
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4870AP01.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4870AP02.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4870AP03.JPG"
+      ],
+      "fetchedAt": "2026-05-27T13:29:01.406Z",
+      "status": "matched",
+      "listing": {
+        "id": "5555-Long-Prairie-Trce,-Richmond,-TX-77407",
+        "formattedAddress": "5555 Long Prairie Trce, Richmond, TX 77407",
+        "addressLine1": "5555 Long Prairie Trce",
+        "addressLine2": null,
+        "city": "Richmond",
+        "state": "TX",
+        "stateFips": "48",
+        "zipCode": "77407",
+        "county": "Fort Bend",
+        "countyFips": "157",
+        "latitude": 29.675194,
+        "longitude": -95.753618,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 826,
+        "yearBuilt": 2014,
+        "status": "Active",
+        "price": 1049,
+        "listingType": "Standard",
+        "listedDate": "2026-03-11T00:00:00.000Z",
+        "removedDate": null,
+        "createdDate": "2019-11-07T01:02:59.717Z",
+        "lastSeenDate": "2026-05-27T00:26:37.226Z",
+        "daysOnMarket": 78,
+        "history": {
+          "2026-03-11": {
+            "event": "Rental Listing",
+            "price": 1049,
+            "listingType": "Standard",
+            "listedDate": "2026-03-11T00:00:00.000Z",
+            "removedDate": null,
+            "daysOnMarket": 78
+          }
+        }
+      }
+    },
+    {
+      "propertyId": 19,
+      "propertyName": "9955 Buffalo Speedway, Houston, TX",
+      "address": "9955 Buffalo Speedway, Houston, TX",
+      "photos": [
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4142AP01.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4142AP02.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/4142AP03.JPG"
+      ],
+      "fetchedAt": "2026-05-27T13:29:02.047Z",
+      "status": "matched",
+      "listing": {
+        "id": "9955-Buffalo-Speedway,-Houston,-TX-77054",
+        "formattedAddress": "9955 Buffalo Speedway, Houston, TX 77054",
+        "addressLine1": "9955 Buffalo Speedway",
+        "addressLine2": null,
+        "city": "Houston",
+        "state": "TX",
+        "stateFips": "48",
+        "zipCode": "77054",
+        "county": "Harris",
+        "countyFips": "201",
+        "latitude": 29.675741,
+        "longitude": -95.423233,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 594,
+        "yearBuilt": 2001,
+        "status": "Active",
+        "price": 999,
+        "listingType": "Standard",
+        "listedDate": "2025-03-04T00:00:00.000Z",
+        "removedDate": null,
+        "createdDate": "2019-11-03T01:22:21.582Z",
+        "lastSeenDate": "2026-05-27T02:47:07.092Z",
+        "daysOnMarket": 450,
+        "history": {
+          "2025-03-04": {
+            "event": "Rental Listing",
+            "price": 999,
+            "listingType": "Standard",
+            "listedDate": "2025-03-04T00:00:00.000Z",
+            "removedDate": null,
+            "daysOnMarket": 450
+          }
+        }
+      }
+    },
+    {
+      "propertyId": 20,
+      "propertyName": "11576 Pearland Pkwy, Houston, TX",
+      "address": "11576 Pearland Pkwy, Houston, TX",
+      "photos": [
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/1234AP01.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/1234AP02.JPG",
+        "https://www.apartmentdata.com/ADS/IMAGECITY/TXHO/FMP/1234AP03.JPG"
+      ],
+      "fetchedAt": "2026-05-27T13:29:03.592Z",
+      "status": "matched",
+      "listing": {
+        "id": "11576-Pearland-Pkwy,-Houston,-TX-77089",
+        "formattedAddress": "11576 Pearland Pkwy, Houston, TX 77089",
+        "addressLine1": "11576 Pearland Pkwy",
+        "addressLine2": null,
+        "city": "Houston",
+        "state": "TX",
+        "stateFips": "48",
+        "zipCode": "77089",
+        "county": "Harris",
+        "countyFips": "201",
+        "latitude": 29.597359,
+        "longitude": -95.268616,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 710,
+        "yearBuilt": 2019,
+        "status": "Active",
+        "price": 1423,
+        "listingType": "Standard",
+        "listedDate": "2025-08-29T00:00:00.000Z",
+        "removedDate": null,
+        "createdDate": "2022-04-14T03:00:33.675Z",
+        "lastSeenDate": "2026-05-26T02:28:12.906Z",
+        "daysOnMarket": 271,
+        "history": {
+          "2025-08-29": {
+            "event": "Rental Listing",
+            "price": 1423,
+            "listingType": "Standard",
+            "listedDate": "2025-08-29T00:00:00.000Z",
+            "removedDate": null,
+            "daysOnMarket": 271
+          }
+        }
+      }
+    }
+  ]
+}
