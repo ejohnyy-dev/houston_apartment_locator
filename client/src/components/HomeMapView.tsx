@@ -69,9 +69,9 @@ export function HomeMapView({ className }: HomeMapViewProps) {
     // Add apartment markers
     if (apartments && apartments.length > 0) {
       apartments.forEach((apt) => {
-        // Use city center coordinates as fallback
-        const lat = (apt as any).lat || 29.7604;
-        const lng = (apt as any).lng || -95.3698;
+        // Use latitude/longitude from apartment data
+        const lat = (apt as any).latitude || 29.7604;
+        const lng = (apt as any).longitude || -95.3698;
         
         if (lat && lng) {
           // Create marker
