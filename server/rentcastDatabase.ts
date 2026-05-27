@@ -511,14 +511,30 @@ async function loadRentCastData() {
     )
     .filter((apartment): apartment is PropertyApartment => Boolean(apartment));
   
+  // Deduplicate RentCast apartments by ID
+  const seenIds = new Set<number>();
+  apartments = apartments.filter(apt => {
+    if (seenIds.has(apt.id)) {
+      return false;
+    }
+    seenIds.add(apt.id);
+    return true;
+  });
+
   // Blend local property database with RentCast results
   try {
     const { getEligiblePropertyDatabaseRecords } = await import('./propertyDatabase');
     const records = await getEligiblePropertyDatabaseRecords();
     const localApartments = records.map(({ apartment }) => apartment);
     // Add local properties that don't duplicate RentCast listings
-    const rentcastAddresses = new Set(apartments.map(a => a.name.toLowerCase()));
-    const uniqueLocal = localApartments.filter(apt => !rentcastAddresses.has(apt.name.toLowerCase()));
+    // Create a set of RentCast addresses for deduplication
+    const rentcastSet = new Set(
+      apartments.map(a => (a.name || '').toLowerCase().trim())
+    );
+    const uniqueLocal = localApartments.filter(apt => {
+      const aptAddr = (apt.name || '').toLowerCase().trim();
+      return !rentcastSet.has(aptAddr);
+    });
     apartments = [...apartments, ...uniqueLocal];
     log.info('Blended apartments', { rentcast: apartments.length - uniqueLocal.length, local: uniqueLocal.length, total: apartments.length });
   } catch (error) {
