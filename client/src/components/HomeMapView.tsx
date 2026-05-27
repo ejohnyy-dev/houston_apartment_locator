@@ -202,7 +202,13 @@ export function HomeMapView({ className, filters }: HomeMapViewProps) {
 
   return (
     <div className={cn("w-full h-full relative", className)}>
-      <div ref={mapContainer} className="w-full h-full" />
+      <div 
+        ref={mapContainer} 
+        className="w-full h-full" 
+        title="Interactive map showing 530+ available apartments in Houston with filtering options"
+        role="region"
+        aria-label="Houston apartment map"
+      />
       {isLoading && (
         <div className="absolute inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center rounded-lg">
           <div className="text-center">
