@@ -232,9 +232,9 @@ export default function ApartmentSearch() {
 
   const { data: apartmentsData, isLoading } = trpc.apartments.list.useQuery(
     {
-      neighborhood: selectedNeighborhood || undefined,
-      minBedrooms: bedroomFilter ? parseInt(bedroomFilter) : undefined,
-      maxBedrooms: bedroomFilter ? parseInt(bedroomFilter) : undefined,
+      neighborhood: selectedNeighborhood && selectedNeighborhood !== '__all__' ? selectedNeighborhood : undefined,
+      minBedrooms: bedroomFilter && bedroomFilter !== '__any__' ? parseInt(bedroomFilter) : undefined,
+      maxBedrooms: bedroomFilter && bedroomFilter !== '__any__' ? parseInt(bedroomFilter) : undefined,
       minRent: rentRange[0],
       maxRent: rentRange[1],
     },
@@ -417,7 +417,7 @@ export default function ApartmentSearch() {
                     <SelectValue placeholder="All areas" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All areas</SelectItem>
+                    <SelectItem value="__all__">All areas</SelectItem>
                     {neighborhoods.map(n => (
                       <SelectItem key={n} value={n}>{n}</SelectItem>
                     ))}
@@ -432,7 +432,7 @@ export default function ApartmentSearch() {
                     <SelectValue placeholder="Any" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Any</SelectItem>
+                    <SelectItem value="__any__">Any</SelectItem>
                     <SelectItem value="0">Studio</SelectItem>
                     <SelectItem value="1">1 Bed</SelectItem>
                     <SelectItem value="2">2 Beds</SelectItem>
