@@ -18,6 +18,7 @@
 - [x] Lead capture form for apartment inquiries (InquiryForm component)
 - [x] Inquiry endpoint with owner notification (inquiries.create tRPC mutation)
 - [x] Inquiry form validation tests (4 test cases for schema validation)
+- [x] Updated form messaging to sign-up prompt (users see "You're All Set!" message)
 
 ## Completed Features (All Done!)
 All planned features have been successfully implemented and tested. The application now provides:
