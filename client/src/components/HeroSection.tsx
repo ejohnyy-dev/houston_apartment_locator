@@ -1,8 +1,10 @@
+import { HomeMapView } from "./HomeMapView";
+
 const HERO_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663501304397/4gMGD9qetV63jA9Ts6DXxD/DiWnH726c4RI_566565c1.jpg";
 
 export default function HeroSection() {
   return (
-    <section className="relative min-h-[90vh] flex items-center">
+    <section className="relative py-20">
       {/* Background */}
       <div className="absolute inset-0">
         <img src={HERO_BG} alt="Houston skyline" className="w-full h-full object-cover" />
@@ -10,8 +12,8 @@ export default function HeroSection() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 container py-32">
-        <div className="max-w-2xl">
+      <div className="relative z-10 container">
+        <div className="max-w-2xl mb-12">
           <p className="text-gold text-sm font-medium tracking-widest uppercase mb-4">
             Habitat Apartment Locators
           </p>
@@ -21,11 +23,20 @@ export default function HeroSection() {
           <p className="text-white/70 text-lg leading-relaxed mb-8 max-w-lg">
             I'm Eric Johnson, your dedicated Houston apartment locator. My service is 100% free — I do the work so you don't have to.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <a href="/search" className="inline-flex items-center justify-center px-7 py-3 bg-gold text-dark font-semibold text-sm rounded hover:opacity-90 transition-opacity">
-              Search Apartments
-            </a>
+        </div>
+
+        {/* Map Section */}
+        <div className="max-w-4xl mx-auto mb-8">
+          <div className="rounded-xl overflow-hidden shadow-2xl border border-gold/20 h-96 bg-slate-800">
+            <HomeMapView className="rounded-lg" />
           </div>
+        </div>
+
+        {/* Button */}
+        <div className="flex justify-center">
+          <a href="/search" className="inline-flex items-center justify-center px-7 py-3 bg-gold text-dark font-semibold text-sm rounded hover:opacity-90 transition-opacity">
+            Search Apartments
+          </a>
         </div>
       </div>
     </section>
