@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 
@@ -31,7 +31,7 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
       });
       setTimeout(() => {
         onClose();
-      }, 2000);
+      }, 3000);
     },
     onError: () => {
       setSubmitStatus("error");
@@ -70,7 +70,7 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-lg font-semibold text-gray-900">Inquire About {apartmentName}</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{apartmentName}</h2>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 transition-colors"
@@ -82,12 +82,25 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
         {/* Content */}
         <div className="p-6">
           {submitStatus === "success" ? (
-            <div className="text-center py-8">
-              <div className="text-green-600 text-4xl mb-3">✓</div>
-              <p className="text-gray-900 font-semibold mb-2">Inquiry Submitted!</p>
-              <p className="text-sm text-gray-600">
-                We'll get back to you soon with more information about this apartment.
-              </p>
+            <div className="text-center py-8 space-y-4">
+              {/* Address Info Box */}
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <div className="text-amber-600 text-xl mt-1">🔒</div>
+                  <div className="text-left">
+                    <p className="font-semibold text-amber-900 text-sm">Exact address & landlord contact available upon request</p>
+                    <p className="text-xs text-amber-800 mt-1">The full street address, landlord name, phone, and unit availability are provided directly by the owner after you make an inquiry.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Success Message */}
+              <div className="pt-4">
+                <p className="text-gray-900 font-semibold text-sm mb-2">Request Submitted!</p>
+                <p className="text-xs text-gray-600">
+                  The owner will reach out to you shortly!
+                </p>
+              </div>
             </div>
           ) : submitStatus === "error" ? (
             <div className="text-center py-8">
@@ -98,13 +111,24 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
               </p>
               <button
                 onClick={() => setSubmitStatus("idle")}
-                className="px-4 py-2 bg-yellow-600 text-white text-sm rounded hover:bg-yellow-700 transition-colors"
+                className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
               >
                 Try Again
               </button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Address Info Box */}
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <div className="text-amber-600 text-xl mt-1">🔒</div>
+                  <div className="text-left">
+                    <p className="font-semibold text-amber-900 text-sm">Exact address & landlord contact available upon request</p>
+                    <p className="text-xs text-amber-800 mt-1">The full street address, landlord name, phone, and unit availability are provided directly by the owner after you make an inquiry.</p>
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Full Name *
@@ -115,7 +139,7 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-600"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                   placeholder="John Doe"
                 />
               </div>
@@ -130,7 +154,7 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-600"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                   placeholder="john@example.com"
                 />
               </div>
@@ -145,7 +169,7 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
                   value={formData.phone}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-600"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                   placeholder="(555) 123-4567"
                 />
               </div>
@@ -159,7 +183,7 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
                   name="moveInDate"
                   value={formData.moveInDate}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-600"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                 />
               </div>
 
@@ -172,7 +196,7 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
                   value={formData.message}
                   onChange={handleChange}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-600 resize-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 resize-none"
                   placeholder="Tell us more about what you're looking for..."
                 />
               </div>
@@ -188,9 +212,9 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                 >
-                  {isSubmitting ? "Sending..." : "Send Inquiry"}
+                  {isSubmitting ? "Requesting..." : "Request Full Details"}
                 </button>
               </div>
             </form>
