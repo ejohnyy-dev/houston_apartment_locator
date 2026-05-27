@@ -19,14 +19,14 @@ export default function HeroSection({ mapFilters, onFilterChange }: HeroSectionP
 
       {/* Content */}
       <div className="relative z-10 container">
-        <div className="max-w-2xl mb-12">
+        <div className="max-w-3xl mx-auto text-center mb-12">
           <p className="text-gold text-sm font-medium tracking-widest uppercase mb-4">
             Habitat Apartment Locators
           </p>
           <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl text-white leading-tight mb-6">
             Find Your Perfect Apartment in Houston
           </h1>
-          <p className="text-white/70 text-lg leading-relaxed mb-8 max-w-lg">
+          <p className="text-white/70 text-lg leading-relaxed mb-8 max-w-lg mx-auto">
             I'm Eric Johnson, your dedicated Houston apartment locator. My service is 100% free — I do the work so you don't have to.
           </p>
         </div>
