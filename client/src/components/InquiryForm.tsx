@@ -9,36 +9,32 @@ interface InquiryFormProps {
 }
 
 export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryFormProps) {
+  const [stage, setStage] = useState<"info" | "signup" | "success" | "error">("info");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
-    moveInDate: "",
-    message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
 
   const createInquiry = trpc.inquiries.create.useMutation({
     onSuccess: () => {
-      setSubmitStatus("success");
+      setStage("success");
       setFormData({
         name: "",
         email: "",
         phone: "",
-        moveInDate: "",
-        message: "",
       });
       setTimeout(() => {
         onClose();
       }, 3000);
     },
     onError: () => {
-      setSubmitStatus("error");
+      setStage("error");
     },
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -49,17 +45,18 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setSubmitStatus("idle");
 
     try {
       await createInquiry.mutateAsync({
         apartmentId,
         apartmentName,
         ...formData,
+        moveInDate: "",
+        message: "",
       });
     } catch (error) {
       console.error("Failed to submit inquiry:", error);
-      setSubmitStatus("error");
+      setStage("error");
     } finally {
       setIsSubmitting(false);
     }
@@ -81,8 +78,8 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
 
         {/* Content */}
         <div className="p-6">
-          {submitStatus === "success" ? (
-            <div className="text-center py-8 space-y-4">
+          {stage === "info" ? (
+            <div className="space-y-4">
               {/* Address Info Box */}
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
                 <div className="flex items-start gap-3">
@@ -94,41 +91,22 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
                 </div>
               </div>
 
-              {/* Success Message */}
-              <div className="pt-4">
-                <p className="text-gray-900 font-semibold text-sm mb-2">Request Submitted!</p>
-                <p className="text-xs text-gray-600">
-                  The owner will reach out to you shortly!
-                </p>
-              </div>
-            </div>
-          ) : submitStatus === "error" ? (
-            <div className="text-center py-8">
-              <div className="text-red-600 text-4xl mb-3">✕</div>
-              <p className="text-gray-900 font-semibold mb-2">Something went wrong</p>
-              <p className="text-sm text-gray-600 mb-4">
-                Please try again or contact us directly.
-              </p>
+              {/* Button */}
               <button
-                onClick={() => setSubmitStatus("idle")}
-                className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                onClick={() => setStage("signup")}
+                className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2"
               >
-                Try Again
+                <span>👁️</span>
+                See Full Property Info
               </button>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Address Info Box */}
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <div className="text-amber-600 text-xl mt-1">🔒</div>
-                  <div className="text-left">
-                    <p className="font-semibold text-amber-900 text-sm">Exact address & landlord contact available upon request</p>
-                    <p className="text-xs text-amber-800 mt-1">The full street address, landlord name, phone, and unit availability are provided directly by the owner after you make an inquiry.</p>
-                  </div>
-                </div>
-              </div>
 
+              {/* Footer Text */}
+              <p className="text-center text-xs text-gray-600">
+                The owner will reach out to you shortly!
+              </p>
+            </div>
+          ) : stage === "signup" ? (
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Full Name *
@@ -174,50 +152,47 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Desired Move-in Date
-                </label>
-                <input
-                  type="date"
-                  name="moveInDate"
-                  value={formData.moveInDate}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Additional Message
-                </label>
-                <textarea
-                  name="message"
-                  value={formData.message}
-                  onChange={handleChange}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 resize-none"
-                  placeholder="Tell us more about what you're looking for..."
-                />
-              </div>
-
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={() => setStage("info")}
                   className="flex-1 px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  Cancel
+                  Back
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                 >
-                  {isSubmitting ? "Requesting..." : "Request Full Details"}
+                  {isSubmitting ? "Signing Up..." : "Sign Up"}
                 </button>
               </div>
             </form>
+          ) : stage === "success" ? (
+            <div className="text-center py-8 space-y-4">
+              <div className="text-green-600 text-4xl">✓</div>
+              <div>
+                <p className="text-gray-900 font-semibold text-sm mb-2">You're All Set!</p>
+                <p className="text-xs text-gray-600">
+                  I'll reach out with the full details shortly!
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="text-red-600 text-4xl mb-3">✕</div>
+              <p className="text-gray-900 font-semibold mb-2">Something went wrong</p>
+              <p className="text-sm text-gray-600 mb-4">
+                Please try again or contact us directly.
+              </p>
+              <button
+                onClick={() => setStage("signup")}
+                className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
           )}
         </div>
       </div>
