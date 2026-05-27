@@ -24,6 +24,9 @@ export default function Footer() {
             <a href="/houston-apartment-move-in-specials" className="text-white/40 hover:text-white/70 text-sm transition-colors">Move-In Specials</a>
             <a href="/faq" className="text-white/40 hover:text-white/70 text-sm transition-colors">FAQ</a>
             <a href="/#contact" className="text-white/40 hover:text-white/70 text-sm transition-colors">Contact</a>
+            <a href="/IABS-1-2.pdf" className="text-white/40 hover:text-white/70 text-sm transition-colors">
+              Texas Real Estate Commission Information About Brokerage Services
+            </a>
           </div>
 
           {/* Contact */}
