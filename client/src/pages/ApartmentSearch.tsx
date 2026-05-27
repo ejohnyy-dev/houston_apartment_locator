@@ -149,10 +149,10 @@ function ApartmentCard({
 
       {/* Content */}
       <div className="p-4">
-        <h3 className="font-semibold text-slate-900 text-sm mb-1 truncate">{apt.name}</h3>
+        <h3 className="font-semibold text-slate-900 text-sm mb-1 truncate">{apt.neighborhood}</h3>
         <p className="text-xs text-slate-500 flex items-center gap-1 mb-2">
           <MapPin className="w-3 h-3 shrink-0" />
-          {apt.neighborhood}
+          Exact address shown after inquiry
         </p>
         <p className="text-base font-bold text-blue-600 mb-3">
           {formatRent(apt.rentMin, apt.rentMax)}
@@ -558,9 +558,9 @@ export default function ApartmentSearch() {
           {selectedApartment && (
             <>
               <DialogHeader>
-                <DialogTitle className="text-base">{selectedApartment.name}</DialogTitle>
+                <DialogTitle className="text-base">{selectedApartment.neighborhood}</DialogTitle>
                 <DialogDescription className="flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5" />{selectedApartment.neighborhood} area
+                  <MapPin className="w-3.5 h-3.5" />Available in {selectedApartment.neighborhood} area
                 </DialogDescription>
               </DialogHeader>
 
