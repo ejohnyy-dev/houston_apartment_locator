@@ -32,12 +32,12 @@ export default function HeroSection({ mapFilters, onFilterChange }: HeroSectionP
         </div>
 
         {/* Search Filter */}
-        <div className="max-w-4xl mx-auto mb-6">
+        <div className="max-w-4xl mx-auto mb-0">
           <MapSearchFilter onFilterChange={onFilterChange} />
         </div>
 
         {/* Map Section */}
-        <div className="max-w-4xl mx-auto mb-8">
+        <div className="max-w-4xl mx-auto mb-8 -mt-2">
           <div className="rounded-2xl overflow-hidden shadow-2xl border border-white/10 h-96 bg-slate-800 ring-1 ring-white/5">
             <HomeMapView className="rounded-2xl" filters={mapFilters} />
           </div>
