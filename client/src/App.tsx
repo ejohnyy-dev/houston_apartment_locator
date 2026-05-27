@@ -10,6 +10,7 @@ import FAQ from "./pages/FAQ";
 import NeighborhoodPage from "./pages/NeighborhoodPage";
 import ScrollToTop from "./components/ScrollToTop";
 import MobileStickyBottomCTA from "./components/MobileStickyBottomCTA";
+import ApartmentSearch from "./pages/ApartmentSearch";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -18,6 +19,7 @@ function Router() {
       <ScrollToTop />
       <Switch>
         <Route path={"/"} component={Home} />
+        <Route path={"/search"} component={ApartmentSearch} />
         <Route path={"/houston-apartment-move-in-specials"} component={MoveInSpecials} />
         <Route path={"/faq"} component={FAQ} />
         <Route path={"/neighborhoods/:slug"} component={NeighborhoodPage} />
