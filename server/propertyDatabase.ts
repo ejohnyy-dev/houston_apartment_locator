@@ -258,6 +258,18 @@ function buildDescription(row: CsvRow): string | null {
   return pieces.length ? pieces.join(" ") : null;
 }
 
+function extractBuildingName(propertyName: string | null): string {
+  if (!propertyName) return "Property";
+  
+  // Remove street addresses - keep only building/complex name
+  // This regex removes patterns like "123 Main St" or "123 Main Street"
+  const cleaned = propertyName
+    .replace(/^\d+\s+[A-Za-z\s]+(?:St|Street|Ave|Avenue|Blvd|Boulevard|Rd|Road|Dr|Drive|Ln|Lane|Ct|Court|Pl|Place|Way|Circle|Cir|Pkwy|Parkway|Terr|Terrace|Tr|Trail|Trl).*$/i, '')
+    .trim();
+  
+  return cleaned || propertyName.trim();
+}
+
 function toApartment(row: CsvRow, index: number, usedIds: Set<number>): PropertyApartment {
   const city = cleanText(row.city) ?? "Houston";
   const minRent = numberFrom(row.min_rent) ?? 0;
@@ -267,10 +279,11 @@ function toApartment(row: CsvRow, index: number, usedIds: Set<number>): Property
   const primaryPhoto = cleanText(row.primary_image_url);
   const photos = primaryPhoto ? [primaryPhoto, ...imageUrls.filter(url => url !== primaryPhoto)] : imageUrls;
   const displayNeighborhood = getDisplayNeighborhood(city, coords.lat, coords.lng);
+  const buildingName = extractBuildingName(cleanText(row.property_name));
 
   return {
     id: stableNumericId(row, index, usedIds),
-    name: cleanText(row.property_name) ?? `Property ${index + 1}`,
+    name: buildingName || `Property ${index + 1}`,
     neighborhood: displayNeighborhood,
     bedrooms: parseBedrooms(row.availability),
     bathrooms: parseBathrooms(row.availability),
