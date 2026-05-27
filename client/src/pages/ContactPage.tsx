@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import Navbar from '@/components/Navbar';
+import Breadcrumb from '@/components/Breadcrumb';
 import ContactForm from '@/components/ContactForm';
 import Footer from '@/components/Footer';
 
@@ -11,6 +12,7 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen">
       <Navbar />
+      <Breadcrumb items={[{ label: 'Contact', href: '/contact' }]} />
       <div className="pt-20">
         <div className="container mx-auto px-4 py-12">
           <h1 className="text-4xl font-bold mb-8 text-center">Get in Touch</h1>
