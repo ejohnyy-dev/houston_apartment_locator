@@ -38,14 +38,6 @@ export default function Navbar() {
               {l.label}
             </a>
           ))}
-          <a href="mailto:ericjohnson@txaptfinder.com" className="flex items-center gap-1.5 text-white/60 hover:text-white text-sm font-medium transition-colors">
-            <Mail size={14} />
-            ericjohnson@txaptfinder.com
-          </a>
-          <a href="tel:8326037278" className="flex items-center gap-1.5 text-white/60 hover:text-white text-sm font-medium transition-colors">
-            <Phone size={14} />
-            (832) 603-7278
-          </a>
           <a href="#contact" className="px-5 py-2 bg-gold text-dark text-sm font-semibold rounded hover:opacity-90 transition-opacity">
             Get Started
           </a>
@@ -64,14 +56,6 @@ export default function Navbar() {
               {l.label}
             </a>
           ))}
-          <a href="mailto:ericjohnson@txaptfinder.com" onClick={() => setOpen(false)} className="flex items-center gap-1.5 text-white/60 hover:text-white text-sm font-medium">
-            <Mail size={14} />
-            ericjohnson@txaptfinder.com
-          </a>
-          <a href="tel:8326037278" onClick={() => setOpen(false)} className="flex items-center gap-1.5 text-white/60 hover:text-white text-sm font-medium">
-            <Phone size={14} />
-            (832) 603-7278
-          </a>
           <a href="#contact" onClick={() => setOpen(false)} className="block text-center py-2.5 bg-gold text-dark text-sm font-semibold rounded">
             Get Started
           </a>
