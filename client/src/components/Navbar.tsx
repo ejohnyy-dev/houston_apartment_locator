@@ -7,6 +7,7 @@ const links = [
   { label: "Services", href: "/#services" },
   { label: "Houston", href: "/#houston" },
   { label: "How It Works", href: "/#how-it-works" },
+  { label: "Search Apartments", href: "/search" },
   { label: "Specials", href: "/houston-apartment-move-in-specials" },
   { label: "FAQ", href: "/faq" },
   { label: "Contact", href: "/#contact" },
