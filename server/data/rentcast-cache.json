@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-05-27T13:29:03.594Z",
+  "generatedAt": "2026-05-27T13:44:04.071Z",
   "status": "ready",
   "entries": [
     {
@@ -971,6 +971,212 @@
             "listedDate": "2025-08-29T00:00:00.000Z",
             "removedDate": null,
             "daysOnMarket": 271
+          }
+        }
+      }
+    },
+    {
+      "propertyId": 36,
+      "propertyName": "3660 Richmond Ave, Houston, TX",
+      "address": "3660 Richmond Ave, Houston, TX",
+      "photos": [
+        "/manus-storage/01_a822391e.jpg",
+        "/manus-storage/02_cc5cf4ae.jpg",
+        "/manus-storage/03_814d7edd.jpg",
+        "/manus-storage/04_85dcc638.jpg"
+      ],
+      "fetchedAt": "2026-05-27T13:44:00.657Z",
+      "status": "matched",
+      "listing": {
+        "id": "3660-Richmond-Ave,-Houston,-TX-77046",
+        "formattedAddress": "3660 Richmond Ave, Houston, TX 77046",
+        "addressLine1": "3660 Richmond Ave",
+        "addressLine2": null,
+        "city": "Houston",
+        "state": "TX",
+        "stateFips": "48",
+        "zipCode": "77046",
+        "county": "Harris",
+        "countyFips": "201",
+        "latitude": 29.73415,
+        "longitude": -95.43272,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 691,
+        "yearBuilt": 2006,
+        "status": "Active",
+        "price": 1199,
+        "listingType": "Standard",
+        "listedDate": "2026-03-30T00:00:00.000Z",
+        "removedDate": null,
+        "createdDate": "2019-11-02T09:41:53.126Z",
+        "lastSeenDate": "2026-05-27T02:29:35.652Z",
+        "daysOnMarket": 59,
+        "history": {
+          "2026-03-30": {
+            "event": "Rental Listing",
+            "price": 1199,
+            "listingType": "Standard",
+            "listedDate": "2026-03-30T00:00:00.000Z",
+            "removedDate": null,
+            "daysOnMarket": 59
+          }
+        }
+      }
+    },
+    {
+      "propertyId": 500,
+      "propertyName": "500 Crawford St, Houston, TX",
+      "address": "500 Crawford St, Houston, TX",
+      "photos": [
+        "/manus-storage/01_3fa5b0e3.jpg",
+        "/manus-storage/02_ba0a3af4.jpg",
+        "/manus-storage/03_e9b8a649.jpg"
+      ],
+      "fetchedAt": "2026-05-27T13:44:03.054Z",
+      "status": "matched",
+      "listing": {
+        "id": "500-Crawford-St,-Houston,-TX-77002",
+        "formattedAddress": "500 Crawford St, Houston, TX 77002",
+        "addressLine1": "500 Crawford St",
+        "addressLine2": null,
+        "city": "Houston",
+        "state": "TX",
+        "stateFips": "48",
+        "zipCode": "77002",
+        "county": "Harris",
+        "countyFips": "201",
+        "latitude": 29.75765,
+        "longitude": -95.35738,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 755,
+        "yearBuilt": 2016,
+        "status": "Active",
+        "price": 1500,
+        "listingType": "Standard",
+        "listedDate": "2024-06-11T00:00:00.000Z",
+        "removedDate": null,
+        "createdDate": "2019-11-02T09:28:11.701Z",
+        "lastSeenDate": "2026-05-27T03:05:07.290Z",
+        "daysOnMarket": 716,
+        "history": {
+          "2024-06-11": {
+            "event": "Rental Listing",
+            "price": 1500,
+            "listingType": "Standard",
+            "listedDate": "2024-06-11T00:00:00.000Z",
+            "removedDate": null,
+            "daysOnMarket": 716
+          }
+        }
+      }
+    },
+    {
+      "propertyId": 51,
+      "propertyName": "5110 Azalea Trace Dr, Houston, TX",
+      "address": "5110 Azalea Trace Dr, Houston, TX",
+      "photos": [
+        "/manus-storage/04_1bd53de8.jpg",
+        "/manus-storage/05_6a899a9d.jpg",
+        "/manus-storage/06_7f6ea36d.jpg",
+        "/manus-storage/07_b6b05fb6.jpg"
+      ],
+      "fetchedAt": "2026-05-27T13:44:03.674Z",
+      "status": "matched",
+      "listing": {
+        "id": "5110-Azalea-Trace-Dr,-Houston,-TX-77066",
+        "formattedAddress": "5110 Azalea Trace Dr, Houston, TX 77066",
+        "addressLine1": "5110 Azalea Trace Dr",
+        "addressLine2": null,
+        "city": "Houston",
+        "state": "TX",
+        "stateFips": "48",
+        "zipCode": "77066",
+        "county": "Harris",
+        "countyFips": "201",
+        "latitude": 29.960381,
+        "longitude": -95.495884,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1.5,
+        "squareFootage": 817,
+        "yearBuilt": 1983,
+        "status": "Active",
+        "price": 765,
+        "listingType": "Standard",
+        "listedDate": "2025-10-23T00:00:00.000Z",
+        "removedDate": null,
+        "createdDate": "2019-11-02T09:28:36.039Z",
+        "lastSeenDate": "2026-05-27T02:56:35.035Z",
+        "daysOnMarket": 217,
+        "history": {
+          "2025-10-23": {
+            "event": "Rental Listing",
+            "price": 765,
+            "listingType": "Standard",
+            "listedDate": "2025-10-23T00:00:00.000Z",
+            "removedDate": null,
+            "daysOnMarket": 217
+          }
+        }
+      }
+    },
+    {
+      "propertyId": 611,
+      "propertyName": "611 Shepherd Dr, Houston, TX",
+      "address": "611 Shepherd Dr, Houston, TX",
+      "photos": [
+        "/manus-storage/08_421c69f9.jpg",
+        "/manus-storage/02_cc5cf4ae.jpg",
+        "/manus-storage/03_814d7edd.jpg"
+      ],
+      "fetchedAt": "2026-05-27T13:44:04.069Z",
+      "status": "matched",
+      "listing": {
+        "id": "611-Shepherd-Dr,-Houston,-TX-77007",
+        "formattedAddress": "611 Shepherd Dr, Houston, TX 77007",
+        "addressLine1": "611 Shepherd Dr",
+        "addressLine2": null,
+        "city": "Houston",
+        "state": "TX",
+        "stateFips": "48",
+        "zipCode": "77007",
+        "county": "Harris",
+        "countyFips": "201",
+        "latitude": 29.76787,
+        "longitude": -95.40999,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 758,
+        "yearBuilt": 2018,
+        "status": "Active",
+        "price": 1587,
+        "listingType": "Standard",
+        "listedDate": "2026-01-29T00:00:00.000Z",
+        "removedDate": null,
+        "createdDate": "2019-11-02T09:32:12.437Z",
+        "lastSeenDate": "2026-05-27T01:14:23.014Z",
+        "daysOnMarket": 119,
+        "history": {
+          "2024-06-11": {
+            "event": "Rental Listing",
+            "price": 1309,
+            "listingType": "Standard",
+            "listedDate": "2024-06-11T00:00:00.000Z",
+            "removedDate": "2025-12-05T00:00:00.000Z",
+            "daysOnMarket": 542
+          },
+          "2026-01-29": {
+            "event": "Rental Listing",
+            "price": 1587,
+            "listingType": "Standard",
+            "listedDate": "2026-01-29T00:00:00.000Z",
+            "removedDate": null,
+            "daysOnMarket": 119
           }
         }
       }
