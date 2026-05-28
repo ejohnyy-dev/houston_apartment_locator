@@ -182,7 +182,7 @@ export function HomeMapView({ className, filters }: HomeMapViewProps) {
             const infoWindow = new window.google.maps.InfoWindow({
               content: `
                 <div class="p-3 max-w-xs bg-white rounded-lg shadow-sm">
-                  <h3 class="font-semibold text-sm text-gray-900">${apt.name}</h3>
+                  <h3 class="font-semibold text-sm text-gray-900">${getDisplayName(apt.name)}</h3>
                   <p class="text-xs text-gray-600">${apt.neighborhood || "Houston"}</p>
                   <p class="text-sm font-medium text-yellow-600 mt-1">$${minRent?.toLocaleString() || "N/A"} - $${maxRent?.toLocaleString() || "N/A"}</p>
                   <p class="text-xs text-gray-600 mt-1">${apt.bedrooms || "?"} bed${apt.bedrooms !== 1 ? "s" : ""}</p>

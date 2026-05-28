@@ -49,3 +49,15 @@ All planned features have been successfully implemented and tested. The applicat
 - [x] Favorites feature: Favorites passed from both Home and ApartmentSearch pages
 - [x] Favorites feature: Unit tests for favorites functionality (12 tests passing)
 - [x] Favorites feature: Integration tests for inquiry submission (4 tests passing)
+
+## Security Audit - Address Privacy
+- [x] Audit: Identified address exposure in HomeMapView marker popup (line 197)
+- [x] Fix: Applied getDisplayName() to HomeMapView marker title display
+- [x] Audit: Identified address exposure in ApartmentSearch favorites (line 598)
+- [x] Fix: Applied getDisplayName() to favorites apartment name storage
+- [x] Verified: ApartmentSearch apartment cards show only neighborhood (not address)
+- [x] Verified: Apartment details modal uses getDisplayName() for title
+- [x] Verified: InquiryForm header uses getDisplayName() for title
+- [x] Verified: localStorage favorites store only stripped names, not full addresses
+- [x] Verified: Server responses only send apartment object with stripped names
+- [x] All tests passing (16/16) with no regressions
