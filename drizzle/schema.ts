@@ -25,4 +25,35 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// TODO: Add your tables here
+// Favorites table to store user-bookmarked apartments
+export const favorites = mysqlTable("favorites", {
+  id: int("id").autoincrement().primaryKey(),
+  apartmentId: varchar("apartmentId", { length: 255 }).notNull(),
+  apartmentName: varchar("apartmentName", { length: 255 }).notNull(),
+  neighborhood: varchar("neighborhood", { length: 255 }),
+  rentMin: int("rentMin"),
+  rentMax: int("rentMax"),
+  bedrooms: int("bedrooms"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Favorite = typeof favorites.$inferSelect;
+export type InsertFavorite = typeof favorites.$inferInsert;
+
+// Inquiries table to store lead submissions
+export const inquiries = mysqlTable("inquiries", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  phone: varchar("phone", { length: 20 }).notNull(),
+  apartmentId: varchar("apartmentId", { length: 255 }).notNull(),
+  apartmentName: varchar("apartmentName", { length: 255 }).notNull(),
+  moveInDate: varchar("moveInDate", { length: 100 }),
+  message: text("message"),
+  favoriteIds: text("favoriteIds"), // JSON array of favorite apartment IDs
+  source: varchar("source", { length: 100 }).default("website"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Inquiry = typeof inquiries.$inferSelect;
+export type InsertInquiry = typeof inquiries.$inferInsert;

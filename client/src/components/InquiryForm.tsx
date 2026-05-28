@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { X } from "lucide-react";
+import { X, Heart } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { FavoriteApartment } from "@/hooks/useFavorites";
 
 interface InquiryFormProps {
   apartmentId: string;
   apartmentName: string;
+  favorites?: FavoriteApartment[];
   onClose: () => void;
 }
 
@@ -28,7 +30,7 @@ function getDisplayName(name: string) {
   return name;
 }
 
-export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryFormProps) {
+export function InquiryForm({ apartmentId, apartmentName, favorites, onClose }: InquiryFormProps) {
   const [stage, setStage] = useState<"info" | "signup" | "success" | "error">("info");
   const [formData, setFormData] = useState({
     name: "",
@@ -74,12 +76,15 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
     setIsSubmitting(true);
 
     try {
+      // Include favorite IDs in the inquiry
+      const favoriteIds = favorites?.map(fav => fav.apartmentId) || [];
       await createInquiry.mutateAsync({
         apartmentId,
         apartmentName,
         ...formData,
         moveInDate: "",
         message: "",
+        favoriteIds: JSON.stringify(favoriteIds),
       });
     } catch (error) {
       console.error("Failed to submit inquiry:", error);
@@ -107,6 +112,25 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
         <div className="p-4 sm:p-6">
           {stage === "info" ? (
             <div className="space-y-4">
+              {/* Favorites List */}
+              {favorites && favorites.length > 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Heart className="w-4 h-4 text-blue-600 fill-blue-600" />
+                    <p className="font-semibold text-blue-900 text-sm">Your Saved Apartments ({favorites.length})</p>
+                  </div>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {favorites.map((fav) => (
+                      <div key={fav.apartmentId} className="text-xs text-blue-800 bg-white rounded px-2 py-1.5">
+                        <p className="font-medium">{getDisplayName(fav.apartmentName)}</p>
+                        {fav.neighborhood && <p className="text-blue-700">{fav.neighborhood}</p>}
+                        {fav.rentMin && <p className="text-blue-700">${fav.rentMin.toLocaleString()} - ${fav.rentMax?.toLocaleString() || "N/A"}</p>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Address Info Box */}
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
                 <div className="flex items-start gap-3">
