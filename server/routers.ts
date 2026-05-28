@@ -100,6 +100,7 @@ export const appRouter = router({
           moveInDate: z.string().optional(),
           message: z.string().optional(),
           favoriteIds: z.string().optional(), // JSON array of favorite apartment IDs
+          qualificationData: z.string().optional(), // JSON stringified qualification data
         })
       )
       .mutation(async ({ input }) => {

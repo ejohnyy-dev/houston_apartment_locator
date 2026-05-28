@@ -196,6 +196,7 @@ export default function Home() {
           apartmentId={inquiryForm.apartmentId}
           apartmentName={inquiryForm.apartmentName}
           favorites={favorites}
+          qualificationData={qualificationData || undefined}
           onClose={() => setInquiryForm(null)}
         />
       )}

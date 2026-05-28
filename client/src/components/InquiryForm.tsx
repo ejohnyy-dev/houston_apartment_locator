@@ -3,17 +3,19 @@ import { X, Heart } from "lucide-react";
 import { cn, getDisplayName } from "@/lib/utils";
 import { FavoriteApartment } from "@/hooks/useFavorites";
 import { trpc } from "@/lib/trpc";
+import { QualificationData } from "./QualificationPrompt";
 
 interface InquiryFormProps {
   apartmentId: string;
   apartmentName: string;
   favorites?: FavoriteApartment[];
+  qualificationData?: QualificationData;
   onClose: () => void;
 }
 
 
 
-export function InquiryForm({ apartmentId, apartmentName, favorites, onClose }: InquiryFormProps) {
+export function InquiryForm({ apartmentId, apartmentName, favorites, qualificationData, onClose }: InquiryFormProps) {
   const [stage, setStage] = useState<"info" | "signup" | "success" | "error">("info");
   const [formData, setFormData] = useState({
     name: "",
@@ -39,7 +41,7 @@ export function InquiryForm({ apartmentId, apartmentName, favorites, onClose }: 
     },
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     let processedValue = value;
     
@@ -59,15 +61,16 @@ export function InquiryForm({ apartmentId, apartmentName, favorites, onClose }: 
     setIsSubmitting(true);
 
     try {
-      // Include favorite IDs in the inquiry
+      // Include favorite IDs and qualification data in the inquiry
       const favoriteIds = favorites?.map(fav => fav.apartmentId) || [];
       await createInquiry.mutateAsync({
         apartmentId,
         apartmentName,
         ...formData,
-        moveInDate: "",
+        moveInDate: qualificationData?.moveInTimeline || "",
         message: "",
         favoriteIds: JSON.stringify(favoriteIds),
+        qualificationData: qualificationData ? JSON.stringify(qualificationData) : undefined,
       });
     } catch (error) {
       console.error("Failed to submit inquiry:", error);
