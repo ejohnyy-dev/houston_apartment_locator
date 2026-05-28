@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronRight } from "lucide-react";
+import { BottomSheet } from "./BottomSheet";
 
 export interface QualificationData {
   preferredAreas: string[];
