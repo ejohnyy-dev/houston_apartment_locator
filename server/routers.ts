@@ -40,10 +40,14 @@ export const appRouter = router({
       )
       .query(async ({ input }) => {
         try {
+          // If RentCast API is available, it already blends local data
           if (process.env.RENTCAST_API_KEY) {
             return await getRentCastDatabaseApartments(input);
           }
-          return [];
+          
+          // Fallback to local property database only
+          const { queryPropertyDatabase } = await import('./propertyDatabase');
+          return await queryPropertyDatabase(input);
         } catch (error) {
           console.error('Failed to fetch apartments:', error);
           throw new Error('Unable to fetch apartments. Please try again.');
