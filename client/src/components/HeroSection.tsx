@@ -1,5 +1,5 @@
 import { HomeMapView } from "./HomeMapView";
-import { MapSearchFilter, type MapFilters } from "./MapSearchFilter";
+import { type MapFilters } from "./MapSearchFilter";
 
 const HERO_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663501304397/4gMGD9qetV63jA9Ts6DXxD/DiWnH726c4RI_566565c1.jpg";
 
@@ -35,11 +35,6 @@ export default function HeroSection({ mapFilters, onFilterChange }: HeroSectionP
         <h2 className="text-2xl sm:text-3xl font-semibold text-white text-center mb-8 max-w-3xl mx-auto">
           Search 530+ Available Apartments on the Map
         </h2>
-
-        {/* Search Filter */}
-        <div className="max-w-4xl mx-auto mb-0">
-          <MapSearchFilter onFilterChange={onFilterChange} />
-        </div>
 
         {/* Map Section */}
         <div className="max-w-4xl mx-auto mb-8 -mt-2">
