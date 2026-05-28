@@ -121,12 +121,17 @@ export const appRouter = router({
           const googleSheetsUrl = process.env.GOOGLE_SHEETS_ENDPOINT;
           if (googleSheetsUrl) {
             try {
-              await fetch(googleSheetsUrl, {
+              const response = await fetch(googleSheetsUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
+                redirect: "follow",
               });
-              console.log("[Google Sheets] Lead submitted successfully");
+              if (response.ok) {
+                console.log("[Google Sheets] Lead submitted successfully");
+              } else {
+                console.warn("[Google Sheets] Unexpected status:", response.status);
+              }
             } catch (googleError) {
               console.error("[Google Sheets] Error:", googleError);
             }
