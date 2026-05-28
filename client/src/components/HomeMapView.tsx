@@ -173,15 +173,21 @@ export function HomeMapView({ className, filters }: HomeMapViewProps) {
         const markers: google.maps.Marker[] = [];
         const infoWindows: Map<google.maps.Marker, google.maps.InfoWindow> = new Map();
         
-        filteredApartments.forEach((apt) => {
+        filteredApartments.forEach((apt, index) => {
           // Use latitude/longitude from apartment data
-          const lat = (apt as any).latitude;
-          const lng = (apt as any).longitude;
+          let lat = (apt as any).latitude;
+          let lng = (apt as any).longitude;
           
           if (lat && lng && lat !== 0 && lng !== 0) {
+            // Add a tiny bit of jitter if markers are at the exact same location
+            // This is common for neighborhood-level coordinates
+            const jitter = 0.002; // Roughly 200 meters
+            const latJitter = (Math.random() - 0.5) * jitter;
+            const lngJitter = (Math.random() - 0.5) * jitter;
+            
             // Create standard Marker
             const marker = new window.google.maps.Marker({
-              position: { lat, lng },
+              position: { lat: lat + latJitter, lng: lng + lngJitter },
               title: apt.name,
             });
             markers.push(marker);
@@ -198,8 +204,8 @@ export function HomeMapView({ className, filters }: HomeMapViewProps) {
                   <p class="text-xs text-gray-600">${apt.neighborhood || "Houston"}</p>
                   <p class="text-sm font-medium text-yellow-600 mt-1">$${minRent?.toLocaleString() || "N/A"} - $${maxRent?.toLocaleString() || "N/A"}</p>
                   <p class="text-xs text-gray-600 mt-1">${apt.bedrooms || "?"} bed${apt.bedrooms !== 1 ? "s" : ""}</p>
-                  <button class="mt-2 w-full px-3 py-1.5 bg-yellow-600 text-white text-xs rounded hover:bg-yellow-700 transition-colors" data-apt-id="${apartmentId}" onclick="window.handleApartmentInquiry && window.handleApartmentInquiry('${apartmentId}', '${getDisplayName(apt.name)}')"
-                    Inquire Now
+                  <button class="mt-2 w-full px-3 py-2 bg-[#C9A96E] text-black font-semibold text-xs rounded hover:bg-[#B8985D] transition-colors" data-apt-id="${apartmentId}" onclick="window.handleApartmentInquiry && window.handleApartmentInquiry('${apartmentId}', '${getDisplayName(apt.name).replace(/'/g, "\\'")}')">
+                    See Full Property Details
                   </button>
                 </div>
               `,

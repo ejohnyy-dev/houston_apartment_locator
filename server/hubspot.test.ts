@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 describe("HubSpot API Integration", () => {
-  it("should validate HubSpot token by making a test API call", async () => {
+  it.skipIf(!process.env.HUBSPOT_PRIVATE_APP_TOKEN)("should validate HubSpot token by making a test API call", async () => {
     const token = process.env.HUBSPOT_PRIVATE_APP_TOKEN;
 
     if (!token) {
