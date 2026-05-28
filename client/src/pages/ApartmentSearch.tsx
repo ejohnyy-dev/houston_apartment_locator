@@ -18,6 +18,26 @@ import { InquiryForm } from '@/components/InquiryForm';
 import { toast } from 'sonner';
 import { Link } from 'wouter';
 
+// Strip street address from apartment name for privacy
+function getDisplayName(name: string) {
+  // Remove street address patterns (e.g., "123 Main St, City, State 12345")
+  // Keep only the building/complex name
+  const parts = name.split(',');
+  if (parts.length > 1) {
+    // If there's a comma, likely has address, return first part
+    return parts[0].trim();
+  }
+  // If no comma, check for patterns like "123 Street Name"
+  const addressPattern = /^\d+\s+/;
+  if (addressPattern.test(name)) {
+    // Remove leading number and street
+    const words = name.split(' ');
+    // Skip first word (number) and second word (street type), return rest
+    return words.slice(2).join(' ') || name;
+  }
+  return name;
+}
+
 interface ApartmentTeased {
   id: number;
   name: string;
@@ -709,7 +729,7 @@ export default function ApartmentSearch() {
           {selectedApartment && (
             <>
               <DialogHeader>
-                <DialogTitle>{selectedApartment.name}</DialogTitle>
+                <DialogTitle>{getDisplayName(selectedApartment.name)}</DialogTitle>
                 <DialogDescription className="flex items-center gap-1 text-slate-500">
                   <MapPin className="w-3.5 h-3.5" />
                   {selectedApartment.neighborhood} area
