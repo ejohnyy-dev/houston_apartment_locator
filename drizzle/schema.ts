@@ -51,9 +51,30 @@ export const inquiries = mysqlTable("inquiries", {
   moveInDate: varchar("moveInDate", { length: 100 }),
   message: text("message"),
   favoriteIds: text("favoriteIds"), // JSON array of favorite apartment IDs
+  qualificationData: text("qualificationData"), // JSON object with qualification preferences
   source: varchar("source", { length: 100 }).default("website"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
 export type Inquiry = typeof inquiries.$inferSelect;
 export type InsertInquiry = typeof inquiries.$inferInsert;
+
+// Qualifications table to store user preferences for apartment matching
+export const qualifications = mysqlTable("qualifications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: varchar("userId", { length: 255 }).notNull(),
+  preferredAreas: text("preferredAreas"),
+  moveInTimeline: varchar("moveInTimeline", { length: 50 }),
+  minBedrooms: int("minBedrooms"),
+  maxBedrooms: int("maxBedrooms"),
+  minBathrooms: int("minBathrooms"),
+  maxBathrooms: int("maxBathrooms"),
+  minBudget: int("minBudget"),
+  maxBudget: int("maxBudget"),
+  pets: text("pets"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Qualification = typeof qualifications.$inferSelect;
+export type InsertQualification = typeof qualifications.$inferInsert;

@@ -4,10 +4,14 @@ import HeroSection from "@/components/HeroSection";
 import Footer from "@/components/Footer";
 import { MapSearchFilter, type MapFilters } from "@/components/MapSearchFilter";
 import { InquiryForm } from "@/components/InquiryForm";
+import { QualificationPrompt } from "@/components/QualificationPrompt";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useQualification } from "@/contexts/QualificationContext";
 
 export default function Home() {
   const { favorites } = useFavorites();
+  const { showQualificationPrompt, setShowQualificationPrompt, setQualificationData } = useQualification();
+  const neighborhoods = ["Midtown", "Downtown", "Upper Kirby", "Montrose", "Galleria Area", "Heights", "Westchase", "Uptown", "Memorial", "Bellaire", "Sugar Land", "The Woodlands", "Katy", "Pearland"];
   const [mapFilters, setMapFilters] = useState<MapFilters>({
     searchText: "",
     minBedrooms: null,
@@ -39,6 +43,13 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
+      <QualificationPrompt
+        isOpen={showQualificationPrompt}
+        neighborhoods={neighborhoods}
+        onComplete={(data) => {
+          setQualificationData(data);
+        }}
+      />
       <Navbar />
       <HeroSection mapFilters={mapFilters} onFilterChange={setMapFilters} />
       
