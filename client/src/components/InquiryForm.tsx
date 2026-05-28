@@ -8,6 +8,26 @@ interface InquiryFormProps {
   onClose: () => void;
 }
 
+// Strip street address from apartment name for privacy
+function getDisplayName(name: string) {
+  // Remove street address patterns (e.g., "123 Main St, City, State 12345")
+  // Keep only the building/complex name
+  const parts = name.split(',');
+  if (parts.length > 1) {
+    // If there's a comma, likely has address, return first part
+    return parts[0].trim();
+  }
+  // If no comma, check for patterns like "123 Street Name"
+  const addressPattern = /^\d+\s+/;
+  if (addressPattern.test(name)) {
+    // Remove leading number and street
+    const words = name.split(' ');
+    // Skip first word (number) and second word (street type), return rest
+    return words.slice(2).join(' ') || name;
+  }
+  return name;
+}
+
 export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryFormProps) {
   const [stage, setStage] = useState<"info" | "signup" | "success" | "error">("info");
   const [formData, setFormData] = useState({
@@ -74,7 +94,7 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
       <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-4 sm:p-6 border-b sticky top-0 bg-white">
-          <h2 className="text-base sm:text-lg font-semibold text-gray-900 truncate pr-2">{apartmentName}</h2>
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 truncate pr-2">{getDisplayName(apartmentName)}</h2>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 transition-colors flex-shrink-0 p-1 hover:bg-gray-100 rounded-lg"
