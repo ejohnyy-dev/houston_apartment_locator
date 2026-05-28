@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { cn } from "@/lib/utils";
+import { cn, getDisplayName } from "@/lib/utils";
 import { loadMarkerClustererLibrary, createMarkerClusterer } from "@/lib/markerClusterer";
 
 declare global {
@@ -11,25 +11,7 @@ declare global {
   }
 }
 
-// Strip street address from apartment name for privacy
-function getDisplayName(name: string) {
-  // Remove street address patterns (e.g., "123 Main St, City, State 12345")
-  // Keep only the building/complex name
-  const parts = name.split(',');
-  if (parts.length > 1) {
-    // If there's a comma, likely has address, return first part
-    return parts[0].trim();
-  }
-  // If no comma, check for patterns like "123 Street Name"
-  const addressPattern = /^\d+\s+/;
-  if (addressPattern.test(name)) {
-    // Remove leading number and street
-    const words = name.split(' ');
-    // Skip first word (number) and second word (street type), return rest
-    return words.slice(2).join(' ') || name;
-  }
-  return name;
-}
+
 
 const API_KEY = import.meta.env.VITE_FRONTEND_FORGE_API_KEY;
 const FORGE_BASE_URL = import.meta.env.VITE_FRONTEND_FORGE_API_URL || "https://forge.butterfly-effect.dev";

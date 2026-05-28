@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { trpc } from '@/lib/trpc';
+import { cn, getDisplayName } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -19,25 +19,7 @@ import { toast } from 'sonner';
 import { Link } from 'wouter';
 import { useFavorites } from '@/hooks/useFavorites';
 
-// Strip street address from apartment name for privacy
-function getDisplayName(name: string) {
-  // Remove street address patterns (e.g., "123 Main St, City, State 12345")
-  // Keep only the building/complex name
-  const parts = name.split(',');
-  if (parts.length > 1) {
-    // If there's a comma, likely has address, return first part
-    return parts[0].trim();
-  }
-  // If no comma, check for patterns like "123 Street Name"
-  const addressPattern = /^\d+\s+/;
-  if (addressPattern.test(name)) {
-    // Remove leading number and street
-    const words = name.split(' ');
-    // Skip first word (number) and second word (street type), return rest
-    return words.slice(2).join(' ') || name;
-  }
-  return name;
-}
+
 
 interface ApartmentTeased {
   id: number;
@@ -146,7 +128,7 @@ function ApartmentCard({
       {/* Photo */}
       <div className="relative h-44 bg-slate-100 overflow-hidden">
         {photo ? (
-          <img src={photo} alt={apt.name} className="w-full h-full object-cover" />
+          <img src={photo} alt={getDisplayName(apt.name)} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <Home className="w-12 h-12 text-slate-300" />
@@ -164,7 +146,7 @@ function ApartmentCard({
         )}
 
         <Badge className="absolute top-2 left-2 bg-blue-600 text-white text-xs">
-          {formatBedrooms(apt.bedrooms)} · {apt.bathrooms} Bath
+          {getDisplayName(apt.name)}
         </Badge>
         {apt.special && (
           <Badge className="absolute bottom-2 left-2 bg-amber-500 text-white text-xs max-w-[90%] truncate">
@@ -193,10 +175,10 @@ function ApartmentCard({
 
       {/* Content */}
       <div className="p-4">
-        <h3 className="font-semibold text-slate-900 text-sm mb-1 truncate">{apt.neighborhood}</h3>
+        <h3 className="font-semibold text-slate-900 text-sm mb-1 truncate">{getDisplayName(apt.name)}</h3>
         <p className="text-xs text-slate-500 flex items-center gap-1 mb-2">
           <MapPin className="w-3 h-3 shrink-0" />
-          Exact address shown after inquiry
+          {apt.neighborhood}
         </p>
         <p className="text-base font-bold text-blue-600 mb-3">
           {formatRent(apt.rentMin, apt.rentMax)}
@@ -614,9 +596,9 @@ export default function ApartmentSearch() {
           {selectedApartment && (
             <>
               <DialogHeader>
-                <DialogTitle className="text-base">{selectedApartment.neighborhood}</DialogTitle>
+                <DialogTitle className="text-base">{getDisplayName(selectedApartment.name)}</DialogTitle>
                 <DialogDescription className="flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5" />Available in {selectedApartment.neighborhood} area
+                  <MapPin className="w-3.5 h-3.5" />{selectedApartment.neighborhood} area
                 </DialogDescription>
               </DialogHeader>
 
@@ -625,7 +607,7 @@ export default function ApartmentSearch() {
                 {selectedApartment.photos?.[0] ? (
                   <img
                     src={selectedApartment.photos[0]}
-                    alt={selectedApartment.name}
+                    alt={getDisplayName(selectedApartment.name)}
                     className={`w-full h-full object-cover transition-all duration-300 ${
                       !true ? 'blur-sm scale-105' : ''
                     }`}
@@ -723,13 +705,13 @@ export default function ApartmentSearch() {
             </DialogDescription>
           </DialogHeader>
 
-          {pendingApartment && (
+              {pendingApartment && (
             <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 flex items-center gap-3 mb-2">
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
                 <Home className="w-6 h-6 text-blue-600" />
               </div>
               <div>
-                <p className="font-medium text-slate-900 text-sm">{pendingApartment.name}</p>
+                <p className="font-medium text-slate-900 text-sm">{getDisplayName(pendingApartment.name)}</p>
                 <p className="text-xs text-slate-500">{pendingApartment.neighborhood} · {formatRent(pendingApartment.rentMin, pendingApartment.rentMax)}</p>
               </div>
             </div>
