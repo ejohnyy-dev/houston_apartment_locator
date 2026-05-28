@@ -63,13 +63,14 @@ All planned features have been successfully implemented and tested. The applicat
 - [x] All tests passing (16/16) with no regressions
 
 
-## Staged Qualification Flow (In Progress)
+## Staged Qualification Flow (Complete)
 - [x] Database schema: Add qualifications table to store user preferences
 - [x] QualificationPrompt component: Create form with areas, timeline, bedrooms, bathrooms, budget, pets
-- [x] Qualification trigger: Implement on first meaningful map interaction (pin click + search)
+- [x] Qualification trigger: Implement on first marker click in HomeMapView
 - [x] QualificationContext: State management with localStorage persistence
 - [x] QualificationProvider: Integrated into App.tsx for global access
-- [ ] Apartment filtering: Filter listings based on qualification preferences
-- [ ] Bottom sheet UI: Mobile-optimized qualification flow with bottom sheet modal
-- [ ] Pass qualification to inquiry: Include qualification context in inquiry submission
-- [ ] Qualification tests: Unit tests for qualification logic and filtering
+- [x] Apartment filtering: Filter listings based on qualification preferences (qualificationFilter.ts)
+- [x] Bottom sheet UI: Mobile-optimized qualification flow with BottomSheet component
+- [x] Matched apartments display: "Strong Matches for You" section on Home page
+- [x] Pass qualification to inquiry: Include qualification context in inquiry submission
+- [x] Qualification tests: Comprehensive unit tests for filtering and matching (qualification.test.ts)
