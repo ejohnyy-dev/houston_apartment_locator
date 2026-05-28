@@ -36,9 +36,16 @@ export function InquiryForm({ apartmentId, apartmentName, onClose }: InquiryForm
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    let processedValue = value;
+    
+    // For phone field, strip non-numeric characters
+    if (name === "phone") {
+      processedValue = value.replace(/\D/g, "");
+    }
+    
     setFormData(prev => ({
       ...prev,
-      [name]: value,
+      [name]: processedValue,
     }));
   };
 

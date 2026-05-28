@@ -88,7 +88,10 @@ export const appRouter = router({
           apartmentName: z.string(),
           name: z.string().min(1, "Name is required"),
           email: z.string().email("Valid email is required"),
-          phone: z.string().min(10, "Valid phone number is required"),
+          phone: z.string().min(7, "Valid phone number is required").refine(
+            (val) => /\d{7,}/.test(val.replace(/\D/g, "")),
+            "Phone number must contain at least 7 digits"
+          ),
           moveInDate: z.string().optional(),
           message: z.string().optional(),
         })
