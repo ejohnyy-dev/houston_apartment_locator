@@ -577,7 +577,7 @@ export default function ApartmentSearch() {
                   isFavorited={isFavorited(apt.id.toString())}
                   onToggleFavorite={() => toggleFavorite({
                     apartmentId: apt.id.toString(),
-                    apartmentName: apt.name,
+                    apartmentName: getDisplayName(apt.name),
                     neighborhood: apt.neighborhood,
                     rentMin: typeof apt.rentMin === 'string' ? parseInt(apt.rentMin) : apt.rentMin,
                     rentMax: typeof apt.rentMax === 'string' ? parseInt(apt.rentMax) : apt.rentMax || undefined,
