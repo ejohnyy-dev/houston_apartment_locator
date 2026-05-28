@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { cn, getDisplayName } from "@/lib/utils";
 import { loadMarkerClustererLibrary, createMarkerClusterer } from "@/lib/markerClusterer";
+import { useQualification } from "@/contexts/QualificationContext";
 
 declare global {
   interface Window {
@@ -70,6 +71,7 @@ interface HomeMapViewProps {
     minRent: number | null;
     maxRent: number | null;
   };
+  neighborhoods?: string[];
 }
 
 export function HomeMapView({ className, filters }: HomeMapViewProps) {
@@ -78,6 +80,8 @@ export function HomeMapView({ className, filters }: HomeMapViewProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [filteredCount, setFilteredCount] = useState(0);
   const [hasError, setHasError] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const { hasQualified, setShowQualificationPrompt } = useQualification();
   const { data: apartments } = trpc.apartments.list.useQuery({
     minRent: 0,
     maxRent: 10000,
@@ -195,6 +199,11 @@ export function HomeMapView({ className, filters }: HomeMapViewProps) {
             infoWindows.set(marker, infoWindow);
 
             marker.addListener("click", () => {
+              // Trigger qualification on first meaningful interaction
+              if (!hasInteracted && !hasQualified) {
+                setHasInteracted(true);
+                setShowQualificationPrompt(true);
+              }
               // Close all other info windows
               infoWindows.forEach((iw) => {
                 iw.close();
@@ -224,11 +233,19 @@ export function HomeMapView({ className, filters }: HomeMapViewProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [apartments, filters]);
+  }, [apartments, filters, hasInteracted, hasQualified, setShowQualificationPrompt]);
 
   useEffect(() => {
     initMap();
   }, [initMap]);
+
+  // Load qualification state from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem("qualification_data");
+    if (stored) {
+      setHasInteracted(true);
+    }
+  }, []);
 
   return (
     <div className={cn("w-full h-full relative", className)}>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X, Heart } from "lucide-react";
 import { cn, getDisplayName } from "@/lib/utils";
 import { FavoriteApartment } from "@/hooks/useFavorites";
+import { trpc } from "@/lib/trpc";
 
 interface InquiryFormProps {
   apartmentId: string;
