@@ -281,9 +281,14 @@ function toApartment(row: CsvRow, index: number, usedIds: Set<number>): Property
   const displayNeighborhood = getDisplayNeighborhood(city, coords.lat, coords.lng);
   const buildingName = extractBuildingName(cleanText(row.property_name));
 
+  // Additional check to ensure building name doesn't contain digits followed by space (likely address)
+  const sanitizedName = /^\d+\s+/.test(buildingName) 
+    ? buildingName.split(' ').slice(2).join(' ') || buildingName 
+    : buildingName;
+
   return {
     id: stableNumericId(row, index, usedIds),
-    name: buildingName || `Property ${index + 1}`,
+    name: sanitizedName || `Property ${index + 1}`,
     neighborhood: displayNeighborhood,
     bedrooms: parseBedrooms(row.availability),
     bathrooms: parseBathrooms(row.availability),

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { X, Heart } from "lucide-react";
-import { trpc } from "@/lib/trpc";
+import { cn, getDisplayName } from "@/lib/utils";
 import { FavoriteApartment } from "@/hooks/useFavorites";
 
 interface InquiryFormProps {
@@ -10,25 +10,7 @@ interface InquiryFormProps {
   onClose: () => void;
 }
 
-// Strip street address from apartment name for privacy
-function getDisplayName(name: string) {
-  // Remove street address patterns (e.g., "123 Main St, City, State 12345")
-  // Keep only the building/complex name
-  const parts = name.split(',');
-  if (parts.length > 1) {
-    // If there's a comma, likely has address, return first part
-    return parts[0].trim();
-  }
-  // If no comma, check for patterns like "123 Street Name"
-  const addressPattern = /^\d+\s+/;
-  if (addressPattern.test(name)) {
-    // Remove leading number and street
-    const words = name.split(' ');
-    // Skip first word (number) and second word (street type), return rest
-    return words.slice(2).join(' ') || name;
-  }
-  return name;
-}
+
 
 export function InquiryForm({ apartmentId, apartmentName, favorites, onClose }: InquiryFormProps) {
   const [stage, setStage] = useState<"info" | "signup" | "success" | "error">("info");
