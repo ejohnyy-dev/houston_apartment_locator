@@ -7,6 +7,12 @@ import { InquiryForm } from "@/components/InquiryForm";
 import { QualificationPrompt } from "@/components/QualificationPrompt";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useQualification } from "@/contexts/QualificationContext";
+import { trpc } from "@/lib/trpc";
+import { filterApartmentsByQualification, sortByMatchScore } from "@/lib/qualificationFilter";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { MapPin, Bed, Bath, DollarSign } from "lucide-react";
+import { getDisplayName } from "@/lib/utils";
 
 export default function Home() {
   const { favorites } = useFavorites();
@@ -23,6 +29,18 @@ export default function Home() {
     apartmentId: string;
     apartmentName: string;
   } | null>(null);
+  const { qualificationData, hasQualified } = useQualification();
+  const { data: apartments } = trpc.apartments.list.useQuery({
+    minRent: 0,
+    maxRent: 10000,
+  });
+
+  const matchedApartments = qualificationData && apartments
+    ? sortByMatchScore(
+        filterApartmentsByQualification(apartments, qualificationData),
+        qualificationData
+      ).slice(0, 6)
+    : [];
 
   useEffect(() => {
     document.title = "Houston Apartment Locator | Free Service | Habitat";
@@ -52,6 +70,60 @@ export default function Home() {
       />
       <Navbar />
       <HeroSection mapFilters={mapFilters} onFilterChange={setMapFilters} />
+
+      {/* Matched Apartments Section */}
+      {hasQualified && matchedApartments.length > 0 && (
+        <section className="py-16 bg-gold/5 border-t border-gold/20">
+          <div className="container">
+            <h2 className="text-3xl sm:text-4xl font-semibold text-white mb-4 text-center">
+              Strong Matches for You
+            </h2>
+            <p className="text-white/60 text-center mb-12 max-w-2xl mx-auto">
+              Based on your preferences, we found {matchedApartments.length} apartments that match your criteria. Click any to request full details.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {matchedApartments.map((apt) => {
+                const rentMin = apt.rentMin ? parseInt(String(apt.rentMin)) : 0;
+                const rentMax = apt.rentMax ? parseInt(String(apt.rentMax)) : 0;
+                return (
+                  <Card key={apt.id} className="bg-dark/50 border-white/10 hover:border-gold/50 transition-colors overflow-hidden">
+                    <div className="p-6">
+                      <div className="flex items-start justify-between mb-3">
+                        <h3 className="text-lg font-semibold text-white flex-1">{getDisplayName(apt.name)}</h3>
+                        <Badge className="bg-gold/20 text-gold border-gold/30">Match</Badge>
+                      </div>
+                      <div className="space-y-2 text-sm text-white/70 mb-4">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-gold" />
+                          {apt.neighborhood || "Houston"}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Bed className="w-4 h-4 text-gold" />
+                          {apt.bedrooms || "?"} bed{apt.bedrooms !== 1 ? "s" : ""}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Bath className="w-4 h-4 text-gold" />
+                          {apt.bathrooms || "?"} bath{apt.bathrooms !== 1 ? "s" : ""}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="w-4 h-4 text-gold" />
+                          ${rentMin.toLocaleString()} - ${rentMax.toLocaleString()}/mo
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setInquiryForm({ apartmentId: String(apt.id), apartmentName: getDisplayName(apt.name) })}
+                        className="w-full px-4 py-2 bg-gold text-dark font-semibold text-sm rounded hover:bg-gold/90 transition-colors"
+                      >
+                        Request Details
+                      </button>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
       
       {/* Why Choose Us Section */}
       <section className="py-16 bg-dark border-t border-white/5">
