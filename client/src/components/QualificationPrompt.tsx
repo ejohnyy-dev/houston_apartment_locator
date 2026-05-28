@@ -1,27 +1,18 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronRight } from "lucide-react";
 import { BottomSheet } from "./BottomSheet";
 
 export interface QualificationData {
   preferredAreas: string[];
   moveInTimeline: string;
-  minBedrooms: number;
-  maxBedrooms: number;
-  minBathrooms: number;
-  maxBathrooms: number;
-  minBudget: number;
-  maxBudget: number;
-  pets: {
-    dogs: boolean;
-    cats: boolean;
-    other: string;
-  };
+  bedrooms: string;
+  bathrooms: string;
+  budget: string;
+  pets: string[];
 }
 
 interface QualificationPromptProps {
@@ -38,8 +29,35 @@ const TIMELINE_OPTIONS = [
   { value: "flexible", label: "Flexible" },
 ];
 
-const BEDROOM_OPTIONS = [1, 2, 3, 4, 5];
-const BATHROOM_OPTIONS = [1, 1.5, 2, 2.5, 3];
+const BEDROOM_OPTIONS = [
+  { value: "studio", label: "Studio" },
+  { value: "1bed", label: "1 Bedroom" },
+  { value: "2bed", label: "2 Bedrooms" },
+  { value: "3bed", label: "3 Bedrooms" },
+  { value: "4plus", label: "4+ Bedrooms" },
+];
+
+const BATHROOM_OPTIONS = [
+  { value: "1bath", label: "1 Bathroom" },
+  { value: "1.5bath", label: "1.5 Bathrooms" },
+  { value: "2bath", label: "2 Bathrooms" },
+  { value: "2.5plus", label: "2.5+ Bathrooms" },
+];
+
+const BUDGET_OPTIONS = [
+  { value: "under-1000", label: "Under $1,000" },
+  { value: "1000-1500", label: "$1,000 - $1,500" },
+  { value: "1500-2000", label: "$1,500 - $2,000" },
+  { value: "2000-2500", label: "$2,000 - $2,500" },
+  { value: "2500-3000", label: "$2,500 - $3,000" },
+  { value: "3000-plus", label: "$3,000+" },
+];
+
+const PET_OPTIONS = [
+  { value: "dogs", label: "Dogs" },
+  { value: "cats", label: "Cats" },
+  { value: "other", label: "Other Pets" },
+];
 
 export function QualificationPrompt({
   onComplete,
@@ -49,18 +67,11 @@ export function QualificationPrompt({
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState<QualificationData>({
     preferredAreas: [],
-    moveInTimeline: "flexible",
-    minBedrooms: 1,
-    maxBedrooms: 3,
-    minBathrooms: 1,
-    maxBathrooms: 2,
-    minBudget: 1000,
-    maxBudget: 3000,
-    pets: {
-      dogs: false,
-      cats: false,
-      other: "",
-    },
+    moveInTimeline: "",
+    bedrooms: "",
+    bathrooms: "",
+    budget: "",
+    pets: [],
   });
 
   if (!isOpen) return null;
@@ -74,8 +85,17 @@ export function QualificationPrompt({
     }));
   };
 
+  const handlePetToggle = (pet: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      pets: prev.pets.includes(pet)
+        ? prev.pets.filter((p) => p !== pet)
+        : [...prev.pets, pet],
+    }));
+  };
+
   const handleNext = () => {
-    if (step < 4) {
+    if (step < 5) {
       setStep(step + 1);
     } else {
       onComplete(formData);
@@ -95,11 +115,13 @@ export function QualificationPrompt({
       case 1:
         return formData.moveInTimeline !== "";
       case 2:
-        return formData.minBedrooms <= formData.maxBedrooms;
+        return formData.bedrooms !== "";
       case 3:
-        return formData.minBathrooms <= formData.maxBathrooms;
+        return formData.bathrooms !== "";
       case 4:
-        return formData.minBudget <= formData.maxBudget;
+        return formData.budget !== "";
+      case 5:
+        return true; // Pets are optional
       default:
         return true;
     }
@@ -114,12 +136,12 @@ export function QualificationPrompt({
             Find Your Perfect Apartment
           </h2>
           <p className="text-sm text-muted-foreground">
-            Step {step + 1} of 5 - Tell us what you're looking for
+            Step {step + 1} of 6 - Tell us what you're looking for
           </p>
           <div className="mt-3 h-1 bg-muted rounded-full overflow-hidden">
             <div
               className="h-full bg-primary transition-all duration-300"
-              style={{ width: `${((step + 1) / 5) * 100}%` }}
+              style={{ width: `${((step + 1) / 6) * 100}%` }}
             />
           </div>
         </div>
@@ -128,7 +150,7 @@ export function QualificationPrompt({
         {step === 0 && (
           <div className="space-y-4">
             <Label className="text-base font-semibold">
-              Which neighborhoods interest you?
+              Which neighborhoods interest you? (Select at least one)
             </Label>
             <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto">
               {neighborhoods.map((area) => (
@@ -154,20 +176,23 @@ export function QualificationPrompt({
         {step === 1 && (
           <div className="space-y-4">
             <Label className="text-base font-semibold">When do you want to move?</Label>
-            <Select value={formData.moveInTimeline} onValueChange={(value) =>
-              setFormData((prev) => ({ ...prev, moveInTimeline: value }))
-            }>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {TIMELINE_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="space-y-2">
+              {TIMELINE_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() =>
+                    setFormData((prev) => ({ ...prev, moveInTimeline: option.value }))
+                  }
+                  className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
+                    formData.moveInTimeline === option.value
+                      ? "border-primary bg-primary/10"
+                      : "border-muted hover:border-primary/50"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
@@ -175,43 +200,22 @@ export function QualificationPrompt({
         {step === 2 && (
           <div className="space-y-4">
             <Label className="text-base font-semibold">How many bedrooms?</Label>
-            <div className="space-y-3">
-              <div>
-                <label className="text-sm text-muted-foreground mb-2 block">
-                  Minimum: {formData.minBedrooms}
-                </label>
-                <Input
-                  type="range"
-                  min="1"
-                  max="5"
-                  value={formData.minBedrooms}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      minBedrooms: Math.min(parseInt(e.target.value), prev.maxBedrooms),
-                    }))
+            <div className="space-y-2">
+              {BEDROOM_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() =>
+                    setFormData((prev) => ({ ...prev, bedrooms: option.value }))
                   }
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <label className="text-sm text-muted-foreground mb-2 block">
-                  Maximum: {formData.maxBedrooms}
-                </label>
-                <Input
-                  type="range"
-                  min="1"
-                  max="5"
-                  value={formData.maxBedrooms}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      maxBedrooms: Math.max(parseInt(e.target.value), prev.minBedrooms),
-                    }))
-                  }
-                  className="w-full"
-                />
-              </div>
+                  className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
+                    formData.bedrooms === option.value
+                      ? "border-primary bg-primary/10"
+                      : "border-muted hover:border-primary/50"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
             </div>
           </div>
         )}
@@ -220,138 +224,76 @@ export function QualificationPrompt({
         {step === 3 && (
           <div className="space-y-4">
             <Label className="text-base font-semibold">How many bathrooms?</Label>
-            <div className="space-y-3">
-              <div>
-                <label className="text-sm text-muted-foreground mb-2 block">
-                  Minimum: {formData.minBathrooms}
-                </label>
-                <Input
-                  type="range"
-                  min="1"
-                  max="3"
-                  step="0.5"
-                  value={formData.minBathrooms}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      minBathrooms: Math.min(parseFloat(e.target.value), prev.maxBathrooms),
-                    }))
+            <div className="space-y-2">
+              {BATHROOM_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() =>
+                    setFormData((prev) => ({ ...prev, bathrooms: option.value }))
                   }
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <label className="text-sm text-muted-foreground mb-2 block">
-                  Maximum: {formData.maxBathrooms}
-                </label>
-                <Input
-                  type="range"
-                  min="1"
-                  max="3"
-                  step="0.5"
-                  value={formData.maxBathrooms}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      maxBathrooms: Math.max(parseFloat(e.target.value), prev.minBathrooms),
-                    }))
-                  }
-                  className="w-full"
-                />
-              </div>
+                  className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
+                    formData.bathrooms === option.value
+                      ? "border-primary bg-primary/10"
+                      : "border-muted hover:border-primary/50"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
             </div>
           </div>
         )}
 
-        {/* Step 4: Budget & Pets */}
+        {/* Step 4: Budget */}
         {step === 4 && (
-          <div className="space-y-6">
-            <div className="space-y-3">
-              <Label className="text-base font-semibold">What's your budget?</Label>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Min</label>
-                  <Input
-                    type="number"
-                    value={formData.minBudget}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        minBudget: parseInt(e.target.value) || 0,
-                      }))
-                    }
-                    placeholder="1000"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Max</label>
-                  <Input
-                    type="number"
-                    value={formData.maxBudget}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        maxBudget: parseInt(e.target.value) || 0,
-                      }))
-                    }
-                    placeholder="3000"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <Label className="text-base font-semibold">Do you have pets?</Label>
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="dogs"
-                    checked={formData.pets.dogs}
-                    onCheckedChange={(checked) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        pets: { ...prev.pets, dogs: checked as boolean },
-                      }))
-                    }
-                  />
-                  <label htmlFor="dogs" className="text-sm cursor-pointer font-medium">
-                    Dogs
-                  </label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="cats"
-                    checked={formData.pets.cats}
-                    onCheckedChange={(checked) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        pets: { ...prev.pets, cats: checked as boolean },
-                      }))
-                    }
-                  />
-                  <label htmlFor="cats" className="text-sm cursor-pointer font-medium">
-                    Cats
-                  </label>
-                </div>
-                <Input
-                  type="text"
-                  placeholder="Other pets (e.g., birds, reptiles)"
-                  value={formData.pets.other}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      pets: { ...prev.pets, other: e.target.value },
-                    }))
+          <div className="space-y-4">
+            <Label className="text-base font-semibold">What's your monthly budget?</Label>
+            <div className="space-y-2">
+              {BUDGET_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() =>
+                    setFormData((prev) => ({ ...prev, budget: option.value }))
                   }
-                  className="mt-2"
-                />
-              </div>
+                  className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
+                    formData.budget === option.value
+                      ? "border-primary bg-primary/10"
+                      : "border-muted hover:border-primary/50"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Step 5: Pets */}
+        {step === 5 && (
+          <div className="space-y-4">
+            <Label className="text-base font-semibold">Do you have any pets? (Optional)</Label>
+            <div className="space-y-2">
+              {PET_OPTIONS.map((option) => (
+                <div key={option.value} className="flex items-center space-x-2 p-3 rounded-lg border-2 border-muted hover:border-primary/50 cursor-pointer">
+                  <Checkbox
+                    id={option.value}
+                    checked={formData.pets.includes(option.value)}
+                    onCheckedChange={() => handlePetToggle(option.value)}
+                  />
+                  <label
+                    htmlFor={option.value}
+                    className="text-sm cursor-pointer font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    {option.label}
+                  </label>
+                </div>
+              ))}
             </div>
           </div>
         )}
 
         {/* Footer */}
-        <div className="flex gap-3 mt-8">
+        <div className="mt-8 flex gap-3">
           <Button
             variant="outline"
             onClick={handleBack}
@@ -365,9 +307,9 @@ export function QualificationPrompt({
             disabled={!isStepValid()}
             className="flex-1"
           >
-            {step === 4 ? (
+            {step === 5 ? (
               <>
-                Find Matches <ChevronRight className="w-4 h-4 ml-2" />
+                Complete <ChevronRight className="w-4 h-4 ml-2" />
               </>
             ) : (
               <>
