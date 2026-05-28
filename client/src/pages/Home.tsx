@@ -1,12 +1,13 @@
-import { useEffect } from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import Footer from "@/components/Footer";
 import { MapSearchFilter, type MapFilters } from "@/components/MapSearchFilter";
 import { InquiryForm } from "@/components/InquiryForm";
+import { useFavorites } from "@/hooks/useFavorites";
 
 export default function Home() {
+  const { favorites } = useFavorites();
   const [mapFilters, setMapFilters] = useState<MapFilters>({
     searchText: "",
     minBedrooms: null,
@@ -111,6 +112,7 @@ export default function Home() {
         <InquiryForm
           apartmentId={inquiryForm.apartmentId}
           apartmentName={inquiryForm.apartmentName}
+          favorites={favorites}
           onClose={() => setInquiryForm(null)}
         />
       )}

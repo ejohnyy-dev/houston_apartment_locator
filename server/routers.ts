@@ -7,6 +7,7 @@ import {
   getRentCastDatabaseStats,
 } from "./rentcastDatabase";
 import { notifyOwner } from "./_core/notification";
+import { createInquiry } from "./db";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -94,6 +95,7 @@ export const appRouter = router({
           ),
           moveInDate: z.string().optional(),
           message: z.string().optional(),
+          favoriteIds: z.string().optional(), // JSON array of favorite apartment IDs
         })
       )
       .mutation(async ({ input }) => {
@@ -102,6 +104,16 @@ export const appRouter = router({
           const nameParts = input.name.trim().split(/\s+/);
           const firstName = nameParts[0] || "";
           const lastName = nameParts.slice(1).join(" ") || "";
+
+          // Parse favorite IDs if provided
+          let favoriteApartmentIds: string[] = [];
+          if (input.favoriteIds) {
+            try {
+              favoriteApartmentIds = JSON.parse(input.favoriteIds);
+            } catch (e) {
+              console.warn("Failed to parse favoriteIds:", e);
+            }
+          }
 
           // Prepare payload for Google Sheets and HubSpot
           const payload = {
@@ -114,6 +126,7 @@ export const appRouter = router({
             apartmentId: input.apartmentId,
             moveInDate: input.moveInDate || "",
             message: input.message || "",
+            favoriteApartmentIds: favoriteApartmentIds.join(", ") || "None",
             source: "website",
             smsConsent: true,
             consentSource: "txaptfinder.com",
@@ -154,6 +167,7 @@ export const appRouter = router({
                   apartment_id: input.apartmentId,
                   move_in_date: input.moveInDate || "",
                   message: input.message || "",
+                  favorite_apartments: favoriteApartmentIds.join(", ") || "None",
                   lifecyclestage: "lead",
                 },
               };
@@ -175,7 +189,20 @@ export const appRouter = router({
           // Notify owner of new inquiry
           await notifyOwner({
             title: `New Apartment Inquiry: ${input.apartmentName}`,
-            content: `Name: ${input.name}\nEmail: ${input.email}\nPhone: ${input.phone}\nMove-in Date: ${input.moveInDate || "Not specified"}\nMessage: ${input.message || "No additional message"}`,
+            content: `Name: ${input.name}\nEmail: ${input.email}\nPhone: ${input.phone}\nMove-in Date: ${input.moveInDate || "Not specified"}\nMessage: ${input.message || "No additional message"}\nSaved Apartments: ${favoriteApartmentIds.length > 0 ? favoriteApartmentIds.join(", ") : "None"}`,
+          });
+
+          // Store inquiry in database
+          await createInquiry({
+            name: input.name,
+            email: input.email,
+            phone: input.phone,
+            apartmentId: input.apartmentId,
+            apartmentName: input.apartmentName,
+            moveInDate: input.moveInDate || null,
+            message: input.message || null,
+            favoriteIds: input.favoriteIds || null,
+            source: "website",
           });
 
           return {

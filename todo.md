@@ -37,3 +37,15 @@ All planned features have been successfully implemented and tested. The applicat
 - Add apartment details page with full information
 - Implement user authentication for saved favorites
 - Add review/rating system for apartments
+
+## Completed Features (Continued)
+- [x] Favorites feature: Database schema to store favorites with inquiries
+- [x] Favorites feature: Client-side state management with localStorage persistence
+- [x] Favorites feature: UI indicators on apartment cards with heart button (add/remove favorites)
+- [x] Favorites feature: Favorites list display in inquiry form ("Your Saved Apartments" section)
+- [x] Favorites feature: Include favorites in inquiry submission (favoriteIds JSON array)
+- [x] Favorites feature: Favorites sent to Google Sheets and HubSpot integrations
+- [x] Favorites feature: Favorites included in owner notifications
+- [x] Favorites feature: Favorites passed from both Home and ApartmentSearch pages
+- [x] Favorites feature: Unit tests for favorites functionality (12 tests passing)
+- [x] Favorites feature: Integration tests for inquiry submission (4 tests passing)

@@ -11,12 +11,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   MapPin, Home, DollarSign, BedDouble, Bath, Lock, ArrowRight,
   Phone, Mail, ChevronLeft, ChevronRight, Search, SlidersHorizontal,
-  X, Eye, MessageCircle
+  X, Eye, MessageCircle, Heart
 } from 'lucide-react';
 import { MapView } from '@/components/Map';
 import { InquiryForm } from '@/components/InquiryForm';
 import { toast } from 'sonner';
 import { Link } from 'wouter';
+import { useFavorites } from '@/hooks/useFavorites';
 
 // Strip street address from apartment name for privacy
 function getDisplayName(name: string) {
@@ -122,12 +123,16 @@ function ApartmentCard({
   onLearnMore,
   onViewDetails,
   isSelected,
+  isFavorited,
+  onToggleFavorite,
 }: {
   apt: ApartmentTeased;
   isLead: boolean;
   onLearnMore: () => void;
   onViewDetails: () => void;
   isSelected: boolean;
+  isFavorited: boolean;
+  onToggleFavorite: () => void;
 }) {
   const photo = apt.photos?.[0];
 
@@ -166,6 +171,24 @@ function ApartmentCard({
             Special
           </Badge>
         )}
+
+        {/* Favorite Button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleFavorite();
+          }}
+          className="absolute top-2 right-2 bg-white/90 hover:bg-white rounded-full p-2 transition-colors"
+          title={isFavorited ? "Remove from favorites" : "Add to favorites"}
+        >
+          <Heart
+            className={`w-5 h-5 ${
+              isFavorited
+                ? "fill-red-500 text-red-500"
+                : "text-gray-400 hover:text-red-500"
+            }`}
+          />
+        </button>
       </div>
 
       {/* Content */}
@@ -236,6 +259,7 @@ function PhotoCarousel({ photos, name }: { photos: string[]; name: string }) {
 }
 
 export default function ApartmentSearch() {
+  const { favorites, isFavorited, toggleFavorite } = useFavorites();
   const [selectedApartment, setSelectedApartment] = useState<ApartmentTeased | null>(null);
   const [showLeadForm, setShowLeadForm] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
@@ -568,6 +592,15 @@ export default function ApartmentSearch() {
                   onLearnMore={() => handleLearnMore(apt)}
                   onViewDetails={() => handleViewDetails(apt)}
                   isSelected={selectedApartment?.id === apt.id}
+                  isFavorited={isFavorited(apt.id.toString())}
+                  onToggleFavorite={() => toggleFavorite({
+                    apartmentId: apt.id.toString(),
+                    apartmentName: apt.name,
+                    neighborhood: apt.neighborhood,
+                    rentMin: typeof apt.rentMin === 'string' ? parseInt(apt.rentMin) : apt.rentMin,
+                    rentMax: typeof apt.rentMax === 'string' ? parseInt(apt.rentMax) : apt.rentMax || undefined,
+                    bedrooms: apt.bedrooms,
+                  })}
                 />
               ))
             )}
@@ -719,6 +752,7 @@ export default function ApartmentSearch() {
         <InquiryForm
           apartmentId={selectedApartment.id.toString()}
           apartmentName={selectedApartment.name}
+          favorites={favorites}
           onClose={() => setShowInquiryForm(false)}
         />
       )}
