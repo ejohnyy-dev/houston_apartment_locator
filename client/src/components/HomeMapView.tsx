@@ -11,6 +11,26 @@ declare global {
   }
 }
 
+// Strip street address from apartment name for privacy
+function getDisplayName(name: string) {
+  // Remove street address patterns (e.g., "123 Main St, City, State 12345")
+  // Keep only the building/complex name
+  const parts = name.split(',');
+  if (parts.length > 1) {
+    // If there's a comma, likely has address, return first part
+    return parts[0].trim();
+  }
+  // If no comma, check for patterns like "123 Street Name"
+  const addressPattern = /^\d+\s+/;
+  if (addressPattern.test(name)) {
+    // Remove leading number and street
+    const words = name.split(' ');
+    // Skip first word (number) and second word (street type), return rest
+    return words.slice(2).join(' ') || name;
+  }
+  return name;
+}
+
 const API_KEY = import.meta.env.VITE_FRONTEND_FORGE_API_KEY;
 const FORGE_BASE_URL = import.meta.env.VITE_FRONTEND_FORGE_API_URL || "https://forge.butterfly-effect.dev";
 const MAPS_PROXY_URL = `${FORGE_BASE_URL}/v1/maps/proxy`;
@@ -178,7 +198,7 @@ export function HomeMapView({ className, filters }: HomeMapViewProps) {
                   <p class="text-xs text-gray-600">${apt.neighborhood || "Houston"}</p>
                   <p class="text-sm font-medium text-yellow-600 mt-1">$${minRent?.toLocaleString() || "N/A"} - $${maxRent?.toLocaleString() || "N/A"}</p>
                   <p class="text-xs text-gray-600 mt-1">${apt.bedrooms || "?"} bed${apt.bedrooms !== 1 ? "s" : ""}</p>
-                  <button class="mt-2 w-full px-3 py-1.5 bg-yellow-600 text-white text-xs rounded hover:bg-yellow-700 transition-colors" data-apt-id="${apartmentId}" onclick="window.handleApartmentInquiry && window.handleApartmentInquiry('${apartmentId}', '${apt.name}')">
+                  <button class="mt-2 w-full px-3 py-1.5 bg-yellow-600 text-white text-xs rounded hover:bg-yellow-700 transition-colors" data-apt-id="${apartmentId}" onclick="window.handleApartmentInquiry && window.handleApartmentInquiry('${apartmentId}', '${getDisplayName(apt.name)}')"
                     Inquire Now
                   </button>
                 </div>

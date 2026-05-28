@@ -18,6 +18,7 @@
 - [x] Lead capture form for apartment inquiries (InquiryForm component)
 - [x] Inquiry endpoint with owner notification (inquiries.create tRPC mutation)
 - [x] Inquiry form validation tests (4 test cases for schema validation)
+- [x] Address privacy fix: Strip street addresses from map marker inquiry flow (getDisplayName applied in HomeMapView)
 
 ## Completed Features (All Done!)
 All planned features have been successfully implemented and tested. The application now provides:
