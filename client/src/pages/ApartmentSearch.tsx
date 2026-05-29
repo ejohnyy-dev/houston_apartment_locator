@@ -332,7 +332,7 @@ export default function ApartmentSearch() {
         position: { lat, lng },
         map,
         content: pin,
-        title: apt.name,
+        title: getDisplayName(apt.name),
       });
 
       marker.addListener('click', () => {
