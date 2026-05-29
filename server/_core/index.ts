@@ -83,33 +83,33 @@ async function startServer() {
         });
       }
 
-      try {
-        const properties: Record<string, string> = {
-          email: String(email),
-          firstname: String(
-            first_name ||
-              (typeof name === "string" ? name.split(" ")?.[0] : "") ||
-              ""
-          ),
-          lastname: String(
-            last_name ||
-              (typeof name === "string" ? name.split(" ")?.slice(1).join(" ") : "") ||
-              ""
-          ),
-          phone: String(phone || ""),
-          budget: String(budget || ""),
-          bedrooms: String(bedrooms || ""),
-          movein_timeline: String(move_in_timeline || ""),
-          preferred_area: String(preferred_area || ""),
-          pets: String(pets || ""),
-          notes: String(notes || ""),
-        };
+      const toStr = (val: unknown): string => String(val || "");
+      const filterEmptyProperties = (obj: Record<string, string>): Record<string, string> => {
+        return Object.fromEntries(
+          Object.entries(obj).filter(([, value]) => value !== "")
+        );
+      };
 
-        // Remove empty properties
-        Object.keys(properties).forEach((key) => {
-          if (!properties[key]) {
-            delete properties[key];
-          }
+      try {
+        const properties = filterEmptyProperties({
+          email: toStr(email),
+          firstname: toStr(
+            first_name ||
+              (typeof name === "string" ? name.split(" ")?.[0] : "")
+          ),
+          lastname: toStr(
+            last_name ||
+              (typeof name === "string"
+                ? name.split(" ")?.slice(1).join(" ")
+                : "")
+          ),
+          phone: toStr(phone),
+          budget: toStr(budget),
+          bedrooms: toStr(bedrooms),
+          movein_timeline: toStr(move_in_timeline),
+          preferred_area: toStr(preferred_area),
+          pets: toStr(pets),
+          notes: toStr(notes),
         });
 
         const updateUrl = `https://api.hubapi.com/crm/v3/objects/contacts/${encodeURIComponent(
@@ -157,37 +157,36 @@ async function startServer() {
           hubspotError = `HubSpot error: ${hubspotResponse.status}`;
           console.error("HubSpot API error:", hubspotResponse.status, errorData);
         }
-      } catch (hubspotError) {
-        console.error("HubSpot fetch error:", hubspotError);
+      } catch (err) {
+        console.error("HubSpot fetch error:", err);
         return res.status(500).json({
           ok: false,
           error: "Failed to send lead to HubSpot",
         });
       }
 
-      // Send to Google Sheets (OPTIONAL)
       const googleSheetsUrl = process.env.GOOGLE_SHEETS_ENDPOINT;
       if (googleSheetsUrl) {
         try {
           const googlePayload = new URLSearchParams({
-            firstName: String(first_name || ""),
-            lastName: String(last_name || ""),
-            email: String(email || ""),
-            phone: String(phone || ""),
-            budget: String(budget || ""),
-            bedrooms: String(bedrooms || ""),
-            moveIn: String(move_in_timeline || ""),
-            areas: String(preferred_area || ""),
-            pets: String(pets || ""),
-            notes: String(notes || ""),
-            smsConsent: String(smsConsent || false),
-            sms_consent: String(smsConsent || false),
-            contact_consent: String(smsConsent || false),
+            firstName: toStr(first_name),
+            lastName: toStr(last_name),
+            email: toStr(email),
+            phone: toStr(phone),
+            budget: toStr(budget),
+            bedrooms: toStr(bedrooms),
+            moveIn: toStr(move_in_timeline),
+            areas: toStr(preferred_area),
+            pets: toStr(pets),
+            notes: toStr(notes),
+            smsConsent: toStr(smsConsent || false),
+            sms_consent: toStr(smsConsent || false),
+            contact_consent: toStr(smsConsent || false),
             consent_source: "txaptfinder.com contact form",
             consent_timestamp: new Date().toISOString(),
             _source: "txaptfinder.com",
-            page_url: String(req.headers.referer || ""),
-            user_agent: String(req.headers["user-agent"] || ""),
+            page_url: toStr(req.headers.referer),
+            user_agent: toStr(req.headers["user-agent"]),
           });
 
           await fetch(googleSheetsUrl, {
@@ -197,9 +196,8 @@ async function startServer() {
           });
 
           console.log("Lead successfully sent to Google Sheets:", email);
-        } catch (googleError) {
-          console.error("Google Sheets error:", googleError);
-          // Don't fail the request if Google Sheets fails
+        } catch (err) {
+          console.error("Google Sheets error:", err);
         }
       } else {
         console.warn("Google Sheets endpoint not configured, skipping");
