@@ -52,14 +52,33 @@ export default function ContactForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleInputChange = (field: string, value: string | boolean) =>
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const handleInputChange = (field: string, value: string | boolean) => {
+    let processedValue: string | boolean = value;
+
+    if (field === "phone" && typeof value === "string") {
+      const digitsOnly = value.replace(/\D/g, "");
+      processedValue = digitsOnly.slice(0, 10);
+    }
+
+    setFormData((prev) => ({ ...prev, [field]: processedValue }));
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!formData.firstName || !formData.email || !formData.phone) {
-      toast.error("Please fill in your name, email, and phone number.");
+    if (!formData.firstName.trim()) {
+      toast.error("Please enter your first name.");
+      return;
+    }
+
+    if (!formData.email.includes("@")) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+
+    const phoneDigits = formData.phone.replace(/\D/g, "");
+    if (phoneDigits.length < 10) {
+      toast.error("Please enter a valid 10-digit phone number.");
       return;
     }
 
