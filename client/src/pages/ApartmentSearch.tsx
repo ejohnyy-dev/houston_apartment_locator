@@ -19,6 +19,9 @@ import { InquiryForm } from '@/components/InquiryForm';
 import { toast } from 'sonner';
 import { Link } from 'wouter';
 import { useFavorites } from '@/hooks/useFavorites';
+import { useQualification } from '@/contexts/QualificationContext';
+import { QualificationPrompt } from '@/components/QualificationPrompt';
+
 
 interface ApartmentTeased {
   id: number;
@@ -240,6 +243,7 @@ function PhotoCarousel({ photos, name }: { photos: string[]; name: string }) {
 }
 
 export default function ApartmentSearch() {
+  const { qualificationData, hasQualified, setQualificationData, setShowQualificationPrompt, showQualificationPrompt } = useQualification();
   const { favorites, isFavorited, toggleFavorite } = useFavorites();
   const [selectedApartment, setSelectedApartment] = useState<ApartmentTeased | null>(null);
   const [showLeadForm, setShowLeadForm] = useState(false);
@@ -256,6 +260,13 @@ export default function ApartmentSearch() {
   const [bedroomFilter, setBedroomFilter] = useState('');
   const [rentRange, setRentRange] = useState<[number, number]>(DEFAULT_RENT_RANGE);
   const [searchText, setSearchText] = useState('');
+
+  // Show qualification prompt on first visit to /search
+  useEffect(() => {
+    if (!hasQualified && !showQualificationPrompt) {
+      setShowQualificationPrompt(true);
+    }
+  }, [hasQualified, showQualificationPrompt, setShowQualificationPrompt]);
 
   const { data: apartmentsData, isLoading } = trpc.apartments.list.useQuery(
     {
@@ -380,6 +391,15 @@ export default function ApartmentSearch() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
+      {/* Qualification Prompt */}
+      <QualificationPrompt
+        isOpen={showQualificationPrompt && !hasQualified}
+        onComplete={(data) => {
+          setQualificationData(data);
+          setShowQualificationPrompt(false);
+        }}
+        neighborhoods={Array.from(new Set(apartments.map(a => a.neighborhood))).sort()}
+      />
       {/* Top Nav */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
