@@ -145,9 +145,9 @@ export default function ContactForm() {
   }
 
   const inputClass =
-    "w-full bg-dark border border-white/10 rounded px-4 py-3 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-gold/50 transition-colors";
+    "w-full bg-white border border-white/10 rounded px-4 py-3 text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gold/50 transition-colors";
   const selectClass =
-    "w-full bg-dark border border-white/10 rounded px-4 py-3 text-sm text-white focus:outline-none focus:border-gold/50 transition-colors appearance-none";
+    "w-full bg-white border border-white/10 rounded px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gold/50 transition-colors appearance-none";
   const labelClass = "block text-white/60 text-xs font-medium tracking-wide uppercase mb-1.5";
 
   return (

@@ -179,7 +179,7 @@ export function InquiryForm({ apartmentId, apartmentName, favorites, qualificati
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-base min-h-[44px]"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-base min-h-[44px] text-gray-900"
                   placeholder="John Doe"
                   autoComplete="name"
                 />
@@ -195,7 +195,7 @@ export function InquiryForm({ apartmentId, apartmentName, favorites, qualificati
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-base min-h-[44px]"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-base min-h-[44px] text-gray-900"
                   placeholder="john@example.com"
                   autoComplete="email"
                 />
@@ -211,7 +211,7 @@ export function InquiryForm({ apartmentId, apartmentName, favorites, qualificati
                   value={formData.phone}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-base min-h-[44px]"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-base min-h-[44px] text-gray-900"
                   placeholder="(555) 123-4567"
                   autoComplete="tel"
                 />
