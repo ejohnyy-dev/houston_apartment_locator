@@ -174,7 +174,7 @@ export function HomeMapView({ className, filters }: HomeMapViewProps) {
             // Create standard Marker
             const marker = new window.google.maps.Marker({
               position: { lat: lat + latJitter, lng: lng + lngJitter },
-              title: apt.name,
+              title: getDisplayName(apt.name),
             });
             markers.push(marker);
 
