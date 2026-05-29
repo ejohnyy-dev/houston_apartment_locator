@@ -448,7 +448,7 @@ function listingPhotos(listing: RentCastListing): string[] {
     ...(Array.isArray(listing.images) ? listing.images : []),
   ].filter(Boolean);
   // Remove duplicates using Set
-  return Array.from(new Set(all));
+  return [...new Set(all)];
 }
 
 function listingName(listing: RentCastListing) {
@@ -460,6 +460,7 @@ function listingToApartment(listing: RentCastListing, index: number, fallbackPho
 
   const descriptionParts = [
     listing.description,
+    listing.formattedAddress ? `Address: ${listing.formattedAddress}.` : null,
     listing.propertyType ? `Property type: ${listing.propertyType}.` : null,
     listing.status ? `RentCast status: ${listing.status}.` : null,
     listing.daysOnMarket != null ? `Listed for ${listing.daysOnMarket} days.` : null,
@@ -503,42 +504,12 @@ async function loadRentCastData() {
   await writeCache(cache);
 
   const targetPhotosById = new Map(targets.map(target => [target.id, target.photos]));
-  let apartments = cache.entries
+  const apartments = cache.entries
     .filter(entry => entry.status === "matched" && entry.listing)
     .map((entry, index) =>
       listingToApartment(entry.listing!, index, entry.photos ?? targetPhotosById.get(entry.propertyId) ?? [])
     )
     .filter((apartment): apartment is PropertyApartment => Boolean(apartment));
-  
-  // Deduplicate RentCast apartments by ID
-  const seenIds = new Set<number>();
-  apartments = apartments.filter(apt => {
-    if (seenIds.has(apt.id)) {
-      return false;
-    }
-    seenIds.add(apt.id);
-    return true;
-  });
-
-  // Blend local property database with RentCast results
-  try {
-    const { getEligiblePropertyDatabaseRecords } = await import('./propertyDatabase');
-    const records = await getEligiblePropertyDatabaseRecords();
-    const localApartments = records.map(({ apartment }) => apartment);
-    // Add local properties that don't duplicate RentCast listings
-    // Create a set of RentCast addresses for deduplication
-    const rentcastSet = new Set(
-      apartments.map(a => (a.name || '').toLowerCase().trim())
-    );
-    const uniqueLocal = localApartments.filter(apt => {
-      const aptAddr = (apt.name || '').toLowerCase().trim();
-      return !rentcastSet.has(aptAddr);
-    });
-    apartments = [...apartments, ...uniqueLocal];
-    log.info('Blended apartments', { rentcast: apartments.length - uniqueLocal.length, local: uniqueLocal.length, total: apartments.length });
-  } catch (error) {
-    log.error('Could not load local property database', error);
-  }
   const cities = new Set(apartments.map(apartment => apartment.neighborhood).filter(Boolean));
   const matches = cache.entries.filter(entry => entry.status === "matched").length;
   const usage = await readUsage();
@@ -583,6 +554,16 @@ export async function getRentCastDatabaseApartments(
     if (filters?.maxBedrooms !== undefined && apartment.bedrooms > filters.maxBedrooms) return false;
     if (filters?.minRent !== undefined && apartment.rentMin < filters.minRent) return false;
     if (filters?.maxRent !== undefined && apartment.rentMin > filters.maxRent) return false;
+
+    // New renter-focused filters (aligned with propertyDatabase)
+    if (filters?.minBathrooms !== undefined && (apartment.bathrooms ?? 0) < filters.minBathrooms) return false;
+    if (filters?.maxBathrooms !== undefined && (apartment.bathrooms ?? Infinity) > filters.maxBathrooms) return false;
+
+    if (filters?.hasSpecial && !apartment.special) return false;
+
+    if (filters?.minSqft !== undefined && (apartment.minSqft ?? 0) < filters.minSqft) return false;
+    if (filters?.maxSqft !== undefined && (apartment.maxSqft ?? Infinity) > filters.maxSqft) return false;
+
     return true;
   });
 }
