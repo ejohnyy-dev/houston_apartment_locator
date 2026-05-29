@@ -177,7 +177,7 @@ export const appRouter = router({
                 },
               };
 
-              await fetch("https://api.hubapi.com/crm/v3/objects/contacts", {
+              const hubspotResponse = await fetch("https://api.hubapi.com/crm/v3/objects/contacts", {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
@@ -185,7 +185,12 @@ export const appRouter = router({
                 },
                 body: JSON.stringify(hubspotPayload),
               });
-              console.log("[HubSpot] Lead submitted successfully");
+
+              if (hubspotResponse.ok) {
+                console.log("[HubSpot] Lead submitted successfully");
+              } else {
+                console.warn("[HubSpot] Unexpected status:", hubspotResponse.status);
+              }
             } catch (hubspotError) {
               console.error("[HubSpot] Error:", hubspotError);
             }
