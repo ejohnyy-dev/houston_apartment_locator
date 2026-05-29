@@ -44,11 +44,11 @@ export function MapSearchFilter({ onFilterChange }: MapSearchFilterProps) {
     onFilterChange?.(resetFilters);
   }, [onFilterChange]);
 
-  const hasActiveFilters = 
-    filters.searchText || 
-    filters.minBedrooms !== null || 
-    filters.maxBedrooms !== null || 
-    filters.minRent !== null || 
+  const hasActiveFilters =
+    Boolean(filters.searchText?.trim()) ||
+    filters.minBedrooms !== null ||
+    filters.maxBedrooms !== null ||
+    filters.minRent !== null ||
     filters.maxRent !== null;
 
   return (
@@ -88,7 +88,7 @@ export function MapSearchFilter({ onFilterChange }: MapSearchFilterProps) {
                 Min Bedrooms
               </label>
               <select
-                value={filters.minBedrooms ?? ""}
+                value={filters.minBedrooms !== null ? String(filters.minBedrooms) : ""}
                 onChange={(e) =>
                   handleFilterChange({
                     minBedrooms: e.target.value ? Number(e.target.value) : null,
@@ -110,7 +110,7 @@ export function MapSearchFilter({ onFilterChange }: MapSearchFilterProps) {
                 Max Bedrooms
               </label>
               <select
-                value={filters.maxBedrooms ?? ""}
+                value={filters.maxBedrooms !== null ? String(filters.maxBedrooms) : ""}
                 onChange={(e) =>
                   handleFilterChange({
                     maxBedrooms: e.target.value ? Number(e.target.value) : null,
