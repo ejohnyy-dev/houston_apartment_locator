@@ -300,8 +300,8 @@ export default function ApartmentSearch() {
   const apartments: ApartmentTeased[] = (apartmentsData ?? []) as ApartmentTeased[];
 
   const filtered = apartments.filter(apt => {
-    const term = searchText.trim().toLowerCase();
-    if (!term) return true;
+    if (!searchText) return true;
+    const term = searchText.toLowerCase();
     return [
       apt.name,
       apt.neighborhood,
@@ -314,14 +314,12 @@ export default function ApartmentSearch() {
       .some(value => value.toLowerCase().includes(term));
   });
 
-  const neighborhoods = Array.from(new Set(apartments.map(a => a.neighborhood).filter(Boolean))).sort();
+  const neighborhoods = Array.from(new Set(apartments.map(a => a.neighborhood))).sort();
 
   // ── Map markers ──────────────────────────────────────────────────────────────
   const placeMarkers = useCallback((map: google.maps.Map, apts: ApartmentTeased[]) => {
     // Clear old markers
-    markersRef.current.forEach((m) => {
-      if (typeof (m as any).setMap === "function") (m as any).setMap(null);
-    });
+    markersRef.current.forEach(m => { m.map = null; });
     markersRef.current = [];
 
     apts.forEach(apt => {

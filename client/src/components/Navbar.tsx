@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Phone, Mail } from "lucide-react";
 
 const LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663501304397/4gMGD9qetV63jA9Ts6DXxD/habitat-logo_3360fdb4.png";
 
@@ -16,7 +16,6 @@ const links = [
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
-  const [logoFailed, setLogoFailed] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -29,19 +28,7 @@ export default function Navbar() {
       <div className="container flex items-center justify-between h-16 md:h-18">
         {/* Logo */}
         <a href="#" className="flex items-center gap-2 shrink-0">
-          {logoFailed ? (
-            <span className="text-gold font-display font-bold text-lg tracking-wide leading-tight">
-              Habitat<br className="hidden" />{" "}
-              <span className="text-white/80">Apartment Locators</span>
-            </span>
-          ) : (
-            <img
-              src={LOGO}
-              alt="Habitat Apartment Locators"
-              className="h-10 md:h-12 w-auto"
-              onError={() => setLogoFailed(true)}
-            />
-          )}
+          <img src={LOGO} alt="Habitat Apartment Locators" className="h-10 md:h-12 w-auto" />
         </a>
 
         {/* Desktop Links */}

@@ -1,57 +1,25 @@
 const highlights = [
   {
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663501304397/4gMGD9qetV63jA9Ts6DXxD/l7NQwmCNmwxG_9e43fb8a.jpg",
-    fallbackGradient: "from-slate-800 via-slate-700 to-slate-600",
     title: "Downtown Skyline",
     desc: "Fortune 500 headquarters, the Texas Medical Center, and a thriving business district.",
   },
   {
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663501304397/4gMGD9qetV63jA9Ts6DXxD/y0Y3lAO4Nfwv_dedbc697.jpg",
-    fallbackGradient: "from-green-900 via-green-800 to-emerald-700",
     title: "Parks & Outdoors",
     desc: "Buffalo Bayou, Hermann Park, and over 56,000 acres of green space to explore.",
   },
   {
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663501304397/4gMGD9qetV63jA9Ts6DXxD/ZJJBkVJ2hskx_20ff0ad2.jpg",
-    fallbackGradient: "from-purple-900 via-purple-800 to-indigo-700",
     title: "Arts & Culture",
     desc: "19 museums, a world-class theater district, and one of the most diverse food scenes in the U.S.",
   },
   {
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663501304397/4gMGD9qetV63jA9Ts6DXxD/Bua6QUNyiAOd_b89f3a50.jpg",
-    fallbackGradient: "from-blue-900 via-blue-800 to-cyan-700",
     title: "Connected City",
     desc: "Major highways, Metro rail, and two international airports keep you connected.",
   },
 ];
-
-import { useState } from "react";
-
-function NeighborhoodCard({ h }: { h: typeof highlights[number] }) {
-  const [imgFailed, setImgFailed] = useState(false);
-  return (
-    <div className="group relative overflow-hidden rounded">
-      <div className="aspect-[16/10]">
-        {imgFailed ? (
-          <div className={`w-full h-full bg-gradient-to-br ${h.fallbackGradient}`} />
-        ) : (
-          <img
-            src={h.image}
-            alt={h.title}
-            className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
-            loading="lazy"
-            onError={() => setImgFailed(true)}
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-      </div>
-      <div className="absolute bottom-0 left-0 right-0 p-5">
-        <h3 className="font-display text-lg text-white mb-1">{h.title}</h3>
-        <p className="text-white/70 text-sm leading-relaxed">{h.desc}</p>
-      </div>
-    </div>
-  );
-}
 
 export default function HoustonSection() {
   return (
@@ -69,7 +37,16 @@ export default function HoustonSection() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {highlights.map((h) => (
-            <NeighborhoodCard key={h.title} h={h} />
+            <div key={h.title} className="group relative overflow-hidden rounded">
+              <div className="aspect-[16/10]">
+                <img src={h.image} alt={h.title} className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" loading="lazy" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 p-5">
+                <h3 className="font-display text-lg text-white mb-1">{h.title}</h3>
+                <p className="text-white/70 text-sm leading-relaxed">{h.desc}</p>
+              </div>
+            </div>
           ))}
         </div>
 
