@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { cn, getDisplayName } from '@/lib/utils';
 import { trpc } from '@/lib/trpc';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,14 +12,16 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   MapPin, Home, DollarSign, BedDouble, Bath, Lock, ArrowRight,
   Phone, Mail, ChevronLeft, ChevronRight, Search, SlidersHorizontal,
-  X, Eye, MessageCircle
+  X, Eye, MessageCircle, Heart
 } from 'lucide-react';
 import { MapView } from '@/components/Map';
-import LeadCaptureForm from '@/components/LeadCaptureForm';
-import { QualificationPrompt, type QualificationData } from '@/components/QualificationPrompt';
-import { useLead } from '@/contexts/LeadContext';
+import { InquiryForm } from '@/components/InquiryForm';
 import { toast } from 'sonner';
 import { Link } from 'wouter';
+import { useFavorites } from '@/hooks/useFavorites';
+import { useQualification } from '@/contexts/QualificationContext';
+import { QualificationPrompt } from '@/components/QualificationPrompt';
+
 
 interface ApartmentTeased {
   id: number;
@@ -104,12 +107,16 @@ function ApartmentCard({
   onLearnMore,
   onViewDetails,
   isSelected,
+  isFavorited,
+  onToggleFavorite,
 }: {
   apt: ApartmentTeased;
   isLead: boolean;
   onLearnMore: () => void;
   onViewDetails: () => void;
   isSelected: boolean;
+  isFavorited: boolean;
+  onToggleFavorite: () => void;
 }) {
   const photo = apt.photos?.[0];
 
@@ -123,7 +130,7 @@ function ApartmentCard({
       {/* Photo */}
       <div className="relative h-44 bg-slate-100 overflow-hidden">
         {photo ? (
-          <img src={photo} alt={apt.name} className="w-full h-full object-cover" />
+          <img src={photo} alt={getDisplayName(apt.name)} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <Home className="w-12 h-12 text-slate-300" />
@@ -141,18 +148,36 @@ function ApartmentCard({
         )}
 
         <Badge className="absolute top-2 left-2 bg-blue-600 text-white text-xs">
-          {formatBedrooms(apt.bedrooms)} · {apt.bathrooms} Bath
+          {getDisplayName(apt.name)}
         </Badge>
         {apt.special && (
           <Badge className="absolute bottom-2 left-2 bg-amber-500 text-white text-xs max-w-[90%] truncate">
             Special
           </Badge>
         )}
+
+        {/* Favorite Button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleFavorite();
+          }}
+          className="absolute top-2 right-2 bg-white/90 hover:bg-white rounded-full p-2 transition-colors"
+          title={isFavorited ? "Remove from favorites" : "Add to favorites"}
+        >
+          <Heart
+            className={`w-5 h-5 ${
+              isFavorited
+                ? "fill-red-500 text-red-500"
+                : "text-gray-400 hover:text-red-500"
+            }`}
+          />
+        </button>
       </div>
 
       {/* Content */}
       <div className="p-4">
-        <h3 className="font-semibold text-slate-900 text-sm mb-1 truncate">{apt.name}</h3>
+        <h3 className="font-semibold text-slate-900 text-sm mb-1 truncate">{getDisplayName(apt.name)}</h3>
         <p className="text-xs text-slate-500 flex items-center gap-1 mb-2">
           <MapPin className="w-3 h-3 shrink-0" />
           {apt.neighborhood}
@@ -218,51 +243,15 @@ function PhotoCarousel({ photos, name }: { photos: string[]; name: string }) {
 }
 
 export default function ApartmentSearch() {
-  const { lead, setLead, isLeadAuthenticated } = useLead();
+  const { qualificationData, hasQualified, setQualificationData, setShowQualificationPrompt, showQualificationPrompt } = useQualification();
+  const { favorites, isFavorited, toggleFavorite } = useFavorites();
   const [selectedApartment, setSelectedApartment] = useState<ApartmentTeased | null>(null);
   const [showLeadForm, setShowLeadForm] = useState(false);
-  const [showPersonalizedResults, setShowPersonalizedResults] = useState(false); // txaptfinder.com post-submission experience (vault spec)
   const [showDetails, setShowDetails] = useState(false);
   const [pendingApartment, setPendingApartment] = useState<ApartmentTeased | null>(null);
   const [showFilters, setShowFilters] = useState(false);
-  const [showFilterSheet, setShowFilterSheet] = useState(false); // New mobile/desktop friendly filter sheet
   const [showPinPreview, setShowPinPreview] = useState(false);
-
-  // Amenities for multi-select (B)
-  const { data: allAmenities = [] } = trpc.amenities.list.useQuery();
-  const [selectedAmenityIds, setSelectedAmenityIds] = useState<number[]>([]);
-
-  // Saved searches for leads (C)
-  const { data: savedSearches = [], refetch: refetchSavedSearches } = trpc.savedSearches.list.useQuery(undefined, {
-    enabled: isLeadAuthenticated,
-  });
-
-  const createSavedSearchMutation = trpc.savedSearches.create.useMutation({
-    onSuccess: () => {
-      refetchSavedSearches();
-      toast.success("Search saved!");
-    },
-  });
-
-  const deleteSavedSearchMutation = trpc.savedSearches.delete.useMutation({
-    onSuccess: () => refetchSavedSearches(),
-  });
-
-  // === Staged qualification flow (ported from innovations work) ===
-  const [showQualificationPrompt, setShowQualificationPrompt] = useState(false);
-  const [qualification, setQualification] = useState<QualificationData | null>(null);
-  const [hasShownQualPrompt, setHasShownQualPrompt] = useState(false);
-
-  // Refs to avoid stale closures in marker listeners
-  const qualificationRef = useRef<QualificationData | null>(null);
-  const hasShownQualPromptRef = useRef(false);
-
-  useEffect(() => { qualificationRef.current = qualification; }, [qualification]);
-  useEffect(() => { hasShownQualPromptRef.current = hasShownQualPrompt; }, [hasShownQualPrompt]);
-
-  // Mobile listings sheet
-  const [showMobileListings, setShowMobileListings] = useState(false);
-
+  const [showInquiryForm, setShowInquiryForm] = useState(false);
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
 
@@ -272,30 +261,23 @@ export default function ApartmentSearch() {
   const [rentRange, setRentRange] = useState<[number, number]>(DEFAULT_RENT_RANGE);
   const [searchText, setSearchText] = useState('');
 
-  // New improved renter filters (ported from development work)
-  const [bathroomFilter, setBathroomFilter] = useState('');
-  const [showSpecialsOnly, setShowSpecialsOnly] = useState(false);
-  const [sqftRange, setSqftRange] = useState<[number, number]>([0, 3000]);
+  // Show qualification prompt on first visit to /search
+  useEffect(() => {
+    if (!hasQualified && !showQualificationPrompt) {
+      setShowQualificationPrompt(true);
+    }
+  }, [hasQualified, showQualificationPrompt, setShowQualificationPrompt]);
 
   const { data: apartmentsData, isLoading } = trpc.apartments.list.useQuery(
     {
-      neighborhood: selectedNeighborhood || undefined,
-      minBedrooms: bedroomFilter ? parseInt(bedroomFilter) : undefined,
-      maxBedrooms: bedroomFilter ? parseInt(bedroomFilter) : undefined,
+      neighborhood: selectedNeighborhood && selectedNeighborhood !== '__all__' ? selectedNeighborhood : undefined,
+      minBedrooms: bedroomFilter && bedroomFilter !== '__any__' ? parseInt(bedroomFilter) : undefined,
+      maxBedrooms: bedroomFilter && bedroomFilter !== '__any__' ? parseInt(bedroomFilter) : undefined,
       minRent: rentRange[0],
       maxRent: rentRange[1],
-      // New filters
-      minBathrooms: bathroomFilter ? parseFloat(bathroomFilter) : undefined,
-      maxBathrooms: bathroomFilter ? parseFloat(bathroomFilter) : undefined,
-      hasSpecial: showSpecialsOnly || undefined,
-      minSqft: sqftRange[0] > 0 ? sqftRange[0] : undefined,
-      maxSqft: sqftRange[1] < 3000 ? sqftRange[1] : undefined,
-      amenityIds: selectedAmenityIds.length > 0 ? selectedAmenityIds : undefined,
     },
     { staleTime: 30_000 }
   );
-
-  const recordInteractionMutation = trpc.leads.recordInteraction.useMutation();
 
   const apartments: ApartmentTeased[] = (apartmentsData ?? []) as ApartmentTeased[];
 
@@ -350,7 +332,7 @@ export default function ApartmentSearch() {
         position: { lat, lng },
         map,
         content: pin,
-        title: apt.name,
+        title: getDisplayName(apt.name),
       });
 
       marker.addListener('click', () => {
@@ -369,7 +351,7 @@ export default function ApartmentSearch() {
 
       markersRef.current.push(marker);
     });
-  }, [isLeadAuthenticated, lead, recordInteractionMutation]);
+  }, [true]);
 
   useEffect(() => {
     if (mapRef.current && filtered.length > 0) {
@@ -393,50 +375,11 @@ export default function ApartmentSearch() {
   const handleViewDetails = (apt: ApartmentTeased) => {
     setSelectedApartment(apt);
     setShowDetails(true);
-    if (lead) {
-      recordInteractionMutation.mutate({
-        leadId: lead.id,
-        apartmentId: apt.id,
-        interactionType: 'view',
-      });
-    }
-  };
-
-  const handleLeadSuccess = (newLead: { 
-    id: number; 
-    name: string; 
-    email: string; 
-    phone: string;
-    moveTimeline?: string;
-  }) => {
-    setLead(newLead);
-    setShowLeadForm(false);
-
-    // Improved success per vault spec (txaptfinder.com)
-    const firstName = newLead.name.split(' ')[0];
-    toast.success(`Thanks, ${firstName}! You now have full access.`, {
-      description: "We've noted your preferences. Strong matches are highlighted below.",
-    });
-
-    // Trigger post-submission personalized experience (vault spec)
-    setShowPersonalizedResults(true);
-
-    if (pendingApartment) {
-      setSelectedApartment(pendingApartment);
-      setShowDetails(true);
-      setPendingApartment(null);
-    }
   };
 
   const handleContactOwner = () => {
-    if (selectedApartment && lead) {
-      recordInteractionMutation.mutate({
-        leadId: lead.id,
-        apartmentId: selectedApartment.id,
-        interactionType: 'inquiry',
-      });
-    }
-    toast.success('Your inquiry has been recorded. The owner will contact you shortly!');
+    setShowDetails(false);
+    setShowInquiryForm(true);
   };
 
   const resetFilters = () => {
@@ -444,150 +387,19 @@ export default function ApartmentSearch() {
     setBedroomFilter('');
     setRentRange(DEFAULT_RENT_RANGE);
     setSearchText('');
-    // Reset new filters
-    setBathroomFilter('');
-    setShowSpecialsOnly(false);
-    setSqftRange([0, 3000]);
-    setSelectedAmenityIds([]);
   };
-
-  // === Apply qualification (ported) ===
-  const applyQualification = (q: QualificationData) => {
-    setQualification(q);
-    if (q.bedrooms) {
-      const bedMap: Record<string, string> = { 'Studio': '0', '1 Bedroom': '1', '2 Bedrooms': '2', '3+ Bedrooms': '3' };
-      setBedroomFilter(bedMap[q.bedrooms] ?? '');
-    }
-    if (q.budget) {
-      const budgetToRange: Record<string, [number, number]> = {
-        "Under $1,000": [0, 1000], "$1,000 – $1,500": [1000, 1500],
-        "$1,500 – $2,000": [1500, 2000], "$2,000 – $2,500": [2000, 2500],
-        "$2,500 – $3,000": [2500, 3000], "$3,000+": [3000, 15000],
-      };
-      const range = budgetToRange[q.budget]; if (range) setRentRange(range);
-    }
-    if (q.preferredAreas.length > 0) setSelectedNeighborhood(q.preferredAreas[0]);
-    toast.success("Got it — filtering the map to your best matches.");
-  };
-
-  // Active filter chips helper
-  const getActiveFilters = () => {
-    const chips: { label: string; onRemove: () => void }[] = [];
-
-    if (selectedNeighborhood) {
-      chips.push({ label: selectedNeighborhood, onRemove: () => setSelectedNeighborhood('') });
-    }
-    if (bedroomFilter) {
-      const label = bedroomFilter === '0' ? 'Studio' : `${bedroomFilter}+ Beds`;
-      chips.push({ label, onRemove: () => setBedroomFilter('') });
-    }
-    if (bathroomFilter) {
-      chips.push({ label: `${bathroomFilter}+ Baths`, onRemove: () => setBathroomFilter('') });
-    }
-    if (showSpecialsOnly) {
-      chips.push({ label: 'Specials Only', onRemove: () => setShowSpecialsOnly(false) });
-    }
-    if (rentRange[0] > 0 || rentRange[1] < 15000) {
-      chips.push({
-        label: `$${rentRange[0] / 1000}k–$${rentRange[1] / 1000}k`,
-        onRemove: () => setRentRange(DEFAULT_RENT_RANGE),
-      });
-    }
-    if (sqftRange[0] > 0 || sqftRange[1] < 3000) {
-      chips.push({
-        label: `${sqftRange[0]}–${sqftRange[1]} sqft`,
-        onRemove: () => setSqftRange([0, 3000]),
-      });
-    }
-    if (searchText) {
-      chips.push({ label: `"${searchText}"`, onRemove: () => setSearchText('') });
-    }
-    if (selectedAmenityIds.length > 0) {
-      const names = allAmenities
-        .filter(a => selectedAmenityIds.includes(a.id))
-        .map(a => a.name)
-        .join(', ');
-      chips.push({
-        label: names.length > 25 ? `${names.slice(0, 22)}...` : names,
-        onRemove: () => setSelectedAmenityIds([]),
-      });
-    }
-    return chips;
-  };
-
-  const activeFilters = getActiveFilters();
-
-  // Helper to get current filters as object for saving
-  const getCurrentFiltersForSave = () => ({
-    neighborhood: selectedNeighborhood || undefined,
-    minRent: rentRange[0] > 0 ? rentRange[0] : undefined,
-    maxRent: rentRange[1] < 15000 ? rentRange[1] : undefined,
-    minBedrooms: bedroomFilter ? parseInt(bedroomFilter) : undefined,
-    maxBedrooms: bedroomFilter ? parseInt(bedroomFilter) : undefined,
-    minBathrooms: bathroomFilter ? parseFloat(bathroomFilter) : undefined,
-    maxBathrooms: bathroomFilter ? parseFloat(bathroomFilter) : undefined,
-    hasSpecial: showSpecialsOnly || undefined,
-    minSqft: sqftRange[0] > 0 ? sqftRange[0] : undefined,
-    maxSqft: sqftRange[1] < 3000 ? sqftRange[1] : undefined,
-    amenityIds: selectedAmenityIds.length > 0 ? selectedAmenityIds : undefined,
-  });
-
-  // C: URL-based filter persistence (shareable filtered views)
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-
-    // Hydrate from URL on mount
-    const urlNeighborhood = params.get('neighborhood') || '';
-    const urlBedrooms = params.get('bedrooms') || '';
-    const urlBathrooms = params.get('bathrooms') || '';
-    const urlSpecials = params.get('specials') === '1';
-    const urlMinRent = params.get('minRent');
-    const urlMaxRent = params.get('maxRent');
-    const urlMinSqft = params.get('minSqft');
-    const urlMaxSqft = params.get('maxSqft');
-    const urlAmenities = params.get('amenities');
-
-    if (urlNeighborhood) setSelectedNeighborhood(urlNeighborhood);
-    if (urlBedrooms) setBedroomFilter(urlBedrooms);
-    if (urlBathrooms) setBathroomFilter(urlBathrooms);
-    if (urlSpecials) setShowSpecialsOnly(true);
-    if (urlMinRent || urlMaxRent) {
-      setRentRange([
-        urlMinRent ? parseInt(urlMinRent) : 0,
-        urlMaxRent ? parseInt(urlMaxRent) : 15000
-      ]);
-    }
-    if (urlMinSqft || urlMaxSqft) {
-      setSqftRange([
-        urlMinSqft ? parseInt(urlMinSqft) : 0,
-        urlMaxSqft ? parseInt(urlMaxSqft) : 3000
-      ]);
-    }
-    if (urlAmenities) {
-      setSelectedAmenityIds(urlAmenities.split(',').map(Number).filter(Boolean));
-    }
-  }, []);
-
-  // Sync filters to URL whenever they change
-  useEffect(() => {
-    const params = new URLSearchParams();
-
-    if (selectedNeighborhood) params.set('neighborhood', selectedNeighborhood);
-    if (bedroomFilter) params.set('bedrooms', bedroomFilter);
-    if (bathroomFilter) params.set('bathrooms', bathroomFilter);
-    if (showSpecialsOnly) params.set('specials', '1');
-    if (rentRange[0] > 0) params.set('minRent', rentRange[0].toString());
-    if (rentRange[1] < 15000) params.set('maxRent', rentRange[1].toString());
-    if (sqftRange[0] > 0) params.set('minSqft', sqftRange[0].toString());
-    if (sqftRange[1] < 3000) params.set('maxSqft', sqftRange[1].toString());
-    if (selectedAmenityIds.length > 0) params.set('amenities', selectedAmenityIds.join(','));
-
-    const newUrl = params.toString() ? `${window.location.pathname}?${params}` : window.location.pathname;
-    window.history.replaceState({}, '', newUrl);
-  }, [selectedNeighborhood, bedroomFilter, bathroomFilter, showSpecialsOnly, rentRange, sqftRange, selectedAmenityIds]);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
+      {/* Qualification Prompt */}
+      <QualificationPrompt
+        isOpen={showQualificationPrompt && !hasQualified}
+        onComplete={(data) => {
+          setQualificationData(data);
+          setShowQualificationPrompt(false);
+        }}
+        neighborhoods={Array.from(new Set(apartments.map(a => a.neighborhood))).sort()}
+      />
       {/* Top Nav */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
@@ -617,24 +429,19 @@ export default function ApartmentSearch() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setShowFilterSheet(true)}
+            onClick={() => setShowFilters(v => !v)}
             className="gap-2 shrink-0"
           >
             <SlidersHorizontal className="w-4 h-4" />
             <span className="hidden sm:inline">Filters</span>
-            {activeFilters.length > 0 && (
-              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">
-                {activeFilters.length}
-              </Badge>
-            )}
           </Button>
 
-          {isLeadAuthenticated ? (
+          {true ? (
             <div className="flex items-center gap-2 shrink-0">
               <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold">
-                {lead?.name?.[0]?.toUpperCase()}
+                E
               </div>
-              <span className="text-sm text-slate-700 hidden sm:block">{lead?.name}</span>
+              <span className="text-sm text-slate-700 hidden sm:block">Eric</span>
             </div>
           ) : (
             <Button
@@ -658,7 +465,7 @@ export default function ApartmentSearch() {
                     <SelectValue placeholder="All areas" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All areas</SelectItem>
+                    <SelectItem value="__all__">All areas</SelectItem>
                     {neighborhoods.map(n => (
                       <SelectItem key={n} value={n}>{n}</SelectItem>
                     ))}
@@ -673,29 +480,12 @@ export default function ApartmentSearch() {
                     <SelectValue placeholder="Any" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Any</SelectItem>
+                    <SelectItem value="__any__">Any</SelectItem>
                     <SelectItem value="0">Studio</SelectItem>
                     <SelectItem value="1">1 Bed</SelectItem>
                     <SelectItem value="2">2 Beds</SelectItem>
                     <SelectItem value="3">3 Beds</SelectItem>
                     <SelectItem value="4">4+ Beds</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* New: Bathrooms filter */}
-              <div className="flex-1 min-w-32">
-                <label className="block text-xs font-medium text-slate-600 mb-1">Bathrooms</label>
-                <Select value={bathroomFilter} onValueChange={setBathroomFilter}>
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Any" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Any</SelectItem>
-                    <SelectItem value="1">1+</SelectItem>
-                    <SelectItem value="1.5">1.5+</SelectItem>
-                    <SelectItem value="2">2+</SelectItem>
-                    <SelectItem value="3">3+</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -714,112 +504,13 @@ export default function ApartmentSearch() {
                 />
               </div>
 
-              {/* New: Specials / Deals Only toggle */}
-              <div className="flex items-center gap-2 min-w-[140px]">
-                <label className="text-xs font-medium text-slate-600">Specials only</label>
-                <button
-                  onClick={() => setShowSpecialsOnly(!showSpecialsOnly)}
-                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                    showSpecialsOnly ? 'bg-amber-500' : 'bg-slate-300'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
-                      showSpecialsOnly ? 'translate-x-5' : 'translate-x-0.5'
-                    }`}
-                  />
-                </button>
-              </div>
-
               <Button variant="ghost" size="sm" onClick={resetFilters} className="text-xs h-8">
                 Reset
               </Button>
             </div>
-
-            {/* Filter Presets */}
-            <div className="mt-2 flex flex-wrap gap-2 max-w-7xl mx-auto">
-              <button onClick={() => { setShowSpecialsOnly(true); setRentRange([0, 2200]); }} className="text-xs px-3 py-1 bg-white border border-slate-300 rounded-full hover:bg-slate-100">Best deals under $2,200</button>
-              <button onClick={() => { setBedroomFilter('2'); setBathroomFilter('1'); setShowSpecialsOnly(true); }} className="text-xs px-3 py-1 bg-white border border-slate-300 rounded-full hover:bg-slate-100">Pet friendly 2+ beds</button>
-              <button onClick={() => setSqftRange([1200, 3000])} className="text-xs px-3 py-1 bg-white border border-slate-300 rounded-full hover:bg-slate-100">Spacious (1200+ sqft)</button>
-              <button onClick={() => { /* builtYear filter placeholder */ }} className="text-xs px-3 py-1 bg-white border border-slate-300 rounded-full hover:bg-slate-100">Newer buildings (2015+)</button>
-            </div>
-
-            {/* New: Square Footage slider */}
-            <div className="mt-3 max-w-7xl mx-auto">
-              <label className="block text-xs font-medium text-slate-600 mb-1">
-                Size: {sqftRange[0]} – {sqftRange[1]} sqft
-              </label>
-              <Slider
-                min={0}
-                max={3000}
-                step={50}
-                value={sqftRange}
-                onValueChange={v => setSqftRange(v as [number, number])}
-                className="w-full"
-              />
-            </div>
           </div>
         )}
       </header>
-
-      {/* Strong Matches Banner (ported from innovations) */}
-      {qualification && (
-        <div className="bg-blue-50 border-b border-blue-100 px-4 py-3">
-          <div className="max-w-7xl mx-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-            <span className="font-semibold text-blue-900">Strong matches for you</span>
-            <span className="text-blue-700">
-              {qualification.preferredAreas.slice(0, 2).join(" • ")}
-              {qualification.moveTimeline && ` • ${qualification.moveTimeline}`}
-              {qualification.bedrooms && ` • ${qualification.bedrooms}`}
-              {qualification.budget && ` • ${qualification.budget}`}
-            </span>
-            <div className="ml-auto flex items-center gap-3 text-xs">
-              <button onClick={() => setShowQualificationPrompt(true)} className="text-blue-600 hover:text-blue-800 underline">Edit my answers</button>
-              <button onClick={() => { setQualification(null); setHasShownQualPrompt(false); resetFilters(); }} className="text-blue-600 hover:text-blue-800 underline">Clear</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ============================================
-          TX APT FINDER POST-SUBMISSION EXPERIENCE
-          Per Obsidian vault spec (May 2025-05-29)
-          Shows immediately after successful LeadCaptureForm submit
-      ============================================ */}
-      {showPersonalizedResults && lead && (
-        <div className="mx-4 mb-4 mt-2 p-4 bg-blue-50 border border-blue-200 rounded-xl max-w-7xl mx-auto">
-          <p className="font-semibold text-blue-900">Welcome, {lead.name.split(" ")[0]}! Your info is saved.</p>
-          <p className="text-sm text-blue-700 mt-1 mb-3">
-            Here are some of the strongest current options based on what you shared. I can also send you a shortlist with today’s best deals.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <Button 
-              size="sm"
-              onClick={() => {
-                // Record the shortlist request as an interaction
-                if (lead) {
-                  // In real use this could trigger a backend "request shortlist" mutation
-                  recordInteractionMutation.mutate({ leadId: lead.id, apartmentId: 0, interactionType: 'inquiry' });
-                }
-                toast.success("Shortlist request received!", {
-                  description: "I'll email you a curated list within a few hours.",
-                });
-              }}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              Send me a shortlist with current deals
-            </Button>
-            <Button 
-              size="sm" 
-              variant="outline"
-              onClick={() => setShowPersonalizedResults(false)}
-            >
-              Continue browsing the map
-            </Button>
-          </div>
-          <p className="text-[10px] text-blue-600 mt-2">This starts your personalized matching process with Eric.</p>
-        </div>
-      )}
 
       {/* Main layout: map left, listings right */}
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden" style={{ height: 'calc(100vh - 57px)' }}>
@@ -832,7 +523,7 @@ export default function ApartmentSearch() {
           />
 
           {/* Lead wall banner on map */}
-          {!isLeadAuthenticated && (
+          {!true && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
               <div className="bg-white rounded-xl shadow-lg px-5 py-3 flex items-center gap-3 border border-blue-100">
                 <Lock className="w-5 h-5 text-blue-600 shrink-0" />
@@ -864,38 +555,12 @@ export default function ApartmentSearch() {
                 <p className="text-xs text-blue-600 mt-0.5">Filters active</p>
               )}
             </div>
-            {isLeadAuthenticated && (
+            {true && (
               <Badge className="bg-green-100 text-green-700 text-xs">
                 Full access
               </Badge>
             )}
           </div>
-
-          {/* Active Filter Chips */}
-          {activeFilters.length > 0 && (
-            <div className="px-4 py-2 flex flex-wrap gap-2 border-b border-slate-100 bg-white">
-              {activeFilters.map((chip, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-1 text-xs bg-blue-100 text-blue-800 px-2.5 py-1 rounded-full"
-                >
-                  {chip.label}
-                  <button
-                    onClick={chip.onRemove}
-                    className="ml-1 text-blue-600 hover:text-blue-800 font-bold"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-              <button
-                onClick={resetFilters}
-                className="text-xs text-slate-500 hover:text-slate-700 underline ml-1"
-              >
-                Clear all
-              </button>
-            </div>
-          )}
 
           {/* Listings scroll area */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -912,12 +577,11 @@ export default function ApartmentSearch() {
                 </Card>
               ))
             ) : filtered.length === 0 ? (
-              <div className="text-center py-16 px-4">
+              <div className="text-center py-16">
                 <MapPin className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-                <p className="text-slate-500 text-sm font-medium mb-2">No listings match your current filters</p>
-                <p className="text-xs text-slate-400 mb-4">Try widening your price range, removing some filters, or checking a different area.</p>
-                <Button variant="ghost" size="sm" onClick={resetFilters} className="text-blue-600">
-                  Clear all filters
+                <p className="text-slate-500 text-sm font-medium">No listings match your filters</p>
+                <Button variant="ghost" size="sm" onClick={resetFilters} className="mt-2 text-blue-600">
+                  Clear filters
                 </Button>
               </div>
             ) : (
@@ -925,10 +589,19 @@ export default function ApartmentSearch() {
                 <ApartmentCard
                   key={apt.id}
                   apt={apt}
-                  isLead={isLeadAuthenticated}
+                  isLead={true}
                   onLearnMore={() => handleLearnMore(apt)}
                   onViewDetails={() => handleViewDetails(apt)}
                   isSelected={selectedApartment?.id === apt.id}
+                  isFavorited={isFavorited(apt.id.toString())}
+                  onToggleFavorite={() => toggleFavorite({
+                    apartmentId: apt.id.toString(),
+                    apartmentName: getDisplayName(apt.name),
+                    neighborhood: apt.neighborhood,
+                    rentMin: typeof apt.rentMin === 'string' ? parseInt(apt.rentMin) : apt.rentMin,
+                    rentMax: typeof apt.rentMax === 'string' ? parseInt(apt.rentMax) : apt.rentMax || undefined,
+                    bedrooms: apt.bedrooms,
+                  })}
                 />
               ))
             )}
@@ -942,7 +615,7 @@ export default function ApartmentSearch() {
           {selectedApartment && (
             <>
               <DialogHeader>
-                <DialogTitle className="text-base">{selectedApartment.name}</DialogTitle>
+                <DialogTitle className="text-base">{getDisplayName(selectedApartment.name)}</DialogTitle>
                 <DialogDescription className="flex items-center gap-1">
                   <MapPin className="w-3.5 h-3.5" />{selectedApartment.neighborhood} area
                 </DialogDescription>
@@ -953,9 +626,9 @@ export default function ApartmentSearch() {
                 {selectedApartment.photos?.[0] ? (
                   <img
                     src={selectedApartment.photos[0]}
-                    alt={selectedApartment.name}
+                    alt={getDisplayName(selectedApartment.name)}
                     className={`w-full h-full object-cover transition-all duration-300 ${
-                      !isLeadAuthenticated ? 'blur-sm scale-105' : ''
+                      !true ? 'blur-sm scale-105' : ''
                     }`}
                   />
                 ) : (
@@ -963,7 +636,7 @@ export default function ApartmentSearch() {
                     <Home className="w-12 h-12 text-slate-300" />
                   </div>
                 )}
-                {!isLeadAuthenticated && (
+                {!true && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/20">
                     <Lock className="w-6 h-6 text-white mb-1" />
                     <span className="text-white text-xs font-semibold">Submit info to unlock details</span>
@@ -999,22 +672,19 @@ export default function ApartmentSearch() {
               {/* Teased description */}
               {selectedApartment.description && (
                 <p className={`text-sm text-slate-600 mb-3 leading-relaxed ${
-                  !isLeadAuthenticated ? 'line-clamp-2' : 'line-clamp-3'
+                  !true ? 'line-clamp-2' : 'line-clamp-3'
                 }`}>
                   {selectedApartment.description}
                 </p>
               )}
 
               {/* CTA */}
-              {isLeadAuthenticated ? (
+              {true ? (
                 <Button
                   className="w-full bg-blue-600 hover:bg-blue-700"
                   onClick={() => {
                     setShowPinPreview(false);
                     setShowDetails(true);
-                    if (lead) {
-                      recordInteractionMutation.mutate({ leadId: lead.id, apartmentId: selectedApartment.id, interactionType: 'view' });
-                    }
                   }}
                 >
                   <Eye className="w-4 h-4 mr-2" /> View Full Details
@@ -1054,21 +724,39 @@ export default function ApartmentSearch() {
             </DialogDescription>
           </DialogHeader>
 
-          {pendingApartment && (
+              {pendingApartment && (
             <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 flex items-center gap-3 mb-2">
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
                 <Home className="w-6 h-6 text-blue-600" />
               </div>
               <div>
-                <p className="font-medium text-slate-900 text-sm">{pendingApartment.name}</p>
+                <p className="font-medium text-slate-900 text-sm">{getDisplayName(pendingApartment.name)}</p>
                 <p className="text-xs text-slate-500">{pendingApartment.neighborhood} · {formatRent(pendingApartment.rentMin, pendingApartment.rentMax)}</p>
               </div>
             </div>
           )}
 
-          <LeadCaptureForm onSuccess={handleLeadSuccess} />
+          <div className="mt-6 p-4 bg-gold/10 rounded-lg">
+            <p className="text-sm text-gray-300 mb-4">Interested in this property? Contact Eric to schedule a viewing.</p>
+            <a href="tel:8326037278" className="inline-block w-full text-center bg-gold text-dark px-4 py-2 rounded font-semibold hover:bg-gold/90">
+              Call (832) 603-7278
+            </a>
+            <a href="/#contact" className="inline-block w-full text-center mt-2 border border-gold text-gold px-4 py-2 rounded font-semibold hover:bg-gold/10">
+              Send Message
+            </a>
+          </div>
         </DialogContent>
       </Dialog>
+
+      {/* ── Inquiry Form Modal ── */}
+      {showInquiryForm && selectedApartment && (
+        <InquiryForm
+          apartmentId={selectedApartment.id.toString()}
+          apartmentName={selectedApartment.name}
+          favorites={favorites}
+          onClose={() => setShowInquiryForm(false)}
+        />
+      )}
 
       {/* ── Apartment Details Dialog (Lead-only) ── */}
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
@@ -1076,7 +764,7 @@ export default function ApartmentSearch() {
           {selectedApartment && (
             <>
               <DialogHeader>
-                <DialogTitle>{selectedApartment.name}</DialogTitle>
+                <DialogTitle>{getDisplayName(selectedApartment.name)}</DialogTitle>
                 <DialogDescription className="flex items-center gap-1 text-slate-500">
                   <MapPin className="w-3.5 h-3.5" />
                   {selectedApartment.neighborhood} area
@@ -1173,267 +861,16 @@ export default function ApartmentSearch() {
                 onClick={handleContactOwner}
               >
                 <MessageCircle className="w-4 h-4 mr-2" />
-                Request Full Details from Owner
+                See Full Property Details
               </Button>
 
               <p className="text-xs text-slate-400 text-center mt-2">
-                The owner will reach out to {lead?.name} at {lead?.email}
+                The owner will reach out to you shortly!
               </p>
             </>
           )}
         </DialogContent>
       </Dialog>
-
-      {/* New: Filter Sheet (mobile-friendly bottom sheet style) */}
-      <Dialog open={showFilterSheet} onOpenChange={setShowFilterSheet}>
-        <DialogContent className="max-w-lg p-0 gap-0 rounded-t-2xl sm:rounded-2xl bottom-0 sm:bottom-auto fixed sm:relative w-full sm:w-auto">
-          <DialogHeader className="px-4 pt-4 pb-2 border-b">
-            <DialogTitle className="text-lg">Filters</DialogTitle>
-          </DialogHeader>
-
-          <div className="p-4 space-y-4 max-h-[70vh] overflow-auto">
-            {/* Neighborhood */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Neighborhood</label>
-              <Select value={selectedNeighborhood} onValueChange={setSelectedNeighborhood}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All areas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All areas</SelectItem>
-                  {neighborhoods.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Bedrooms + Bathrooms side by side */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Bedrooms</label>
-                <Select value={bedroomFilter} onValueChange={setBedroomFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Any" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Any</SelectItem>
-                    <SelectItem value="0">Studio</SelectItem>
-                    <SelectItem value="1">1 Bed</SelectItem>
-                    <SelectItem value="2">2 Beds</SelectItem>
-                    <SelectItem value="3">3 Beds</SelectItem>
-                    <SelectItem value="4">4+ Beds</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Bathrooms</label>
-                <Select value={bathroomFilter} onValueChange={setBathroomFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Any" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Any</SelectItem>
-                    <SelectItem value="1">1+</SelectItem>
-                    <SelectItem value="1.5">1.5+</SelectItem>
-                    <SelectItem value="2">2+</SelectItem>
-                    <SelectItem value="3">3+</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Rent */}
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Rent: ${rentRange[0].toLocaleString()} – ${rentRange[1].toLocaleString()}/mo
-              </label>
-              <Slider
-                min={0}
-                max={15000}
-                step={100}
-                value={rentRange}
-                onValueChange={v => setRentRange(v as [number, number])}
-              />
-            </div>
-
-            {/* Sqft */}
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Size: {sqftRange[0]} – {sqftRange[1]} sqft
-              </label>
-              <Slider
-                min={0}
-                max={3000}
-                step={50}
-                value={sqftRange}
-                onValueChange={v => setSqftRange(v as [number, number])}
-              />
-            </div>
-
-            {/* Specials Toggle */}
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Specials / Deals only</label>
-              <button
-                onClick={() => setShowSpecialsOnly(!showSpecialsOnly)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${showSpecialsOnly ? 'bg-amber-500' : 'bg-slate-300'}`}
-              >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${showSpecialsOnly ? 'translate-x-6' : 'translate-x-1'}`} />
-              </button>
-            </div>
-
-            {/* Amenities Multi-select (B) */}
-            {allAmenities.length > 0 && (
-              <div>
-                <label className="block text-sm font-medium mb-2">Amenities</label>
-                <div className="flex flex-wrap gap-2">
-                  {allAmenities.map(amenity => {
-                    const isSelected = selectedAmenityIds.includes(amenity.id);
-                    return (
-                      <button
-                        key={amenity.id}
-                        onClick={() => {
-                          if (isSelected) {
-                            setSelectedAmenityIds(selectedAmenityIds.filter(id => id !== amenity.id));
-                          } else {
-                            setSelectedAmenityIds([...selectedAmenityIds, amenity.id]);
-                          }
-                        }}
-                        className={`text-xs px-3 py-1 rounded-full border transition-colors ${
-                          isSelected 
-                            ? 'bg-blue-600 text-white border-blue-600' 
-                            : 'bg-white border-slate-300 hover:bg-slate-100'
-                        }`}
-                      >
-                        {amenity.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Presets */}
-            <div>
-              <label className="block text-sm font-medium mb-2">Quick presets</label>
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" onClick={() => { setShowSpecialsOnly(true); setRentRange([0, 2200]); setShowFilterSheet(false); }}>Best deals under $2,200</Button>
-                <Button variant="outline" size="sm" onClick={() => { setBedroomFilter('2'); setBathroomFilter('1'); setShowSpecialsOnly(true); setShowFilterSheet(false); }}>Pet friendly 2+ beds</Button>
-                <Button variant="outline" size="sm" onClick={() => { setSqftRange([1200, 3000]); setShowFilterSheet(false); }}>Spacious (1200+ sqft)</Button>
-              </div>
-            </div>
-
-            {/* Saved Searches for Leads */}
-            {isLeadAuthenticated && (
-              <div className="pt-4 border-t">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium">My Saved Searches</label>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      const name = prompt("Name for this search?");
-                      if (name) {
-                        const filters = getCurrentFiltersForSave();
-                        createSavedSearchMutation.mutate({ name, ...filters });
-                      }
-                    }}
-                  >
-                    Save current
-                  </Button>
-                </div>
-
-                {savedSearches.length > 0 ? (
-                  <div className="space-y-2">
-                    {savedSearches.map((search: any) => (
-                      <div key={search.id} className="flex items-center justify-between text-sm bg-slate-50 p-2 rounded">
-                        <button
-                          onClick={() => {
-                            // Load the saved search
-                            if (search.neighborhood) setSelectedNeighborhood(search.neighborhood);
-                            if (search.minBedrooms) setBedroomFilter(search.minBedrooms.toString());
-                            if (search.minBathrooms) setBathroomFilter(search.minBathrooms.toString());
-                            if (search.hasSpecial) setShowSpecialsOnly(true);
-                            if (search.minRent || search.maxRent) {
-                              setRentRange([
-                                search.minRent ?? 0,
-                                search.maxRent ?? 15000
-                              ]);
-                            }
-                            if (search.minSqft || search.maxSqft) {
-                              setSqftRange([
-                                search.minSqft ?? 0,
-                                search.maxSqft ?? 3000
-                              ]);
-                            }
-                            if (search.amenityIds?.length) setSelectedAmenityIds(search.amenityIds);
-                            setShowFilterSheet(false);
-                          }}
-                          className="flex-1 text-left hover:text-blue-600"
-                        >
-                          {search.name}
-                        </button>
-                        <button
-                          onClick={() => deleteSavedSearchMutation.mutate({ id: search.id })}
-                          className="text-red-500 hover:text-red-700 px-2"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-slate-500">No saved searches yet. Use "Save current" above.</p>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="p-4 border-t flex gap-3">
-            <Button variant="outline" className="flex-1" onClick={() => { resetFilters(); setShowFilterSheet(false); }}>Clear all</Button>
-            <Button className="flex-1" onClick={() => setShowFilterSheet(false)}>Done</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Qualification Prompt (ported) */}
-      <QualificationPrompt
-        open={showQualificationPrompt}
-        onOpenChange={setShowQualificationPrompt}
-        onQualify={applyQualification}
-        initialData={qualification ?? undefined}
-        onSkip={() => setHasShownQualPrompt(true)}
-      />
-
-      {/* Mobile listings sheet (ported) */}
-      {showMobileListings && (
-        <div className="lg:hidden fixed inset-0 z-50 flex flex-col">
-          <div className="flex-1 bg-black/40" onClick={() => setShowMobileListings(false)} />
-          <div className="bg-white rounded-t-2xl shadow-2xl max-h-[70vh] flex flex-col">
-            <div className="p-4 border-b flex items-center justify-between">
-              <div>
-                <div className="font-semibold">{filtered.length} listings</div>
-                {qualification && <div className="text-xs text-blue-600">Filtered to your preferences</div>}
-              </div>
-              <button onClick={() => setShowMobileListings(false)} className="text-xl px-2">×</button>
-            </div>
-            <div className="flex-1 overflow-auto p-4 space-y-4">
-              {filtered.slice(0, 15).map(apt => (
-                <div key={apt.id} className="border rounded-xl p-3 text-sm" onClick={() => {
-                  setSelectedApartment(apt);
-                  setShowMobileListings(false);
-                  if (!qualification && !hasShownQualPrompt) {
-                    setHasShownQualPrompt(true);
-                    setShowQualificationPrompt(true);
-                  } else {
-                    setShowPinPreview(true);
-                  }
-                }}>
-                  {getDisplayName ? getDisplayName(apt.name) : apt.name} • {formatRent(apt.rentMin, apt.rentMax)}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
