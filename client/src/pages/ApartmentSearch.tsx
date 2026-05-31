@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { cn, getDisplayName } from '@/lib/utils';
 import { trpc } from '@/lib/trpc';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   MapPin, Home, DollarSign, BedDouble, Bath, Lock, ArrowRight,
   Phone, Mail, ChevronLeft, ChevronRight, Search, SlidersHorizontal,
-  X, Eye, MessageCircle, Heart
+  X, Eye, MessageCircle, Heart, ZoomIn, ZoomOut, Compass
 } from 'lucide-react';
 import { MapView } from '@/components/Map';
 import { InquiryForm } from '@/components/InquiryForm';
@@ -21,7 +21,7 @@ import { Link } from 'wouter';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useQualification } from '@/contexts/QualificationContext';
 import { QualificationPrompt } from '@/components/QualificationPrompt';
-
+import { loadMarkerClustererLibrary, createMarkerClusterer } from '@/lib/markerClusterer';
 
 interface ApartmentTeased {
   id: number;
@@ -254,6 +254,7 @@ export default function ApartmentSearch() {
   const [showInquiryForm, setShowInquiryForm] = useState(false);
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
+  const clustererRef = useRef<any>(null);
 
   // Filters
   const [selectedNeighborhood, setSelectedNeighborhood] = useState('');
@@ -298,11 +299,18 @@ export default function ApartmentSearch() {
 
   const neighborhoods = Array.from(new Set(apartments.map(a => a.neighborhood))).sort();
 
-  // ── Map markers ──────────────────────────────────────────────────────────────
+  // ── Map markers with clustering ──────────────────────────────────────────────────────────────
   const placeMarkers = useCallback((map: google.maps.Map, apts: ApartmentTeased[]) => {
     // Clear old markers
     markersRef.current.forEach(m => { m.map = null; });
     markersRef.current = [];
+
+    // Clear clusterer
+    if (clustererRef.current) {
+      clustererRef.current.clearMarkers();
+    }
+
+    const newMarkers: google.maps.marker.AdvancedMarkerElement[] = [];
 
     apts.forEach(apt => {
       const { lat, lng } = getCoords(apt);
@@ -349,9 +357,19 @@ export default function ApartmentSearch() {
         setShowPinPreview(true);
       });
 
+      newMarkers.push(marker);
       markersRef.current.push(marker);
     });
-  }, [true]);
+
+    // Setup clustering
+    if (newMarkers.length > 0) {
+      loadMarkerClustererLibrary().then(success => {
+        if (success && mapRef.current) {
+          clustererRef.current = createMarkerClusterer(mapRef.current, newMarkers as any);
+        }
+      });
+    }
+  }, []);
 
   useEffect(() => {
     if (mapRef.current && filtered.length > 0) {
@@ -365,6 +383,27 @@ export default function ApartmentSearch() {
       placeMarkers(map, filtered);
     }
   }, [filtered, placeMarkers]);
+
+  // Fit map bounds to filtered apartments
+  const fitMapBounds = useCallback(() => {
+    if (!mapRef.current || filtered.length === 0) return;
+
+    const bounds = new google.maps.LatLngBounds();
+    filtered.forEach(apt => {
+      const { lat, lng } = getCoords(apt);
+      bounds.extend({ lat, lng });
+    });
+
+    mapRef.current.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 });
+  }, [filtered]);
+
+  // Center map on selected apartment
+  const centerOnSelected = useCallback(() => {
+    if (!mapRef.current || !selectedApartment) return;
+    const { lat, lng } = getCoords(selectedApartment);
+    mapRef.current.panTo({ lat, lng });
+    mapRef.current.setZoom(15);
+  }, [selectedApartment]);
 
   const handleLearnMore = (apt: ApartmentTeased) => {
     setSelectedApartment(apt);
@@ -456,57 +495,121 @@ export default function ApartmentSearch() {
 
         {/* Filter bar */}
         {showFilters && (
-          <div className="border-t border-slate-100 bg-slate-50 px-4 py-3">
-            <div className="max-w-7xl mx-auto flex flex-wrap gap-4 items-end">
-              <div className="flex-1 min-w-36">
-                <label className="block text-xs font-medium text-slate-600 mb-1">Neighborhood</label>
-                <Select value={selectedNeighborhood} onValueChange={setSelectedNeighborhood}>
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="All areas" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all__">All areas</SelectItem>
-                    {neighborhoods.map(n => (
-                      <SelectItem key={n} value={n}>{n}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          <div className="border-t border-slate-100 bg-white px-4 py-4 shadow-sm">
+            <div className="max-w-7xl mx-auto space-y-4">
+              {/* Quick filter buttons */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wide">Quick Filters</label>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant={bedroomFilter === '0' ? 'default' : 'outline'}
+                    className="text-xs h-8"
+                    onClick={() => setBedroomFilter(bedroomFilter === '0' ? '' : '0')}
+                  >
+                    Studio
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={bedroomFilter === '1' ? 'default' : 'outline'}
+                    className="text-xs h-8"
+                    onClick={() => setBedroomFilter(bedroomFilter === '1' ? '' : '1')}
+                  >
+                    1 Bed
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={bedroomFilter === '2' ? 'default' : 'outline'}
+                    className="text-xs h-8"
+                    onClick={() => setBedroomFilter(bedroomFilter === '2' ? '' : '2')}
+                  >
+                    2 Beds
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={bedroomFilter === '3' ? 'default' : 'outline'}
+                    className="text-xs h-8"
+                    onClick={() => setBedroomFilter(bedroomFilter === '3' ? '' : '3')}
+                  >
+                    3 Beds
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={rentRange[1] <= 1500 ? 'default' : 'outline'}
+                    className="text-xs h-8"
+                    onClick={() => setRentRange(rentRange[1] <= 1500 ? DEFAULT_RENT_RANGE : [0, 1500])}
+                  >
+                    Under $1.5k
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={rentRange[0] >= 2000 && rentRange[1] <= 3000 ? 'default' : 'outline'}
+                    className="text-xs h-8"
+                    onClick={() => setRentRange(rentRange[0] >= 2000 && rentRange[1] <= 3000 ? DEFAULT_RENT_RANGE : [2000, 3000])}
+                  >
+                    $2k - $3k
+                  </Button>
+                </div>
               </div>
 
-              <div className="flex-1 min-w-32">
-                <label className="block text-xs font-medium text-slate-600 mb-1">Bedrooms</label>
-                <Select value={bedroomFilter} onValueChange={setBedroomFilter}>
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Any" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__any__">Any</SelectItem>
-                    <SelectItem value="0">Studio</SelectItem>
-                    <SelectItem value="1">1 Bed</SelectItem>
-                    <SelectItem value="2">2 Beds</SelectItem>
-                    <SelectItem value="3">3 Beds</SelectItem>
-                    <SelectItem value="4">4+ Beds</SelectItem>
-                  </SelectContent>
-                </Select>
+              {/* Advanced filters */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-2">Neighborhood</label>
+                  <Select value={selectedNeighborhood} onValueChange={setSelectedNeighborhood}>
+                    <SelectTrigger className="h-9 text-xs">
+                      <SelectValue placeholder="All areas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">All areas</SelectItem>
+                      {neighborhoods.map(n => (
+                        <SelectItem key={n} value={n}>{n}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-2">Bedrooms</label>
+                  <Select value={bedroomFilter} onValueChange={setBedroomFilter}>
+                    <SelectTrigger className="h-9 text-xs">
+                      <SelectValue placeholder="Any" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__any__">Any</SelectItem>
+                      <SelectItem value="0">Studio</SelectItem>
+                      <SelectItem value="1">1 Bed</SelectItem>
+                      <SelectItem value="2">2 Beds</SelectItem>
+                      <SelectItem value="3">3 Beds</SelectItem>
+                      <SelectItem value="4">4+ Beds</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-2">
+                    Max Rent: ${rentRange[1].toLocaleString()}/mo
+                  </label>
+                  <Slider
+                    min={0}
+                    max={15000}
+                    step={100}
+                    value={rentRange}
+                    onValueChange={v => setRentRange(v as [number, number])}
+                    className="w-full"
+                  />
+                </div>
               </div>
 
-              <div className="flex-1 min-w-48">
-                <label className="block text-xs font-medium text-slate-600 mb-1">
-                  Rent: ${rentRange[0].toLocaleString()} – ${rentRange[1].toLocaleString()}/mo
-                </label>
-                <Slider
-                  min={0}
-                  max={15000}
-                  step={100}
-                  value={rentRange}
-                  onValueChange={v => setRentRange(v as [number, number])}
-                  className="w-full"
-                />
+              {/* Filter actions */}
+              <div className="flex gap-2 justify-end pt-2">
+                <Button variant="ghost" size="sm" onClick={resetFilters} className="text-xs h-8">
+                  Clear All
+                </Button>
+                <Button size="sm" onClick={() => setShowFilters(false)} className="text-xs h-8 bg-blue-600 hover:bg-blue-700">
+                  Done
+                </Button>
               </div>
-
-              <Button variant="ghost" size="sm" onClick={resetFilters} className="text-xs h-8">
-                Reset
-              </Button>
             </div>
           </div>
         )}
@@ -522,25 +625,36 @@ export default function ApartmentSearch() {
             onMapReady={handleMapReady}
           />
 
-          {/* Lead wall banner on map */}
-          {!true && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
-              <div className="bg-white rounded-xl shadow-lg px-5 py-3 flex items-center gap-3 border border-blue-100">
-                <Lock className="w-5 h-5 text-blue-600 shrink-0" />
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">Unlock full listing details</p>
-                  <p className="text-xs text-slate-500">Submit your info to view addresses & contact info</p>
-                </div>
-                <Button
-                  size="sm"
-                  className="bg-blue-600 hover:bg-blue-700 text-white ml-2 shrink-0"
-                  onClick={() => setShowLeadForm(true)}
-                >
-                  Get Access
-                </Button>
-              </div>
-            </div>
-          )}
+          {/* Map controls */}
+          <div className="absolute bottom-6 right-4 flex flex-col gap-2 z-20">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-10 w-10 p-0 bg-white hover:bg-slate-50 shadow-md"
+              onClick={fitMapBounds}
+              title="Fit all listings in view"
+            >
+              <Compass className="w-4 h-4" />
+            </Button>
+            {selectedApartment && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-10 w-10 p-0 bg-white hover:bg-slate-50 shadow-md"
+                onClick={centerOnSelected}
+                title="Center on selected"
+              >
+                <MapPin className="w-4 h-4 text-blue-600" />
+              </Button>
+            )}
+          </div>
+
+          {/* Results count badge */}
+          <div className="absolute top-4 left-4 z-20">
+            <Badge className="bg-white text-slate-900 shadow-md border border-slate-200">
+              {isLoading ? 'Loading...' : `${filtered.length} listing${filtered.length !== 1 ? 's' : ''}`}
+            </Badge>
+          </div>
         </div>
 
         {/* Listings panel */}
@@ -699,9 +813,15 @@ export default function ApartmentSearch() {
                       setShowLeadForm(true);
                     }}
                   >
-                    <Lock className="w-4 h-4 mr-2" /> Unlock Full Details
+                    <Lock className="w-4 h-4 mr-2" /> Unlock Details
                   </Button>
-                  <p className="text-xs text-slate-400 text-center">Free — just your name, email &amp; phone</p>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setShowPinPreview(false)}
+                  >
+                    Close
+                  </Button>
                 </>
               )}
             </>
@@ -709,42 +829,72 @@ export default function ApartmentSearch() {
         </DialogContent>
       </Dialog>
 
-      {/* ── Lead Capture Dialog ── */}
-      <Dialog open={showLeadForm} onOpenChange={setShowLeadForm}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Lock className="w-5 h-5 text-blue-600" />
-              Unlock Full Apartment Details
-            </DialogTitle>
-            <DialogDescription>
-              {pendingApartment
-                ? `Submit your contact information to view full details for ${pendingApartment.name} and all other listings.`
-                : 'Submit your contact information to unlock available API listing details and the ability to inquire about any listing.'}
-            </DialogDescription>
-          </DialogHeader>
+      {/* ── Full Details Modal ── */}
+      <Dialog open={showDetails} onOpenChange={setShowDetails}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          {selectedApartment && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-lg">{getDisplayName(selectedApartment.name)}</DialogTitle>
+                <DialogDescription className="flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5" />{selectedApartment.neighborhood} area
+                </DialogDescription>
+              </DialogHeader>
 
-              {pendingApartment && (
-            <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
-                <Home className="w-6 h-6 text-blue-600" />
+              <PhotoCarousel photos={selectedApartment.photos ?? []} name={selectedApartment.name} />
+
+              {/* Key stats */}
+              <div className="grid grid-cols-4 gap-2 bg-slate-50 rounded-lg p-3">
+                <div className="text-center">
+                  <p className="text-sm font-bold text-slate-900">{formatBedrooms(selectedApartment.bedrooms)}</p>
+                  <p className="text-xs text-slate-500">Beds</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-bold text-slate-900">{selectedApartment.bathrooms}</p>
+                  <p className="text-xs text-slate-500">Baths</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-bold text-blue-600">{formatRent(selectedApartment.rentMin, selectedApartment.rentMax)}</p>
+                  <p className="text-xs text-slate-500">Rent</p>
+                </div>
+                {formatSqft(selectedApartment) && (
+                  <div className="text-center">
+                    <p className="text-sm font-bold text-slate-900">{formatSqft(selectedApartment)}</p>
+                    <p className="text-xs text-slate-500">Size</p>
+                  </div>
+                )}
               </div>
-              <div>
-                <p className="font-medium text-slate-900 text-sm">{getDisplayName(pendingApartment.name)}</p>
-                <p className="text-xs text-slate-500">{pendingApartment.neighborhood} · {formatRent(pendingApartment.rentMin, pendingApartment.rentMax)}</p>
-              </div>
-            </div>
+
+              {selectedApartment.special && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 mb-1">Current special</p>
+                  <p className="text-sm font-medium text-amber-950">{selectedApartment.special}</p>
+                </div>
+              )}
+
+              {selectedApartment.description && (
+                <p className="text-sm text-slate-600 leading-relaxed">{selectedApartment.description}</p>
+              )}
+
+              {selectedApartment.availability && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-xs font-semibold text-blue-700 mb-1">Availability</p>
+                  <p className="text-sm text-blue-900">{selectedApartment.availability}</p>
+                </div>
+              )}
+
+              {/* CTA */}
+              <Button
+                className="w-full bg-blue-600 hover:bg-blue-700"
+                onClick={() => {
+                  setShowDetails(false);
+                  setShowInquiryForm(true);
+                }}
+              >
+                <MessageCircle className="w-4 h-4 mr-2" /> Contact Owner
+              </Button>
+            </>
           )}
-
-          <div className="mt-6 p-4 bg-gold/10 rounded-lg">
-            <p className="text-sm text-gray-300 mb-4">Interested in this property? Contact Eric to schedule a viewing.</p>
-            <a href="tel:8326037278" className="inline-block w-full text-center bg-gold text-dark px-4 py-2 rounded font-semibold hover:bg-gold/90">
-              Call (832) 603-7278
-            </a>
-            <a href="/#contact" className="inline-block w-full text-center mt-2 border border-gold text-gold px-4 py-2 rounded font-semibold hover:bg-gold/10">
-              Send Message
-            </a>
-          </div>
         </DialogContent>
       </Dialog>
 
@@ -752,125 +902,39 @@ export default function ApartmentSearch() {
       {showInquiryForm && selectedApartment && (
         <InquiryForm
           apartmentId={selectedApartment.id.toString()}
-          apartmentName={selectedApartment.name}
-          favorites={favorites}
+          apartmentName={getDisplayName(selectedApartment.name)}
+          qualificationData={qualificationData ?? undefined}
           onClose={() => setShowInquiryForm(false)}
         />
       )}
 
-      {/* ── Apartment Details Dialog (Lead-only) ── */}
-      <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          {selectedApartment && (
-            <>
-              <DialogHeader>
-                <DialogTitle>{getDisplayName(selectedApartment.name)}</DialogTitle>
-                <DialogDescription className="flex items-center gap-1 text-slate-500">
-                  <MapPin className="w-3.5 h-3.5" />
-                  {selectedApartment.neighborhood} area
-                </DialogDescription>
-              </DialogHeader>
-
-              {/* Photos */}
-              <PhotoCarousel
-                photos={selectedApartment.photos ?? []}
-                name={selectedApartment.name}
-              />
-
-              {/* Stats */}
-              <div className="grid grid-cols-3 gap-3 my-4">
-                <div className="bg-slate-50 rounded-lg p-3 text-center">
-                  <BedDouble className="w-5 h-5 text-blue-600 mx-auto mb-1" />
-                  <p className="text-sm font-bold text-slate-900">{formatBedrooms(selectedApartment.bedrooms)}</p>
-                  <p className="text-xs text-slate-500">Floor plans</p>
-                </div>
-                <div className="bg-slate-50 rounded-lg p-3 text-center">
-                  <Bath className="w-5 h-5 text-blue-600 mx-auto mb-1" />
-                  <p className="text-sm font-bold text-slate-900">{selectedApartment.bathrooms}</p>
-                  <p className="text-xs text-slate-500">Bathrooms</p>
-                </div>
-                <div className="bg-slate-50 rounded-lg p-3 text-center">
-                  <DollarSign className="w-5 h-5 text-blue-600 mx-auto mb-1" />
-                  <p className="text-sm font-bold text-slate-900">
-                    {formatRent(selectedApartment.rentMin, selectedApartment.rentMax).split('/')[0]}
-                  </p>
-                  <p className="text-xs text-slate-500">Per month</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                {selectedApartment.availability && (
-                  <div className="bg-white border border-slate-200 rounded-lg p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Availability</p>
-                    <p className="text-sm text-slate-800">{selectedApartment.availability}</p>
-                  </div>
-                )}
-                {formatSqft(selectedApartment) && (
-                  <div className="bg-white border border-slate-200 rounded-lg p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Size range</p>
-                    <p className="text-sm text-slate-800">{formatSqft(selectedApartment)}</p>
-                  </div>
-                )}
-                {selectedApartment.builtYear && (
-                  <div className="bg-white border border-slate-200 rounded-lg p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Built</p>
-                    <p className="text-sm text-slate-800">{selectedApartment.builtYear}</p>
-                  </div>
-                )}
-                {selectedApartment.managedBy && (
-                  <div className="bg-white border border-slate-200 rounded-lg p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Managed by</p>
-                    <p className="text-sm text-slate-800">{selectedApartment.managedBy}</p>
-                  </div>
-                )}
-              </div>
-
-              {selectedApartment.special && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 mb-1">Current special</p>
-                  <p className="text-sm font-medium text-amber-950">{selectedApartment.special}</p>
-                </div>
-              )}
-
-              {/* Description */}
-              {selectedApartment.description && (
-                <div className="mb-4">
-                  <h4 className="font-semibold text-slate-900 text-sm mb-2">About this apartment</h4>
-                  <p className="text-slate-600 text-sm leading-relaxed">{selectedApartment.description}</p>
-                </div>
-              )}
-
-              {/* Hidden info notice */}
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
-                <div className="flex items-start gap-3">
-                  <Lock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-amber-900 mb-1">
-                      Exact address & landlord contact available upon request
-                    </p>
-                    <p className="text-xs text-amber-700">
-                      The full street address, landlord name, phone, and unit availability are provided directly by the owner after you make an inquiry.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* CTA */}
+      {/* ── Lead Form Modal ── */}
+      {showLeadForm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <div className="p-6">
+              <h2 className="text-lg font-bold text-slate-900 mb-2">Unlock Full Access</h2>
+              <p className="text-sm text-slate-600 mb-4">Submit your information to view detailed listings and contact information.</p>
               <Button
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                onClick={handleContactOwner}
+                className="w-full bg-blue-600 hover:bg-blue-700"
+                onClick={() => {
+                  setShowLeadForm(false);
+                  toast.success('Feature coming soon');
+                }}
               >
-                <MessageCircle className="w-4 h-4 mr-2" />
-                See Full Property Details
+                Continue
               </Button>
-
-              <p className="text-xs text-slate-400 text-center mt-2">
-                The owner will reach out to you shortly!
-              </p>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+              <Button
+                variant="ghost"
+                className="w-full mt-2"
+                onClick={() => setShowLeadForm(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
