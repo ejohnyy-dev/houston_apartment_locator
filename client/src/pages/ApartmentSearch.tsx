@@ -14,6 +14,7 @@ import {
   X, Eye, MessageCircle
 } from 'lucide-react';
 import { MapView } from '@/components/Map';
+import LeadCaptureForm from '@/components/LeadCaptureForm';
 import { QualificationPrompt, type QualificationData } from '@/components/QualificationPrompt';
 import { useLead } from '@/contexts/LeadContext';
 import { toast } from 'sonner';

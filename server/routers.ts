@@ -38,6 +38,8 @@ import {
   getRentCastDatabaseStats,
 } from "./rentcastDatabase";
 import { notifyOwner } from "./_core/notification";
+import { seedSampleData } from "./seed";
+import { getHealthStatus } from "./health";
 import { 
   sendEmail, 
   renderNewLeadEmail, 
@@ -64,7 +66,7 @@ export const appRouter = router({
 
   // ============= HEALTH CHECK =============
   health: publicProcedure.query(async () => {
-    return { status: 'ok', timestamp: new Date() };
+    return await getHealthStatus();
   }),
 
   auth: router({
@@ -221,10 +223,10 @@ export const appRouter = router({
 
     /**
      * Seed sample apartment data (owner only, idempotent)
-     * TODO: Implement seedSampleData function
      */
     seedSample: adminProcedure.mutation(async () => {
-      return { success: false, message: 'Seed functionality not yet implemented' };
+      const result = await seedSampleData();
+      return result;
     }),
   }),
 
@@ -244,15 +246,19 @@ export const appRouter = router({
       )
       .mutation(async ({ input, ctx }) => {
         // Rate limiting: max 10 submissions per hour per IP
-        const clientIp = getClientIp({
-          'x-forwarded-for': ctx.req.headers['x-forwarded-for'] as string | undefined,
-          'x-real-ip': ctx.req.socket.remoteAddress as string | undefined,
-        } as Record<string, string>);
+        const clientIp = getClientIp(
+          ctx.req.headers['x-forwarded-for'] as string | undefined,
+          ctx.req.socket.remoteAddress
+        );
 
-        const rateLimitResult = checkRateLimit(clientIp);
+        const rateLimitResult = checkRateLimit(clientIp, {
+          maxRequests: 10,
+          windowMs: 60 * 60 * 1000,
+          message: 'Too many submissions. Please try again later.',
+        });
 
         if (!rateLimitResult.allowed) {
-          throw new Error('Too many submissions. Please try again later.');
+          throw new Error(rateLimitResult.error);
         }
 
         const result = await createLead({
@@ -284,12 +290,10 @@ export const appRouter = router({
           });
 
           // Update nurture stage in DB (for future Day 2 / Day 5 scheduling)
-          // Note: nurtureStage and lastNurtureSentAt are stored in leads table but updateLead doesn't support them yet
-          // This is a placeholder for future enhancement
-          // await updateLead(leadId, { 
-          //   nurtureStage: 'email1_sent',
-          //   lastNurtureSentAt: new Date()
-          // });
+          await updateLead(leadId, { 
+            nurtureStage: 'email1_sent',
+            lastNurtureSentAt: new Date()
+          });
         } catch (error) {
           console.error("Failed to send nurture Email 1 to lead:", error);
         }
