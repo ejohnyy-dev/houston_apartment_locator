@@ -101,8 +101,13 @@ type PropertyFilters = {
   neighborhood?: string;
   minBedrooms?: number;
   maxBedrooms?: number;
+  minBathrooms?: number;
+  maxBathrooms?: number;
   minRent?: number;
   maxRent?: number;
+  minSqft?: number;
+  maxSqft?: number;
+  hasSpecial?: boolean;
 };
 
 type RentCastTarget = {
