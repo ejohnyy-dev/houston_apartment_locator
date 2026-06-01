@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { eq, and, lte, isNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, inquiries, InsertInquiry } from "../drizzle/schema";
+import { InsertUser, users, inquiries, InsertInquiry, Inquiry } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -103,6 +103,95 @@ export async function createInquiry(inquiry: InsertInquiry): Promise<void> {
     console.error("[Database] Failed to create inquiry:", error);
     throw error;
   }
+}
+
+/**
+ * Get all inquiries that are due for nurture follow-up:
+ * - nurtureStage = 'pending'
+ * - nurtureScheduledFor <= now
+ */
+export async function getInquiriesDueForNurture(): Promise<Inquiry[]> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot query nurture leads: database not available");
+    return [];
+  }
+
+  const now = new Date();
+  const result = await db
+    .select()
+    .from(inquiries)
+    .where(
+      and(
+        eq(inquiries.nurtureStage, "pending"),
+        lte(inquiries.nurtureScheduledFor, now)
+      )
+    )
+    .limit(50); // process in batches to stay within 2-min handler timeout
+
+  return result;
+}
+
+/**
+ * Mark an inquiry nurture as sent.
+ */
+export async function markNurtureSent(inquiryId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  await db
+    .update(inquiries)
+    .set({
+      nurtureStage: "sent",
+      nurtureSentAt: new Date(),
+    })
+    .where(eq(inquiries.id, inquiryId));
+}
+
+/**
+ * Mark an inquiry nurture as failed with an error message.
+ */
+export async function markNurtureFailed(inquiryId: number, error: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  await db
+    .update(inquiries)
+    .set({
+      nurtureStage: "failed",
+      nurtureError: error,
+    })
+    .where(eq(inquiries.id, inquiryId));
+}
+
+/**
+ * Mark an inquiry nurture as skipped (e.g. HubSpot not configured).
+ */
+export async function markNurtureSkipped(inquiryId: number, reason: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  await db
+    .update(inquiries)
+    .set({
+      nurtureStage: "skipped",
+      nurtureError: reason,
+    })
+    .where(eq(inquiries.id, inquiryId));
+}
+
+/**
+ * Get recent inquiries with their nurture status (for admin view).
+ */
+export async function getInquiriesWithNurtureStatus(limit = 50): Promise<Inquiry[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db
+    .select()
+    .from(inquiries)
+    .orderBy(inquiries.createdAt)
+    .limit(limit);
 }
 
 // TODO: add feature queries here as your schema grows.

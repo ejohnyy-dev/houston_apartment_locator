@@ -16,6 +16,7 @@ import Services from "./pages/Services";
 import HoustonPage from "./pages/HoustonPage";
 import HowItWorksPage from "./pages/HowItWorksPage";
 import ContactPage from "./pages/ContactPage";
+import AdminNurture from "./pages/AdminNurture";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -32,6 +33,7 @@ function Router() {
         <Route path={"/houston-apartment-move-in-specials"} component={MoveInSpecials} />
         <Route path={"/faq"} component={FAQ} />
         <Route path={"/neighborhoods/:slug"} component={NeighborhoodPage} />
+        <Route path={"/admin/nurture"} component={AdminNurture} />
         <Route path={"/404"} component={NotFound} />
         <Route component={NotFound} />
       </Switch>

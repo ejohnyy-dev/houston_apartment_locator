@@ -53,6 +53,11 @@ export const inquiries = mysqlTable("inquiries", {
   favoriteIds: text("favoriteIds"), // JSON array of favorite apartment IDs
   qualificationData: text("qualificationData"), // JSON object with qualification preferences
   source: varchar("source", { length: 100 }).default("website"),
+  // Lead nurturing automation fields
+  nurtureStage: mysqlEnum("nurtureStage", ["pending", "sent", "skipped", "failed"]).default("pending"),
+  nurtureSentAt: timestamp("nurtureSentAt"),
+  nurtureScheduledFor: timestamp("nurtureScheduledFor"), // when the follow-up should be sent (createdAt + 24h)
+  nurtureError: text("nurtureError"), // error message if nurture failed
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

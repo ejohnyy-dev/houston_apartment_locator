@@ -74,3 +74,17 @@ All planned features have been successfully implemented and tested. The applicat
 - [x] Matched apartments display: "Strong Matches for You" section on Home page
 - [x] Pass qualification to inquiry: Include qualification context in inquiry submission
 - [x] Qualification tests: Comprehensive unit tests for filtering and matching (qualification.test.ts)
+
+## Lead Nurture Automation (Complete)
+- [x] Database schema: Add nurtureStage, nurtureSentAt, nurtureScheduledFor, nurtureError columns to inquiries table
+- [x] Migration: Applied ALTER TABLE migration via webdev_execute_sql
+- [x] HubSpot helper: Created server/hubspot.ts with upsertHubSpotContact, sendNurtureFollowup, getHubSpotContact
+- [x] DB helpers: Added getInquiriesDueForNurture, markNurtureSent, markNurtureFailed, markNurtureSkipped, getInquiriesWithNurtureStatus
+- [x] Inquiry creation: Updated createInquiry call to set nurtureScheduledFor = createdAt + 24h
+- [x] Scheduled handler: Created server/scheduled/nurtureFollowup.ts with cron auth guard and batch processing
+- [x] Server registration: Registered /api/scheduled/nurture-followup endpoint in server/_core/index.ts
+- [x] Nurture router: Created server/routers/nurture.ts with admin-only status, triggerForLead, cronStatus, setupCron, deleteCron, dueCount
+- [x] Admin UI: Created /admin/nurture page with stats, cron management, lead table, manual trigger
+- [x] Route: Registered /admin/nurture in App.tsx
+- [x] Tests: 13 nurture tests passing (HubSpot helpers, scheduling logic, auth guard, stage transitions)
+- [x] Security: Rate limiting on /api/leads endpoint (5/hr per email, 20/hr per IP)

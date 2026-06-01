@@ -15,6 +15,13 @@
       "when": 1780011448451,
       "tag": "0001_needy_major_mapleleaf",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1780296402795,
+      "tag": "0002_jittery_morg",
+      "breakpoints": true
     }
   ]
 }

@@ -10,12 +10,14 @@ import { notifyOwner } from "./_core/notification";
 import { createInquiry } from "./db";
 import { integrationsRouter } from "./routers/integrations";
 import { reportsRouter } from "./routers/reports";
+import { nurtureRouter } from "./routers/nurture";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   integrations: integrationsRouter,
   reports: reportsRouter,
+  nurture: nurtureRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
@@ -207,6 +209,8 @@ export const appRouter = router({
           });
 
           // Store inquiry in database
+          // Schedule nurture follow-up for 24 hours from now
+          const nurtureScheduledFor = new Date(Date.now() + 24 * 60 * 60 * 1000);
           await createInquiry({
             name: input.name,
             email: input.email,
@@ -216,7 +220,10 @@ export const appRouter = router({
             moveInDate: input.moveInDate || null,
             message: input.message || null,
             favoriteIds: input.favoriteIds || null,
+            qualificationData: input.qualificationData || null,
             source: "website",
+            nurtureStage: "pending",
+            nurtureScheduledFor,
           });
 
           return {

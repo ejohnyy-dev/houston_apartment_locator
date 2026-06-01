@@ -53,6 +53,10 @@ async function startServer() {
   // POST /api/scheduled/refresh-rentcast - Scheduled RentCast cache refresh
   const { refreshRentCastHandler } = await import("../scheduled/refreshRentCast");
   app.post("/api/scheduled/refresh-rentcast", refreshRentCastHandler);
+
+  // POST /api/scheduled/nurture-followup - 24-hour lead nurture follow-up
+  const { nurtureFollowupHandler } = await import("../scheduled/nurtureFollowup");
+  app.post("/api/scheduled/nurture-followup", nurtureFollowupHandler);
   
   // POST /api/leads - HubSpot lead capture (MUST be before static files)
   app.post("/api/leads", async (req, res) => {
