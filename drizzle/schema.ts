@@ -83,3 +83,42 @@ export const qualifications = mysqlTable("qualifications", {
 
 export type Qualification = typeof qualifications.$inferSelect;
 export type InsertQualification = typeof qualifications.$inferInsert;
+
+// Admin-managed apartment listings table
+// These listings take priority over CSV data when propertyId matches.
+// New listings (no CSV counterpart) are appended to search results.
+export const listings = mysqlTable("listings", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Optional: if set, this row overrides the CSV row with this propertyId */
+  propertyId: varchar("propertyId", { length: 255 }),
+  name: varchar("name", { length: 255 }).notNull(),
+  address: varchar("address", { length: 500 }),
+  city: varchar("city", { length: 100 }).notNull().default("Houston"),
+  state: varchar("state", { length: 10 }).notNull().default("TX"),
+  neighborhood: varchar("neighborhood", { length: 100 }),
+  minRent: int("minRent").notNull(),
+  maxRent: int("maxRent"),
+  bedrooms: int("bedrooms"),
+  bathrooms: int("bathrooms"),
+  minSqft: int("minSqft"),
+  maxSqft: int("maxSqft"),
+  builtYear: int("builtYear"),
+  availability: varchar("availability", { length: 255 }),
+  primaryImageUrl: text("primaryImageUrl"),
+  imageUrls: text("imageUrls"),       // JSON array of image URLs
+  special: text("special"),
+  featureHighlights: text("featureHighlights"),
+  exteriorAmenities: text("exteriorAmenities"),
+  interiorAmenities: text("interiorAmenities"),
+  petPolicy: text("petPolicy"),
+  managedBy: varchar("managedBy", { length: 255 }),
+  latitude: text("latitude"),
+  longitude: text("longitude"),
+  isActive: int("isActive").default(1).notNull(), // 1 = active, 0 = hidden
+  sortOrder: int("sortOrder").default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Listing = typeof listings.$inferSelect;
+export type InsertListing = typeof listings.$inferInsert;

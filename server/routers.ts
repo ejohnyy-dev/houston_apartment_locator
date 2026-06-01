@@ -7,10 +7,11 @@ import {
   getRentCastDatabaseStats,
 } from "./rentcastDatabase";
 import { notifyOwner } from "./_core/notification";
-import { createInquiry } from "./db";
+import { createInquiry, getActiveListings } from "./db";
 import { integrationsRouter } from "./routers/integrations";
 import { reportsRouter } from "./routers/reports";
 import { nurtureRouter } from "./routers/nurture";
+import { listingsRouter } from "./routers/listings";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -18,6 +19,7 @@ export const appRouter = router({
   integrations: integrationsRouter,
   reports: reportsRouter,
   nurture: nurtureRouter,
+  listings: listingsRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
@@ -46,14 +48,75 @@ export const appRouter = router({
       )
       .query(async ({ input }) => {
         try {
-          // If RentCast API is available, it already blends local data
+          // Get base apartments from RentCast (blends CSV) or CSV only
+          let baseApartments: any[];
           if (process.env.RENTCAST_API_KEY) {
-            return await getRentCastDatabaseApartments(input);
+            baseApartments = await getRentCastDatabaseApartments(input);
+          } else {
+            const { queryPropertyDatabase } = await import('./propertyDatabase');
+            baseApartments = await queryPropertyDatabase(input);
           }
-          
-          // Fallback to local property database only
-          const { queryPropertyDatabase } = await import('./propertyDatabase');
-          return await queryPropertyDatabase(input);
+
+          // Merge admin-managed SQL listings on top
+          // DB listings with a propertyId override matching CSV entries;
+          // DB listings without a propertyId are appended as new results.
+          const dbListings = await getActiveListings();
+          if (dbListings.length === 0) return baseApartments;
+
+          // Build a map of propertyId overrides
+          const overrideMap = new Map<string, any>();
+          const newListings: any[] = [];
+          for (const l of dbListings) {
+            const apt = {
+              id: l.propertyId ?? `db-${l.id}`,
+              name: l.name,
+              neighborhood: l.neighborhood ?? l.city,
+              bedrooms: l.bedrooms ?? 0,
+              bathrooms: l.bathrooms ?? 0,
+              rentMin: l.minRent,
+              rentMax: l.maxRent ?? null,
+              description: [
+                l.featureHighlights,
+                l.interiorAmenities,
+                l.exteriorAmenities,
+              ].filter(Boolean).join('. ') || null,
+              latitude: l.latitude ? parseFloat(l.latitude) : null,
+              longitude: l.longitude ? parseFloat(l.longitude) : null,
+              photos: [
+                ...(l.primaryImageUrl ? [l.primaryImageUrl] : []),
+                ...(l.imageUrls ? JSON.parse(l.imageUrls) : []),
+              ],
+              special: l.special ?? null,
+              availability: l.availability ?? null,
+              minSqft: l.minSqft ?? null,
+              maxSqft: l.maxSqft ?? null,
+              builtYear: l.builtYear ?? null,
+              managedBy: l.managedBy ?? null,
+              source: 'admin' as const,
+            };
+            if (l.propertyId) {
+              overrideMap.set(l.propertyId, apt);
+            } else {
+              newListings.push(apt);
+            }
+          }
+
+          // Replace overridden CSV entries; keep unmatched CSV entries
+          const merged = baseApartments.map((a: any) =>
+            overrideMap.has(String(a.id)) ? overrideMap.get(String(a.id)) : a
+          );
+
+          // Apply filters to new DB-only listings
+          const filteredNew = newListings.filter((a) => {
+            if (input?.neighborhood && a.neighborhood !== input.neighborhood) return false;
+            if (input?.minBedrooms != null && a.bedrooms < input.minBedrooms) return false;
+            if (input?.maxBedrooms != null && a.bedrooms > input.maxBedrooms) return false;
+            if (input?.minRent != null && a.rentMin < input.minRent) return false;
+            if (input?.maxRent != null && a.rentMin > input.maxRent) return false;
+            return true;
+          });
+
+          return [...merged, ...filteredNew];
         } catch (error) {
           console.error('Failed to fetch apartments:', error);
           throw new Error('Unable to fetch apartments. Please try again.');

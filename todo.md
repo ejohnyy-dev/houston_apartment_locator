@@ -88,3 +88,14 @@ All planned features have been successfully implemented and tested. The applicat
 - [x] Route: Registered /admin/nurture in App.tsx
 - [x] Tests: 13 nurture tests passing (HubSpot helpers, scheduling logic, auth guard, stage transitions)
 - [x] Security: Rate limiting on /api/leads endpoint (5/hr per email, 20/hr per IP)
+
+## Admin Listings Interface
+- [x] Database schema: Add listings table for admin-managed apartments
+- [x] Migration: Apply listings table migration via webdev_execute_sql
+- [x] DB helpers: Add CRUD helpers for listings in db.ts
+- [x] tRPC router: Create listings router with list, create, update, delete procedures (admin-only)
+- [x] Merge logic: SQL listings served via activeList endpoint, merged at query time
+- [x] Admin UI: Create /admin/listings page with table view, add/edit form, delete confirmation
+- [x] Image upload: Wire up S3 photo upload for apartment images
+- [x] Route: Register /admin/listings in App.tsx
+- [x] Tests: Write unit tests for listings CRUD operations (11 tests, all passing)

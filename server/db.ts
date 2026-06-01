@@ -1,6 +1,6 @@
 import { eq, and, lte, isNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, inquiries, InsertInquiry, Inquiry } from "../drizzle/schema";
+import { InsertUser, users, inquiries, InsertInquiry, Inquiry, listings, InsertListing, Listing } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -194,4 +194,69 @@ export async function getInquiriesWithNurtureStatus(limit = 50): Promise<Inquiry
     .limit(limit);
 }
 
-// TODO: add feature queries here as your schema grows.
+// ─── Listings CRUD helpers ────────────────────────────────────────────────────
+
+/**
+ * Get all admin-managed listings, ordered by sortOrder then createdAt.
+ */
+export async function getAllListings(): Promise<Listing[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(listings).orderBy(listings.sortOrder, listings.createdAt);
+}
+
+/**
+ * Get only active listings (isActive = 1).
+ */
+export async function getActiveListings(): Promise<Listing[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(listings).where(eq(listings.isActive, 1)).orderBy(listings.sortOrder, listings.createdAt);
+}
+
+/**
+ * Get a single listing by its database id.
+ */
+export async function getListingById(id: number): Promise<Listing | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(listings).where(eq(listings.id, id)).limit(1);
+  return rows[0] ?? null;
+}
+
+/**
+ * Create a new admin listing.
+ */
+export async function createListing(data: Omit<InsertListing, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  const result = await db.insert(listings).values(data);
+  return (result[0] as { insertId: number }).insertId;
+}
+
+/**
+ * Update an existing listing by id.
+ */
+export async function updateListing(id: number, data: Partial<Omit<InsertListing, 'id' | 'createdAt' | 'updatedAt'>>): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  await db.update(listings).set(data).where(eq(listings.id, id));
+}
+
+/**
+ * Delete a listing by id.
+ */
+export async function deleteListing(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  await db.delete(listings).where(eq(listings.id, id));
+}
+
+/**
+ * Toggle a listing's active status.
+ */
+export async function toggleListingActive(id: number, isActive: boolean): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  await db.update(listings).set({ isActive: isActive ? 1 : 0 }).where(eq(listings.id, id));
+}
