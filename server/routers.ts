@@ -1,6 +1,8 @@
 import { getSessionCookieOptions, COOKIE_NAME } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { publicProcedure, router, adminProcedure } from "./_core/trpc";
+import { leadsRateLimiter, leadsIpRateLimiter } from "./_core/rateLimiter";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import {
   getRentCastDatabaseApartments,
@@ -139,9 +141,62 @@ export const appRouter = router({
       }),
 
     /**
+     * Get apartments with move-in specials (public)
+     */
+    specials: publicProcedure.query(async () => {
+      try {
+        // Prefer RentCast blended data, fall back to CSV-only
+        let allApartments: any[];
+        if (process.env.RENTCAST_API_KEY) {
+          allApartments = await getRentCastDatabaseApartments();
+        } else {
+          const { queryPropertyDatabase } = await import('./propertyDatabase');
+          allApartments = await queryPropertyDatabase();
+        }
+
+        // Also include admin-managed listings with specials
+        const dbListings = await getActiveListings();
+        const dbWithSpecials = dbListings
+          .filter(l => l.special && l.special.trim())
+          .map(l => ({
+            id: l.propertyId ?? `db-${l.id}`,
+            name: l.name,
+            neighborhood: l.neighborhood ?? l.city ?? '',
+            special: l.special,
+            rentMin: l.minRent,
+            rentMax: l.maxRent ?? null,
+          }));
+
+        // Filter CSV/RentCast apartments that have a non-empty special
+        const csvWithSpecials = allApartments
+          .filter((a: any) => a.special && String(a.special).trim())
+          .map((a: any) => ({
+            id: a.id,
+            name: a.name,
+            neighborhood: a.neighborhood,
+            special: a.special,
+            rentMin: a.rentMin,
+            rentMax: a.rentMax ?? null,
+          }));
+
+        // Merge: admin listings override CSV entries with same propertyId
+        const overrideIds = new Set(dbListings.filter(l => l.propertyId).map(l => l.propertyId!));
+        const merged = [
+          ...csvWithSpecials.filter((a: any) => !overrideIds.has(String(a.id))),
+          ...dbWithSpecials,
+        ];
+
+        return merged.slice(0, 50); // cap at 50 for the page
+      } catch (error) {
+        console.error('Failed to fetch specials:', error);
+        throw new Error('Unable to fetch move-in specials. Please try again.');
+      }
+    }),
+
+    /**
      * Get database stats (inventory count, budget, etc.)
      */
-    databaseStats: publicProcedure.query(async () => {
+    databaseStats: adminProcedure.query(async () => {
       try {
         if (process.env.RENTCAST_API_KEY) {
           return await getRentCastDatabaseStats();
@@ -187,7 +242,25 @@ export const appRouter = router({
           qualificationData: z.string().optional(), // JSON stringified qualification data
         })
       )
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        // Rate-limit by email (5/hr) and IP (20/hr)
+        const clientIp = (ctx.req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim()
+          || ctx.req.socket?.remoteAddress
+          || 'unknown';
+        if (!leadsRateLimiter.isAllowed(input.email)) {
+          const retryAfter = Math.ceil((leadsRateLimiter.getResetTime(input.email) - Date.now()) / 1000);
+          throw new TRPCError({
+            code: 'TOO_MANY_REQUESTS',
+            message: `Too many submissions from this email. Please try again in ${Math.ceil(retryAfter / 60)} minute(s).`,
+          });
+        }
+        if (!leadsIpRateLimiter.isAllowed(clientIp)) {
+          const retryAfter = Math.ceil((leadsIpRateLimiter.getResetTime(clientIp) - Date.now()) / 1000);
+          throw new TRPCError({
+            code: 'TOO_MANY_REQUESTS',
+            message: `Too many submissions from this location. Please try again in ${Math.ceil(retryAfter / 60)} minute(s).`,
+          });
+        }
         try {
           // Parse name into first and last
           const nameParts = input.name.trim().split(/\s+/);

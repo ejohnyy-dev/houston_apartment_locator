@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { cn, getDisplayName } from '@/lib/utils';
 import { trpc } from '@/lib/trpc';
 import { Button } from '@/components/ui/button';
@@ -127,6 +127,7 @@ function formatSqft(apt: ApartmentTeased): string | null {
 }
 
 function ApartmentCard({
+  id,
   apt,
   isLead,
   onLearnMore,
@@ -136,6 +137,7 @@ function ApartmentCard({
   onToggleFavorite,
   bedroomFilter,
 }: {
+  id?: string;
   apt: ApartmentTeased;
   isLead: boolean;
   onLearnMore: () => void;
@@ -149,6 +151,7 @@ function ApartmentCard({
 
   return (
     <Card
+      id={id}
       className={`overflow-hidden transition-all duration-200 cursor-pointer hover:shadow-lg ${
         isSelected ? 'ring-2 ring-blue-500 shadow-lg' : ''
       }`}
@@ -276,7 +279,6 @@ export default function ApartmentSearch() {
   const { qualificationData, hasQualified, setQualificationData, setShowQualificationPrompt, showQualificationPrompt } = useQualification();
   const { favorites, isFavorited, toggleFavorite } = useFavorites();
   const [selectedApartment, setSelectedApartment] = useState<ApartmentTeased | null>(null);
-  const [showLeadForm, setShowLeadForm] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [pendingApartment, setPendingApartment] = useState<ApartmentTeased | null>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -285,12 +287,17 @@ export default function ApartmentSearch() {
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const clustererRef = useRef<any>(null);
+  const listScrollRef = useRef<HTMLDivElement | null>(null);
 
   // Filters
   const [selectedNeighborhood, setSelectedNeighborhood] = useState('');
   const [bedroomFilter, setBedroomFilter] = useState('');
-  const [rentRange, setRentRange] = useState<[number, number]>(DEFAULT_RENT_RANGE);
+  // sliderRentRange is the live display value; committedRentRange drives the tRPC query
+  const [sliderRentRange, setSliderRentRange] = useState<[number, number]>(DEFAULT_RENT_RANGE);
+  const [committedRentRange, setCommittedRentRange] = useState<[number, number]>(DEFAULT_RENT_RANGE);
   const [searchText, setSearchText] = useState('');
+  // Mobile view toggle: 'map' | 'list'
+  const [mobileView, setMobileView] = useState<'map' | 'list'>('list');
 
   // Show qualification prompt on first visit to /search
   useEffect(() => {
@@ -299,14 +306,16 @@ export default function ApartmentSearch() {
     }
   }, [hasQualified, showQualificationPrompt, setShowQualificationPrompt]);
 
-  const { data: apartmentsData, isLoading } = trpc.apartments.list.useQuery(
-    {
-      neighborhood: selectedNeighborhood && selectedNeighborhood !== '__all__' ? selectedNeighborhood : undefined,
-      minBedrooms: bedroomFilter && bedroomFilter !== '__any__' ? parseInt(bedroomFilter) : undefined,
-      maxBedrooms: bedroomFilter && bedroomFilter !== '__any__' ? parseInt(bedroomFilter) : undefined,
-      minRent: rentRange[0],
-      maxRent: rentRange[1],
-    },
+  const queryInput = useMemo(() => ({
+    neighborhood: selectedNeighborhood && selectedNeighborhood !== '__all__' ? selectedNeighborhood : undefined,
+    minBedrooms: bedroomFilter && bedroomFilter !== '__any__' ? parseInt(bedroomFilter) : undefined,
+    maxBedrooms: bedroomFilter && bedroomFilter !== '__any__' ? parseInt(bedroomFilter) : undefined,
+    minRent: committedRentRange[0],
+    maxRent: committedRentRange[1],
+  }), [selectedNeighborhood, bedroomFilter, committedRentRange]);
+
+  const { data: apartmentsData, isLoading, isError } = trpc.apartments.list.useQuery(
+    queryInput,
     { staleTime: 30_000 }
   );
 
@@ -395,6 +404,13 @@ export default function ApartmentSearch() {
         // Always show the teaser preview card first (for both visitors and leads)
         setSelectedApartment(apt);
         setShowPinPreview(true);
+
+        // On mobile, switch to list view and scroll to the matching card
+        setMobileView('list');
+        setTimeout(() => {
+          const cardEl = document.getElementById(`apt-card-${apt.id}`);
+          if (cardEl) cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
       });
 
       newMarkers.push(marker);
@@ -448,7 +464,8 @@ export default function ApartmentSearch() {
   const handleLearnMore = (apt: ApartmentTeased) => {
     setSelectedApartment(apt);
     setPendingApartment(apt);
-    setShowLeadForm(true);
+    // Open the real InquiryForm (replaces the old dead showLeadForm placeholder)
+    setShowInquiryForm(true);
   };
 
   const handleViewDetails = (apt: ApartmentTeased) => {
@@ -464,7 +481,8 @@ export default function ApartmentSearch() {
   const resetFilters = () => {
     setSelectedNeighborhood('');
     setBedroomFilter('');
-    setRentRange(DEFAULT_RENT_RANGE);
+    setSliderRentRange(DEFAULT_RENT_RANGE);
+    setCommittedRentRange(DEFAULT_RENT_RANGE);
     setSearchText('');
   };
 
@@ -576,18 +594,18 @@ export default function ApartmentSearch() {
                   </Button>
                   <Button
                     size="sm"
-                    variant={rentRange[1] <= 1500 ? 'default' : 'outline'}
+                    variant={committedRentRange[1] <= 1500 ? 'default' : 'outline'}
                     className="text-xs h-8"
-                    onClick={() => setRentRange(rentRange[1] <= 1500 ? DEFAULT_RENT_RANGE : [0, 1500])}
+                    onClick={() => { const v = committedRentRange[1] <= 1500 ? DEFAULT_RENT_RANGE : [0, 1500] as [number, number]; setSliderRentRange(v); setCommittedRentRange(v); }}
                     title={bedroomFilter === '1' ? '1BR under $1,500/mo' : bedroomFilter === '2' ? '2BR under $1,500/mo' : 'Under $1,500/mo'}
                   >
                     {bedroomFilter === '1' ? '1BR < $1.5k' : bedroomFilter === '2' ? '2BR < $1.5k' : 'Under $1.5k'}
                   </Button>
                   <Button
                     size="sm"
-                    variant={rentRange[0] >= 2000 && rentRange[1] <= 3000 ? 'default' : 'outline'}
+                    variant={committedRentRange[0] >= 2000 && committedRentRange[1] <= 3000 ? 'default' : 'outline'}
                     className="text-xs h-8"
-                    onClick={() => setRentRange(rentRange[0] >= 2000 && rentRange[1] <= 3000 ? DEFAULT_RENT_RANGE : [2000, 3000])}
+                    onClick={() => { const v = committedRentRange[0] >= 2000 && committedRentRange[1] <= 3000 ? DEFAULT_RENT_RANGE : [2000, 3000] as [number, number]; setSliderRentRange(v); setCommittedRentRange(v); }}
                     title={bedroomFilter === '1' ? '1BR $2,000–$3,000/mo' : bedroomFilter === '2' ? '2BR $2,000–$3,000/mo' : '$2,000–$3,000/mo'}
                   >
                     {bedroomFilter === '1' ? '1BR $2k-$3k' : bedroomFilter === '2' ? '2BR $2k-$3k' : '$2k - $3k'}
@@ -650,14 +668,15 @@ export default function ApartmentSearch() {
 
                 <div>
                   <label className="block text-xs font-medium text-slate-600 mb-2">
-                    {bedroomFilter === '1' ? '1BR Max Rent' : bedroomFilter === '2' ? '2BR Max Rent' : bedroomFilter === '3' ? '3BR Max Rent' : 'Max Rent'}: ${rentRange[1] >= 15000 ? 'Any' : rentRange[1].toLocaleString() + '/mo'}
+                    {bedroomFilter === '1' ? '1BR Max Rent' : bedroomFilter === '2' ? '2BR Max Rent' : bedroomFilter === '3' ? '3BR Max Rent' : 'Max Rent'}: ${sliderRentRange[1] >= 15000 ? 'Any' : sliderRentRange[1].toLocaleString() + '/mo'}
                   </label>
                   <Slider
                     min={0}
                     max={15000}
                     step={100}
-                    value={rentRange}
-                    onValueChange={v => setRentRange(v as [number, number])}
+                    value={sliderRentRange}
+                    onValueChange={v => setSliderRentRange(v as [number, number])}
+                    onValueCommit={v => setCommittedRentRange(v as [number, number])}
                     className="w-full"
                   />
                 </div>
@@ -677,10 +696,36 @@ export default function ApartmentSearch() {
         )}
       </header>
 
+      {/* Mobile map/list toggle — only visible on small screens */}
+      <div className="flex lg:hidden items-center justify-center gap-1 bg-white border-b border-slate-200 px-4 py-2">
+        <button
+          onClick={() => setMobileView('list')}
+          className={cn(
+            'flex-1 py-1.5 rounded-l-md text-xs font-semibold border transition-colors',
+            mobileView === 'list'
+              ? 'bg-blue-600 text-white border-blue-600'
+              : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
+          )}
+        >
+          List
+        </button>
+        <button
+          onClick={() => setMobileView('map')}
+          className={cn(
+            'flex-1 py-1.5 rounded-r-md text-xs font-semibold border-t border-b border-r transition-colors',
+            mobileView === 'map'
+              ? 'bg-blue-600 text-white border-blue-600'
+              : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
+          )}
+        >
+          Map
+        </button>
+      </div>
+
       {/* Main layout: map left, listings right */}
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden" style={{ height: 'calc(100vh - 57px)' }}>
         {/* Map panel */}
-        <div className="lg:flex-1 h-64 lg:h-full relative">
+        <div className={cn('lg:flex-1 lg:h-full relative', mobileView === 'map' ? 'flex-1 h-full' : 'hidden lg:block')}>
           <MapView
             initialCenter={{ lat: 29.7604, lng: -95.3698 }}
             initialZoom={10}
@@ -720,7 +765,7 @@ export default function ApartmentSearch() {
         </div>
 
         {/* Listings panel */}
-        <div className="w-full lg:w-96 xl:w-[420px] bg-white border-l border-slate-200 flex flex-col overflow-hidden">
+        <div className={cn('w-full lg:w-96 xl:w-[420px] bg-white border-l border-slate-200 flex flex-col overflow-hidden', mobileView === 'list' ? 'flex' : 'hidden lg:flex')}>
           {/* Panel header */}
           <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between shrink-0">
             <div>
@@ -739,7 +784,7 @@ export default function ApartmentSearch() {
           </div>
 
           {/* Listings scroll area */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div ref={listScrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
             {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <Card key={i} className="overflow-hidden">
@@ -760,12 +805,18 @@ export default function ApartmentSearch() {
                   Clear filters
                 </Button>
               </div>
+            ) : isError ? (
+              <div className="text-center py-16">
+                <p className="text-slate-500 text-sm font-medium">Unable to load listings right now.</p>
+                <p className="text-slate-400 text-xs mt-1">Please check your connection and try again.</p>
+              </div>
             ) : (
               filtered.map(apt => (
                 <ApartmentCard
                   key={apt.id}
+                  id={`apt-card-${apt.id}`}
                   apt={apt}
-                  isLead={true}
+                  isLead={hasQualified}
                   bedroomFilter={bedroomFilter}
                   onLearnMore={() => handleLearnMore(apt)}
                   onViewDetails={() => handleViewDetails(apt)}
@@ -873,7 +924,7 @@ export default function ApartmentSearch() {
                     onClick={() => {
                       setShowPinPreview(false);
                       setPendingApartment(selectedApartment);
-                      setShowLeadForm(true);
+                      setShowInquiryForm(true);
                     }}
                   >
                     <Lock className="w-4 h-4 mr-2" /> Unlock Details
@@ -996,33 +1047,7 @@ export default function ApartmentSearch() {
         />
       )}
 
-      {/* ── Lead Form Modal ── */}
-      {showLeadForm && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md">
-            <div className="p-6">
-              <h2 className="text-lg font-bold text-slate-900 mb-2">Unlock Full Access</h2>
-              <p className="text-sm text-slate-600 mb-4">Submit your information to view detailed listings and contact information.</p>
-              <Button
-                className="w-full bg-blue-600 hover:bg-blue-700"
-                onClick={() => {
-                  setShowLeadForm(false);
-                  toast.success('Feature coming soon');
-                }}
-              >
-                Continue
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full mt-2"
-                onClick={() => setShowLeadForm(false)}
-              >
-                Cancel
-              </Button>
-            </div>
-          </Card>
-        </div>
-      )}
+      {/* showLeadForm is no longer used — handleLearnMore now opens InquiryForm directly */}
     </div>
   );
 }

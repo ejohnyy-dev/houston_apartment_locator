@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, Redirect } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { QualificationProvider } from "./contexts/QualificationContext";
@@ -36,6 +36,7 @@ function Router() {
         <Route path={"/houston-apartment-move-in-specials"} component={MoveInSpecials} />
         <Route path={"/faq"} component={FAQ} />
         <Route path={"/neighborhoods/:slug"} component={NeighborhoodPage} />
+        <Route path={"/admin"}><Redirect to="/admin/listings" /></Route>
         <Route path={"/admin/nurture"} component={AdminNurture} />
         <Route path={"/admin/listings"} component={AdminListings} />
         <Route path={"/admin/reports"} component={AdminReports} />

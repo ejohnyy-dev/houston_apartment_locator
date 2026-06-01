@@ -146,3 +146,18 @@ All planned features have been successfully implemented and tested. The applicat
 - [x] AdminNav: add Rentcast link
 - [x] App.tsx: register /admin/rentcast route
 - [x] Tests: cover rentcast router procedures
+
+## Site-Wide Audit Fixes (Jun 2026)
+
+### High Priority
+- [x] Rent slider: use onValueCommit instead of onValueChange to avoid a tRPC re-fetch on every slider tick
+- [x] Dead showLeadForm modal: replace "Feature coming soon" button with the real InquiryForm component
+- [x] Mobile /search: add a map/list toggle button so users on phones can switch between views
+- [x] /admin route: redirect to /admin/listings instead of 404
+- [x] apartments.databaseStats: change from publicProcedure to adminProcedure (leaks internal stats)
+
+### Medium Priority
+- [x] Map-to-list scroll sync: clicking a map marker should scroll the list panel to the matching card
+- [x] Specials page: wire to real special field from DB/CSV instead of hardcoded seoContent.ts array
+- [x] Error state in ApartmentSearch: show a user-friendly message when the apartments.list query fails
+- [x] inquiries.create tRPC procedure: add rate limiting (currently only the REST /api/leads has it)
