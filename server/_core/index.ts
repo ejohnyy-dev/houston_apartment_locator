@@ -49,6 +49,10 @@ async function startServer() {
     })
   );
   
+  // POST /api/scheduled/refresh-rentcast - Scheduled RentCast cache refresh
+  const { refreshRentCastHandler } = await import("../scheduled/refreshRentCast");
+  app.post("/api/scheduled/refresh-rentcast", refreshRentCastHandler);
+  
   // POST /api/leads - HubSpot lead capture (MUST be before static files)
   app.post("/api/leads", async (req, res) => {
     try {
