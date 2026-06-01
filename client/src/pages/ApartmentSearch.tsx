@@ -578,19 +578,40 @@ export default function ApartmentSearch() {
                     variant={rentRange[1] <= 1500 ? 'default' : 'outline'}
                     className="text-xs h-8"
                     onClick={() => setRentRange(rentRange[1] <= 1500 ? DEFAULT_RENT_RANGE : [0, 1500])}
+                    title={bedroomFilter === '1' ? '1BR under $1,500/mo' : bedroomFilter === '2' ? '2BR under $1,500/mo' : 'Under $1,500/mo'}
                   >
-                    Under $1.5k
+                    {bedroomFilter === '1' ? '1BR < $1.5k' : bedroomFilter === '2' ? '2BR < $1.5k' : 'Under $1.5k'}
                   </Button>
                   <Button
                     size="sm"
                     variant={rentRange[0] >= 2000 && rentRange[1] <= 3000 ? 'default' : 'outline'}
                     className="text-xs h-8"
                     onClick={() => setRentRange(rentRange[0] >= 2000 && rentRange[1] <= 3000 ? DEFAULT_RENT_RANGE : [2000, 3000])}
+                    title={bedroomFilter === '1' ? '1BR $2,000–$3,000/mo' : bedroomFilter === '2' ? '2BR $2,000–$3,000/mo' : '$2,000–$3,000/mo'}
                   >
-                    $2k - $3k
+                    {bedroomFilter === '1' ? '1BR $2k-$3k' : bedroomFilter === '2' ? '2BR $2k-$3k' : '$2k - $3k'}
                   </Button>
                 </div>
               </div>
+
+              {/* Per-bedroom price range hint */}
+              {(bedroomFilter === '1' || bedroomFilter === '2') && (() => {
+                const priceKey = bedroomFilter === '1' ? 'price1brMin' : 'price2brMin';
+                const priceMaxKey = bedroomFilter === '1' ? 'price1brMax' : 'price2brMax';
+                const prices = filtered
+                  .map(a => (a as any)[priceKey])
+                  .filter((p): p is number => typeof p === 'number' && p > 0);
+                if (prices.length === 0) return null;
+                const lo = Math.min(...prices);
+                const hi = Math.max(...filtered.map(a => (a as any)[priceMaxKey] ?? (a as any)[priceKey]).filter((p): p is number => typeof p === 'number' && p > 0));
+                return (
+                  <div className="flex items-center gap-1.5 text-xs text-blue-700 bg-blue-50 border border-blue-100 rounded px-3 py-1.5">
+                    <span className="font-semibold">{bedroomFilter === '1' ? '1 BR' : '2 BR'} range in results:</span>
+                    <span>${lo.toLocaleString()} – ${hi.toLocaleString()}/mo</span>
+                    <span className="text-blue-400">({prices.length} listings with pricing data)</span>
+                  </div>
+                );
+              })()}
 
               {/* Advanced filters */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

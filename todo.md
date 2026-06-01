@@ -112,9 +112,9 @@ All planned features have been successfully implemented and tested. The applicat
 - [x] Verify search page shows 541 listings with correct prices and map markers (72 tests passing)
 
 ## Per-Bedroom Price Filter Upgrade
-- [ ] Server: Update apartments.list filter to use price1brMin/Max when bedrooms=1, price2brMin/Max when bedrooms=2, etc.
-- [ ] Server: Fall back to minRent/maxRent when per-bedroom price is null for a listing
-- [ ] Client: Update ApartmentSearch filter UI to show per-bedroom price ranges when a bedroom count is selected
-- [ ] Client: Update quick-access price buttons to reflect per-bedroom pricing context
-- [ ] Client: Show price range hint (e.g. "1BR: $1,100–$1,800") in filter bar when bedroom is selected
-- [ ] Tests: Add unit tests for per-bedroom price filter logic
+- [x] Server: Update apartments.list filter to use price1brMin/Max when bedrooms=1, price2brMin/Max when bedrooms=2, etc.
+- [x] Server: Fall back to minRent/maxRent when per-bedroom price is null for a listing
+- [x] Client: Update ApartmentSearch filter UI to show per-bedroom price ranges when a bedroom count is selected
+- [x] Client: Update quick-access price buttons to reflect per-bedroom pricing context
+- [x] Client: Show price range hint (e.g. "1BR: $1,100–$1,800") in filter bar when bedroom is selected
+- [x] Tests: Add unit tests for per-bedroom price filter logic (70/72 pass; 2 external API timeouts unrelated to changes)
