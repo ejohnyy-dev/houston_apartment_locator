@@ -140,3 +140,22 @@ export const listings = mysqlTable("listings", {
 
 export type Listing = typeof listings.$inferSelect;
 export type InsertListing = typeof listings.$inferInsert;
+
+// RentCast cron configuration — stores the Heartbeat task_uid and last refresh stats
+// Only ever has one row (id=1). Use upsert to update.
+export const rentcastCronConfig = mysqlTable("rentcast_cron_config", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Heartbeat task UID — used to update/delete the cron job */
+  scheduleCronTaskUid: varchar("scheduleCronTaskUid", { length: 65 }),
+  cronExpression: varchar("cronExpression", { length: 64 }),
+  isEnabled: int("isEnabled").default(1).notNull(),
+  lastRefreshAt: timestamp("lastRefreshAt"),
+  lastRefreshStatus: varchar("lastRefreshStatus", { length: 32 }),
+  /** JSON blob: { totalProperties, rentcastMatches, requestsUsed, requestsRemaining, duration } */
+  lastRefreshStats: text("lastRefreshStats"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type RentcastCronConfig = typeof rentcastCronConfig.$inferSelect;
+export type InsertRentcastCronConfig = typeof rentcastCronConfig.$inferInsert;

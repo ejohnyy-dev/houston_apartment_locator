@@ -19,6 +19,7 @@ import ContactPage from "./pages/ContactPage";
 import AdminNurture from "./pages/AdminNurture";
 import AdminListings from "./pages/AdminListings";
 import AdminReports from "./pages/AdminReports";
+import AdminRentcast from "./pages/AdminRentcast";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -38,6 +39,7 @@ function Router() {
         <Route path={"/admin/nurture"} component={AdminNurture} />
         <Route path={"/admin/listings"} component={AdminListings} />
         <Route path={"/admin/reports"} component={AdminReports} />
+        <Route path={"/admin/rentcast"} component={AdminRentcast} />
         <Route path={"/404"} component={NotFound} />
         <Route component={NotFound} />
       </Switch>

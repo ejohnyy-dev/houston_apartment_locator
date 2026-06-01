@@ -1,9 +1,9 @@
 import { Link } from "wouter";
-import { Building2, Users, BarChart3, Home } from "lucide-react";
+import { Building2, Users, BarChart3, Home, Database } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface AdminNavProps {
-  active: "listings" | "nurture" | "reports";
+  active: "listings" | "nurture" | "reports" | "rentcast";
 }
 
 const navItems = [
@@ -24,6 +24,12 @@ const navItems = [
     label: "Reports",
     href: "/admin/reports",
     icon: BarChart3,
+  },
+  {
+    key: "rentcast" as const,
+    label: "RentCast",
+    href: "/admin/rentcast",
+    icon: Database,
   },
 ];
 

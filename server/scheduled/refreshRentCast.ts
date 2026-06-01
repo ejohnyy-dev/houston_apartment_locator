@@ -1,27 +1,31 @@
 import { Request, Response } from "express";
 import { sdk } from "../_core/sdk";
 import { getRentCastDatabaseStats } from "../rentcastDatabase";
+import { getDb } from "../db";
+import { rentcastCronConfig } from "../../drizzle/schema";
+import { eq } from "drizzle-orm";
 
 /**
  * Scheduled handler: Refresh RentCast apartment cache
- * 
+ *
  * Triggered by: manus-heartbeat (HTTP cron)
  * Path: /api/scheduled/refresh-rentcast
- * 
+ *
  * This handler:
  * 1. Authenticates the request as a cron job
  * 2. Triggers the RentCast cache refresh
- * 3. Returns stats on the refresh result
- * 
+ * 3. Persists refresh stats to the rentcast_cron_config DB row
+ * 4. Returns stats on the refresh result
+ *
  * Idempotent: Safe to retry on failure
  */
 export async function refreshRentCastHandler(req: Request, res: Response) {
   const startTime = Date.now();
-  
+
   try {
     // Authenticate as cron request
     const user = await sdk.authenticateRequest(req);
-    
+
     if (!user.isCron || !user.taskUid) {
       console.warn("[Scheduled] Unauthorized access to refresh-rentcast endpoint");
       return res.status(403).json({ error: "cron-only" });
@@ -43,6 +47,65 @@ export async function refreshRentCastHandler(req: Request, res: Response) {
       monthlyRequestsUsed: stats.monthlyRequestsUsed,
       monthlyRequestsRemaining: stats.monthlyRequestsRemaining,
     });
+
+    // Persist refresh stats to DB so the admin UI can display them
+    try {
+      const db = await getDb();
+      if (db) {
+        const statsJson = JSON.stringify({
+          totalProperties: stats.totalProperties,
+          rentcastMatches: stats.rentcastMatches,
+          requestsUsed: stats.monthlyRequestsUsed,
+          requestsRemaining: stats.monthlyRequestsRemaining,
+          duration: `${duration}ms`,
+        });
+
+        // Look up the config row by taskUid
+        const existing = await db
+          .select()
+          .from(rentcastCronConfig)
+          .where(eq(rentcastCronConfig.scheduleCronTaskUid, user.taskUid))
+          .limit(1);
+
+        if (existing.length > 0) {
+          await db
+            .update(rentcastCronConfig)
+            .set({
+              lastRefreshAt: new Date(),
+              lastRefreshStatus: stats.status,
+              lastRefreshStats: statsJson,
+            })
+            .where(eq(rentcastCronConfig.id, existing[0].id));
+        } else {
+          // Fallback: upsert the first config row if task_uid doesn't match
+          // (can happen if the cron was set up via CLI rather than the admin UI)
+          const rows = await db.select().from(rentcastCronConfig).limit(1);
+          if (rows.length > 0) {
+            await db
+              .update(rentcastCronConfig)
+              .set({
+                scheduleCronTaskUid: user.taskUid,
+                lastRefreshAt: new Date(),
+                lastRefreshStatus: stats.status,
+                lastRefreshStats: statsJson,
+              })
+              .where(eq(rentcastCronConfig.id, rows[0].id));
+          } else {
+            await db.insert(rentcastCronConfig).values({
+              scheduleCronTaskUid: user.taskUid,
+              lastRefreshAt: new Date(),
+              lastRefreshStatus: stats.status,
+              lastRefreshStats: statsJson,
+            });
+          }
+        }
+
+        console.log("[Scheduled] Persisted refresh stats to DB");
+      }
+    } catch (dbErr) {
+      // Non-fatal: log but don't fail the cron response
+      console.error("[Scheduled] Failed to persist refresh stats to DB", dbErr);
+    }
 
     return res.json({
       ok: true,

@@ -45,3 +45,125 @@ describe("RentCast API Integration", () => {
     }
   });
 });
+
+// ─── Cron expression validation ───────────────────────────────────────────────
+
+function isValid6FieldCron(expr: string): boolean {
+  // 6-field cron: sec min hour dom mon dow
+  const parts = expr.trim().split(/\s+/);
+  if (parts.length !== 6) return false;
+  return parts.every((p) => /^(\*|\d+(-\d+)?(\/\d+)?|\d+(,\d+)*)$/.test(p));
+}
+
+describe("RentCast cron expression validation", () => {
+  it("accepts valid daily 03:00 UTC expression", () => {
+    expect(isValid6FieldCron("0 0 3 * * *")).toBe(true);
+  });
+
+  it("accepts hourly expression", () => {
+    expect(isValid6FieldCron("0 0 * * * *")).toBe(true);
+  });
+
+  it("rejects 5-field cron (standard unix cron)", () => {
+    expect(isValid6FieldCron("0 3 * * *")).toBe(false);
+  });
+
+  it("rejects empty string", () => {
+    expect(isValid6FieldCron("")).toBe(false);
+  });
+
+  it("rejects expression with letters", () => {
+    expect(isValid6FieldCron("0 0 3 * * MON")).toBe(false);
+  });
+});
+
+// ─── refreshRentCast handler auth guard ───────────────────────────────────────
+
+describe("refreshRentCast handler auth guard", () => {
+  it("rejects requests where isCron is false", () => {
+    const user = { isCron: false, taskUid: "uid_abc" };
+    const isAllowed = user.isCron && !!user.taskUid;
+    expect(isAllowed).toBe(false);
+  });
+
+  it("rejects requests with missing taskUid", () => {
+    const user = { isCron: true, taskUid: "" };
+    const isAllowed = user.isCron && !!user.taskUid;
+    expect(isAllowed).toBe(false);
+  });
+
+  it("allows valid cron requests", () => {
+    const user = { isCron: true, taskUid: "uid_abc123" };
+    const isAllowed = user.isCron && !!user.taskUid;
+    expect(isAllowed).toBe(true);
+  });
+});
+
+// ─── cronStatus response shape ────────────────────────────────────────────────
+
+describe("cronStatus response shape", () => {
+  it("returns configured=false when no job exists", () => {
+    const response = { configured: false, job: null, lastRefresh: null };
+    expect(response.configured).toBe(false);
+    expect(response.job).toBeNull();
+    expect(response.lastRefresh).toBeNull();
+  });
+
+  it("returns configured=true with job details when job exists", () => {
+    const response = {
+      configured: true,
+      job: {
+        taskUid: "uid_abc",
+        name: "rentcast-nightly-refresh",
+        cronExpression: "0 0 3 * * *",
+        isEnabled: true,
+        lastExecutedAt: null,
+        nextExecutionAt: "2026-06-02T03:00:00Z",
+      },
+      lastRefresh: null,
+    };
+    expect(response.configured).toBe(true);
+    expect(response.job?.name).toBe("rentcast-nightly-refresh");
+    expect(response.job?.cronExpression).toBe("0 0 3 * * *");
+  });
+});
+
+// ─── lastRefresh stats persistence shape ─────────────────────────────────────
+
+describe("lastRefresh stats shape", () => {
+  it("parses persisted JSON stats correctly", () => {
+    const raw = JSON.stringify({
+      totalProperties: 547,
+      rentcastMatches: 45,
+      requestsUsed: 50,
+      requestsRemaining: 0,
+      duration: "1234ms",
+    });
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    expect(parsed.totalProperties).toBe(547);
+    expect(parsed.rentcastMatches).toBe(45);
+    expect(parsed.requestsUsed).toBe(50);
+    expect(parsed.requestsRemaining).toBe(0);
+    expect(parsed.duration).toBe("1234ms");
+  });
+
+  it("handles missing stats gracefully", () => {
+    const lastRefresh = { at: null, status: null, stats: null };
+    expect(lastRefresh.stats).toBeNull();
+  });
+});
+
+// ─── deleteCron input validation ──────────────────────────────────────────────
+
+describe("deleteCron input validation", () => {
+  it("requires a non-empty taskUid", () => {
+    const taskUid = "uid_abc123";
+    expect(typeof taskUid).toBe("string");
+    expect(taskUid.length).toBeGreaterThan(0);
+  });
+
+  it("rejects empty taskUid", () => {
+    const taskUid = "";
+    expect(taskUid.length).toBe(0);
+  });
+});

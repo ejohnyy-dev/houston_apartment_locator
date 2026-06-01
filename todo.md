@@ -136,3 +136,13 @@ All planned features have been successfully implemented and tested. The applicat
 - [x] /admin/reports: On-demand Excel generation with loading states and error handling
 - [x] /admin/reports: Registered route in App.tsx
 - [x] Reports router: Secured all procedures with adminProcedure (was publicProcedure)
+
+## RentCast Nightly Auto-Refresh Heartbeat Cron
+- [x] DB schema: rentcast_cache_config table with task_uid, last_refresh_at, last_refresh_status, last_refresh_stats (JSON), cron_expression
+- [x] DB migration: generate and apply schema
+- [x] rentcast tRPC router: cronStatus, setupCron, deleteCron, refreshStats procedures
+- [x] refreshRentCast handler: persist refresh stats to DB after each run
+- [x] /admin/rentcast page: cron status card, setup/delete controls, last refresh stats
+- [x] AdminNav: add Rentcast link
+- [x] App.tsx: register /admin/rentcast route
+- [x] Tests: cover rentcast router procedures

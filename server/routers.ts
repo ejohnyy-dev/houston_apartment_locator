@@ -12,6 +12,7 @@ import { integrationsRouter } from "./routers/integrations";
 import { reportsRouter } from "./routers/reports";
 import { nurtureRouter } from "./routers/nurture";
 import { listingsRouter } from "./routers/listings";
+import { rentcastRouter } from "./routers/rentcast";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -20,6 +21,7 @@ export const appRouter = router({
   reports: reportsRouter,
   nurture: nurtureRouter,
   listings: listingsRouter,
+  rentcast: rentcastRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
