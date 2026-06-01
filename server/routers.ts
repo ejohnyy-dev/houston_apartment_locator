@@ -106,13 +106,26 @@ export const appRouter = router({
             overrideMap.has(String(a.id)) ? overrideMap.get(String(a.id)) : a
           );
 
-          // Apply filters to new DB-only listings
+          // Apply filters to new DB-only listings (with per-bedroom price support)
+          const targetBedrooms =
+            input?.minBedrooms != null &&
+            input?.maxBedrooms != null &&
+            input.minBedrooms === input.maxBedrooms
+              ? input.minBedrooms
+              : input?.minBedrooms ?? input?.maxBedrooms;
+
           const filteredNew = newListings.filter((a) => {
             if (input?.neighborhood && a.neighborhood !== input.neighborhood) return false;
             if (input?.minBedrooms != null && a.bedrooms < input.minBedrooms) return false;
             if (input?.maxBedrooms != null && a.bedrooms > input.maxBedrooms) return false;
-            if (input?.minRent != null && a.rentMin < input.minRent) return false;
-            if (input?.maxRent != null && a.rentMin > input.maxRent) return false;
+
+            // Use per-bedroom price when a specific bedroom count is targeted
+            let effectivePrice = a.rentMin;
+            if (targetBedrooms === 1 && a.price1brMin != null) effectivePrice = a.price1brMin;
+            else if (targetBedrooms === 2 && a.price2brMin != null) effectivePrice = a.price2brMin;
+
+            if (input?.minRent != null && effectivePrice < input.minRent) return false;
+            if (input?.maxRent != null && effectivePrice > input.maxRent) return false;
             return true;
           });
 

@@ -110,3 +110,11 @@ All planned features have been successfully implemented and tested. The applicat
 - [x] propertyDatabase.ts: update parser to map new merged CSV columns
 - [x] Swap data source to all-properties-merged.csv
 - [x] Verify search page shows 541 listings with correct prices and map markers (72 tests passing)
+
+## Per-Bedroom Price Filter Upgrade
+- [ ] Server: Update apartments.list filter to use price1brMin/Max when bedrooms=1, price2brMin/Max when bedrooms=2, etc.
+- [ ] Server: Fall back to minRent/maxRent when per-bedroom price is null for a listing
+- [ ] Client: Update ApartmentSearch filter UI to show per-bedroom price ranges when a bedroom count is selected
+- [ ] Client: Update quick-access price buttons to reflect per-bedroom pricing context
+- [ ] Client: Show price range hint (e.g. "1BR: $1,100–$1,800") in filter bar when bedroom is selected
+- [ ] Tests: Add unit tests for per-bedroom price filter logic

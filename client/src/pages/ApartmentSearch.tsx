@@ -31,6 +31,11 @@ interface ApartmentTeased {
   bathrooms: string | number;
   rentMin: string | number;
   rentMax: string | number | null;
+  // Per-bedroom price splits from merged CSV
+  price1brMin?: number | null;
+  price1brMax?: number | null;
+  price2brMin?: number | null;
+  price2brMax?: number | null;
   description: string | null;
   latitude: string | number;
   longitude: string | number;
@@ -93,6 +98,26 @@ function formatBedrooms(bedrooms: number): string {
   return bedrooms === 0 ? 'Studio' : `${bedrooms} Bed`;
 }
 
+/**
+ * Returns the best available price for display given the active bedroom filter.
+ * Falls back to generic rentMin/rentMax when per-bedroom data is absent.
+ */
+function getBedroomAwareRent(
+  apt: ApartmentTeased,
+  bedroomFilter: string
+): { min: string | number; max: string | number | null } {
+  const br = parseInt(bedroomFilter);
+  if (bedroomFilter && !isNaN(br)) {
+    if (br === 1 && apt.price1brMin != null) {
+      return { min: apt.price1brMin, max: apt.price1brMax ?? null };
+    }
+    if (br === 2 && apt.price2brMin != null) {
+      return { min: apt.price2brMin, max: apt.price2brMax ?? null };
+    }
+  }
+  return { min: apt.rentMin, max: apt.rentMax };
+}
+
 function formatSqft(apt: ApartmentTeased): string | null {
   if (!apt.minSqft) return null;
   if (apt.maxSqft && apt.maxSqft !== apt.minSqft) {
@@ -109,6 +134,7 @@ function ApartmentCard({
   isSelected,
   isFavorited,
   onToggleFavorite,
+  bedroomFilter,
 }: {
   apt: ApartmentTeased;
   isLead: boolean;
@@ -117,6 +143,7 @@ function ApartmentCard({
   isSelected: boolean;
   isFavorited: boolean;
   onToggleFavorite: () => void;
+  bedroomFilter: string;
 }) {
   const photo = apt.photos?.[0];
 
@@ -183,7 +210,10 @@ function ApartmentCard({
           {apt.neighborhood}
         </p>
         <p className="text-base font-bold text-blue-600 mb-3">
-          {formatRent(apt.rentMin, apt.rentMax)}
+          {(() => {
+            const { min, max } = getBedroomAwareRent(apt, bedroomFilter);
+            return formatRent(min, max);
+          })()}
         </p>
         {apt.availability && (
           <p className="text-xs text-slate-500 mb-3 line-clamp-1">{apt.availability}</p>
@@ -300,7 +330,7 @@ export default function ApartmentSearch() {
   const neighborhoods = Array.from(new Set(apartments.map(a => a.neighborhood))).sort();
 
   // ── Map markers with clustering ──────────────────────────────────────────────────────────────
-  const placeMarkers = useCallback((map: google.maps.Map, apts: ApartmentTeased[]) => {
+  const placeMarkers = useCallback((map: google.maps.Map, apts: ApartmentTeased[], activeBrFilter: string) => {
     // Clear old markers
     markersRef.current.forEach(m => { m.map = null; });
     markersRef.current = [];
@@ -331,9 +361,19 @@ export default function ApartmentSearch() {
         white-space: nowrap;
         transition: transform 0.15s, background 0.15s;
       `;
-      const rentMin = typeof apt.rentMin === 'string' ? parseFloat(apt.rentMin) : apt.rentMin;
-      pin.textContent = Number.isFinite(rentMin) && rentMin > 0
-        ? `$${Math.round(rentMin / 100) * 100 >= 1000 ? (rentMin / 1000).toFixed(1) + 'k' : rentMin}`
+      // Use bedroom-specific price on pin when a bedroom filter is active
+      const brNum = parseInt(activeBrFilter);
+      let pinPrice: number | null = null;
+      if (!isNaN(brNum)) {
+        if (brNum === 1 && apt.price1brMin != null) pinPrice = apt.price1brMin;
+        else if (brNum === 2 && apt.price2brMin != null) pinPrice = apt.price2brMin;
+      }
+      if (pinPrice == null) {
+        const raw = apt.rentMin;
+        pinPrice = typeof raw === 'string' ? parseFloat(raw) : raw;
+      }
+      pin.textContent = Number.isFinite(pinPrice) && pinPrice > 0
+        ? `$${pinPrice >= 1000 ? (pinPrice / 1000).toFixed(1) + 'k' : pinPrice}`
         : 'Info';
 
       const marker = new google.maps.marker.AdvancedMarkerElement({
@@ -373,16 +413,16 @@ export default function ApartmentSearch() {
 
   useEffect(() => {
     if (mapRef.current && filtered.length > 0) {
-      placeMarkers(mapRef.current, filtered);
+      placeMarkers(mapRef.current, filtered, bedroomFilter);
     }
-  }, [filtered, placeMarkers]);
+  }, [filtered, placeMarkers, bedroomFilter]);
 
   const handleMapReady = useCallback((map: google.maps.Map) => {
     mapRef.current = map;
     if (filtered.length > 0) {
-      placeMarkers(map, filtered);
+      placeMarkers(map, filtered, bedroomFilter);
     }
-  }, [filtered, placeMarkers]);
+  }, [filtered, placeMarkers, bedroomFilter]);
 
   // Fit map bounds to filtered apartments
   const fitMapBounds = useCallback(() => {
@@ -588,7 +628,7 @@ export default function ApartmentSearch() {
 
                 <div>
                   <label className="block text-xs font-medium text-slate-600 mb-2">
-                    Max Rent: ${rentRange[1].toLocaleString()}/mo
+                    {bedroomFilter === '1' ? '1BR Max Rent' : bedroomFilter === '2' ? '2BR Max Rent' : bedroomFilter === '3' ? '3BR Max Rent' : 'Max Rent'}: ${rentRange[1] >= 15000 ? 'Any' : rentRange[1].toLocaleString() + '/mo'}
                   </label>
                   <Slider
                     min={0}
@@ -704,6 +744,7 @@ export default function ApartmentSearch() {
                   key={apt.id}
                   apt={apt}
                   isLead={true}
+                  bedroomFilter={bedroomFilter}
                   onLearnMore={() => handleLearnMore(apt)}
                   onViewDetails={() => handleViewDetails(apt)}
                   isSelected={selectedApartment?.id === apt.id}
@@ -864,6 +905,31 @@ export default function ApartmentSearch() {
                   </div>
                 )}
               </div>
+
+              {/* Per-bedroom price breakdown */}
+              {(selectedApartment.price1brMin || selectedApartment.price2brMin) && (
+                <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
+                  <p className="text-xs font-semibold text-blue-700 mb-2 uppercase tracking-wide">Pricing by bedroom</p>
+                  <div className="flex flex-wrap gap-3">
+                    {selectedApartment.price1brMin && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs bg-blue-100 text-blue-800 rounded px-1.5 py-0.5 font-medium">1 BR</span>
+                        <span className="text-sm font-semibold text-slate-900">
+                          {formatRent(selectedApartment.price1brMin, selectedApartment.price1brMax ?? null)}
+                        </span>
+                      </div>
+                    )}
+                    {selectedApartment.price2brMin && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs bg-blue-100 text-blue-800 rounded px-1.5 py-0.5 font-medium">2 BR</span>
+                        <span className="text-sm font-semibold text-slate-900">
+                          {formatRent(selectedApartment.price2brMin, selectedApartment.price2brMax ?? null)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {selectedApartment.special && (
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">

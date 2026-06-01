@@ -103,6 +103,7 @@ type PropertyFilters = {
   maxBedrooms?: number;
   minRent?: number;
   maxRent?: number;
+  useBedroomPrices?: boolean;
 };
 
 type RentCastTarget = {
@@ -582,17 +583,40 @@ export async function getRentCastDatabaseStats(): Promise<RentCastStats> {
   return (await loadRentCastData()).stats;
 }
 
+function getEffectiveRentCastPrice(
+  apartment: PropertyApartment,
+  bedroomCount: number | undefined,
+  useBedroomPrices: boolean
+): number {
+  if (!useBedroomPrices || bedroomCount == null) return apartment.rentMin;
+  // RentCast listings don't have per-bedroom splits, fall back to rentMin
+  if (bedroomCount === 1 && apartment.price1brMin != null) return apartment.price1brMin;
+  if (bedroomCount === 2 && apartment.price2brMin != null) return apartment.price2brMin;
+  return apartment.rentMin;
+}
+
 export async function getRentCastDatabaseApartments(
   filters?: PropertyFilters
 ): Promise<PropertyApartment[]> {
   const database = await loadRentCastData();
 
+  const targetBedrooms =
+    filters?.minBedrooms != null &&
+    filters?.maxBedrooms != null &&
+    filters.minBedrooms === filters.maxBedrooms
+      ? filters.minBedrooms
+      : filters?.minBedrooms ?? filters?.maxBedrooms;
+
+  const useBedroomPrices = filters?.useBedroomPrices ?? true;
+
   return database.apartments.filter(apartment => {
     if (filters?.neighborhood && apartment.neighborhood !== filters.neighborhood) return false;
     if (filters?.minBedrooms !== undefined && apartment.bedrooms < filters.minBedrooms) return false;
     if (filters?.maxBedrooms !== undefined && apartment.bedrooms > filters.maxBedrooms) return false;
-    if (filters?.minRent !== undefined && apartment.rentMin < filters.minRent) return false;
-    if (filters?.maxRent !== undefined && apartment.rentMin > filters.maxRent) return false;
+
+    const effectivePrice = getEffectiveRentCastPrice(apartment, targetBedrooms, useBedroomPrices);
+    if (filters?.minRent !== undefined && effectivePrice < filters.minRent) return false;
+    if (filters?.maxRent !== undefined && effectivePrice > filters.maxRent) return false;
     return true;
   });
 }

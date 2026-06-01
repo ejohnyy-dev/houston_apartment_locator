@@ -11,6 +11,8 @@ type PropertyFilters = {
   maxBedrooms?: number;
   minRent?: number;
   maxRent?: number;
+  // When true, use per-bedroom price fields instead of generic minRent/maxRent
+  useBedroomPrices?: boolean;
 };
 
 type CsvRow = Record<string, string>;
@@ -399,15 +401,49 @@ export async function getPropertyDatabaseStats(): Promise<PropertyStats> {
   return stats;
 }
 
+/**
+ * Pick the best price field to compare against a rent filter for a given apartment.
+ * When a specific bedroom count is selected and per-bedroom price data is available,
+ * use that price instead of the generic minRent (which reflects the cheapest unit type).
+ */
+function getEffectivePrice(
+  apartment: PropertyApartment,
+  bedroomCount: number | undefined,
+  useBedroomPrices: boolean
+): number {
+  if (!useBedroomPrices || bedroomCount == null) return apartment.rentMin;
+
+  // Exact bedroom match → use per-bedroom price if available
+  if (bedroomCount === 0) return apartment.rentMin; // Studio: no split data, fall back
+  if (bedroomCount === 1 && apartment.price1brMin != null) return apartment.price1brMin;
+  if (bedroomCount === 2 && apartment.price2brMin != null) return apartment.price2brMin;
+  // 3+ bedrooms: no dedicated split field yet, use generic rentMin
+  return apartment.rentMin;
+}
+
 export async function queryPropertyDatabase(filters?: PropertyFilters): Promise<PropertyApartment[]> {
   const { apartments } = await readPropertyDatabase();
 
+  // Determine if a single bedroom count is being targeted (minBedrooms === maxBedrooms)
+  const targetBedrooms =
+    filters?.minBedrooms != null &&
+    filters?.maxBedrooms != null &&
+    filters.minBedrooms === filters.maxBedrooms
+      ? filters.minBedrooms
+      : filters?.minBedrooms ?? filters?.maxBedrooms;
+
+  const useBedroomPrices = filters?.useBedroomPrices ?? true;
+
   return apartments.filter(apartment => {
     if (filters?.neighborhood && apartment.neighborhood !== filters.neighborhood) return false;
-    if (filters?.minBedrooms && apartment.bedrooms < filters.minBedrooms) return false;
-    if (filters?.maxBedrooms && apartment.bedrooms > filters.maxBedrooms) return false;
-    if (filters?.minRent && apartment.rentMin < filters.minRent) return false;
-    if (filters?.maxRent && apartment.rentMin > filters.maxRent) return false;
+    if (filters?.minBedrooms != null && apartment.bedrooms < filters.minBedrooms) return false;
+    if (filters?.maxBedrooms != null && apartment.bedrooms > filters.maxBedrooms) return false;
+
+    // Use per-bedroom price when a specific bedroom count is selected
+    const effectivePrice = getEffectivePrice(apartment, targetBedrooms, useBedroomPrices);
+    if (filters?.minRent != null && effectivePrice < filters.minRent) return false;
+    if (filters?.maxRent != null && effectivePrice > filters.maxRent) return false;
+
     return true;
   });
 }
