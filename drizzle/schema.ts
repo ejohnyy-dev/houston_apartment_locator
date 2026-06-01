@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { decimal, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -92,12 +92,24 @@ export const listings = mysqlTable("listings", {
   /** Optional: if set, this row overrides the CSV row with this propertyId */
   propertyId: varchar("propertyId", { length: 255 }),
   name: varchar("name", { length: 255 }).notNull(),
+  // Address fields — streetAddress is the scraped/raw address, verifiedAddress is Google-confirmed
   address: varchar("address", { length: 500 }),
+  streetAddress: varchar("streetAddress", { length: 500 }),
+  verifiedAddress: varchar("verifiedAddress", { length: 500 }),
+  addressMatchStatus: varchar("addressMatchStatus", { length: 50 }), // confirmed | mismatch | ZERO_RESULTS
   city: varchar("city", { length: 100 }).notNull().default("Houston"),
   state: varchar("state", { length: 10 }).notNull().default("TX"),
   neighborhood: varchar("neighborhood", { length: 100 }),
+  // Coordinates — decimal(10,7) for ~1cm precision
+  latitude: decimal("latitude", { precision: 10, scale: 7 }),
+  longitude: decimal("longitude", { precision: 10, scale: 7 }),
+  // Rent fields — generic min/max plus per-bedroom splits
   minRent: int("minRent").notNull(),
   maxRent: int("maxRent"),
+  price1brMin: int("price1brMin"),
+  price1brMax: int("price1brMax"),
+  price2brMin: int("price2brMin"),
+  price2brMax: int("price2brMax"),
   bedrooms: int("bedrooms"),
   bathrooms: int("bathrooms"),
   minSqft: int("minSqft"),
@@ -112,8 +124,14 @@ export const listings = mysqlTable("listings", {
   interiorAmenities: text("interiorAmenities"),
   petPolicy: text("petPolicy"),
   managedBy: varchar("managedBy", { length: 255 }),
-  latitude: text("latitude"),
-  longitude: text("longitude"),
+  // Contact info per property
+  phone: varchar("phone", { length: 30 }),
+  email: varchar("email", { length: 320 }),
+  // Website URLs
+  website: varchar("website", { length: 500 }),
+  actualWebsite: varchar("actualWebsite", { length: 500 }),
+  // Scraping metadata
+  lastScraped: timestamp("lastScraped"),
   isActive: int("isActive").default(1).notNull(), // 1 = active, 0 = hidden
   sortOrder: int("sortOrder").default(0),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

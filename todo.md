@@ -99,3 +99,14 @@ All planned features have been successfully implemented and tested. The applicat
 - [x] Image upload: Wire up S3 photo upload for apartment images
 - [x] Route: Register /admin/listings in App.tsx
 - [x] Tests: Write unit tests for listings CRUD operations (11 tests, all passing)
+
+## CSV Merge & Schema Upgrade
+- [x] Python merge script: join 489 matched rows + 20 current-only + 39 uploaded-only into unified CSV
+- [x] Merged CSV: parse Price 1BR/2BR into numeric min/max fields
+- [x] Merged CSV: include lat/lon, phone, email, verified_address, address_match_status
+- [x] Schema: add phone, email, streetAddress, verifiedAddress, price1brMin/Max, price2brMin/Max, addressMatchStatus, lastScraped, website, actualWebsite to listings table
+- [x] Schema: change latitude/longitude from text to decimal(10,7)
+- [x] Migration: generate and apply via webdev_execute_sql
+- [x] propertyDatabase.ts: update parser to map new merged CSV columns
+- [x] Swap data source to all-properties-merged.csv
+- [x] Verify search page shows 541 listings with correct prices and map markers (72 tests passing)

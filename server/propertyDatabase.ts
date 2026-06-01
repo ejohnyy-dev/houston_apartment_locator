@@ -3,7 +3,7 @@ import path from "path";
 import { createHash } from "crypto";
 
 const DEFAULT_PROPERTY_CSV = process.env.PROPERTY_DATABASE_CSV ||
-  path.join(process.cwd(), 'data', 'all-properties-with-info-and-photos.csv');
+  path.join(process.cwd(), 'data', 'all-properties-merged.csv');
 
 type PropertyFilters = {
   neighborhood?: string;
@@ -23,6 +23,11 @@ export type PropertyApartment = {
   bathrooms: number;
   rentMin: number;
   rentMax: number | null;
+  // Per-bedroom price splits (from merged CSV)
+  price1brMin: number | null;
+  price1brMax: number | null;
+  price2brMin: number | null;
+  price2brMax: number | null;
   description: string | null;
   latitude: number;
   longitude: number;
@@ -34,6 +39,13 @@ export type PropertyApartment = {
   builtYear?: number | null;
   managedBy?: string | null;
   photoCount?: number;
+  // Contact info (from merged CSV)
+  phone?: string | null;
+  email?: string | null;
+  website?: string | null;
+  // Address quality
+  verifiedAddress?: string | null;
+  addressMatchStatus?: string | null;
 };
 
 type PropertyStats = {
@@ -274,11 +286,18 @@ function toApartment(row: CsvRow, index: number, usedIds: Set<number>): Property
   const city = cleanText(row.city) ?? "Houston";
   const minRent = numberFrom(row.min_rent) ?? 0;
   const maxRent = numberFrom(row.max_rent);
-  const coords = areaCoords(city);
   const imageUrls = splitList(row.image_urls);
   const primaryPhoto = cleanText(row.primary_image_url);
   const photos = primaryPhoto ? [primaryPhoto, ...imageUrls.filter(url => url !== primaryPhoto)] : imageUrls;
-  const displayNeighborhood = getDisplayNeighborhood(city, coords.lat, coords.lng);
+
+  // Use real lat/lon from merged CSV if available; fall back to area centroid
+  const csvLat = numberFrom(row.latitude);
+  const csvLng = numberFrom(row.longitude);
+  const fallbackCoords = areaCoords(city);
+  const lat = csvLat ?? fallbackCoords.lat;
+  const lng = csvLng ?? fallbackCoords.lng;
+
+  const displayNeighborhood = getDisplayNeighborhood(city, lat, lng);
   const buildingName = extractBuildingName(cleanText(row.property_name));
 
   // Additional check to ensure building name doesn't contain digits followed by space (likely address)
@@ -294,9 +313,14 @@ function toApartment(row: CsvRow, index: number, usedIds: Set<number>): Property
     bathrooms: parseBathrooms(row.availability),
     rentMin: minRent,
     rentMax: maxRent && maxRent !== minRent ? maxRent : null,
+    // Per-bedroom price splits from merged CSV
+    price1brMin: numberFrom(row.price_1br_min),
+    price1brMax: numberFrom(row.price_1br_max),
+    price2brMin: numberFrom(row.price_2br_min),
+    price2brMax: numberFrom(row.price_2br_max),
     description: buildDescription(row),
-    latitude: coords.lat,
-    longitude: coords.lng,
+    latitude: lat,
+    longitude: lng,
     photos,
     special: filterCommissionFromSpecial(cleanText(row.special)),
     availability: cleanText(row.availability),
@@ -305,6 +329,13 @@ function toApartment(row: CsvRow, index: number, usedIds: Set<number>): Property
     builtYear: numberFrom(row.built_year),
     managedBy: cleanText(row.managed_by),
     photoCount: numberFrom(row.photo_count) ?? photos.length,
+    // Contact info from merged CSV
+    phone: cleanText(row.phone),
+    email: cleanText(row.email),
+    website: cleanText(row.website),
+    // Address quality
+    verifiedAddress: cleanText(row.verified_address),
+    addressMatchStatus: cleanText(row.address_match_status),
   };
 }
 

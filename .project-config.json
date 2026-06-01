@@ -15,10 +15,10 @@
   ],
   "git_remote": {
     "repo_url": "s3://vida-prod-gitrepo/webdev-git/310519663501304397/4gMGD9qetV63jA9Ts6DXxD",
-    "access_key_id": "ASIAZV3A2ECZKYHNQ2LJ",
-    "secret_access_key": "XqcWEC6YiTe/LEJG9Omz/vonY/T/jJyy0ts5sq93",
-    "session_token": "IQoJb3JpZ2luX2VjENb//////////wEaCXVzLWVhc3QtMSJIMEYCIQDSezujj4CkPOkzwhBMVqDsJ0JphnWwaUEps5mzkvWRNQIhAO9gebm5Be/bd4hkid/TbHpI89ovc01zaaqyOgNOvU4GKv8DCJ7//////////wEQBBoMNjY1Mzg2MDk4ODY2IgzjKICu7uJX+gr2Tr8q0wMhsebdmhwf/ySVlmi9bVDDoRdetd+pdVUK+HbBIoQAqlbBPPlirrx79YiqoP+X0tzHadarfWe2mjVVFMMaDs2Q6t2K8aYnF7X2BaU/ILvTTsvTLsFNNs63WEf3VGNJDd/krdnC5gbHRatyNAMHqJ6qyqxAh6isO13cC+pXmPRuhDzFYtbByFFulPpgXAvOd/L6H5bYOBgnFEWz8PVBg9I7r0cXu2RsL4jw6UwGZ424Hv507g+1HfX3xxy5ZbvE2x2biG8EiFV6G0hMtfiAzSVvB3sm4h5aMBSYqhQUpwF49HcIGQVwzmPb6OIZKnpT1Q2gDHNkGztNJQz1RbJqoDnVft0qZUcQLNYDDyui7Km+S3ybaCmaGNG/EGnA7XHjZOQeOsZ7stB8GA8IzjSZX22WsdOoZbwIuHDedTu9DHF2sHLp1UH2DEYsL1R9raSRTUDIhk4yHwsaClz9j/exFeZ4ERvEbob9iG0HeE+Eksd7qU79UoK96wSi+LdBpd5uCjpHuMNaUCdTyZ9RXLthqc3ZtUYl5brCHICqxf2L9DmVUZeaxKP8JynePWilfGGzDlq+m+/R1RJjt61x24gWf38U34XnHvPZss4rT3xVYVtHNKqWoDCHud3QBjqcAW/gHDd0IJ1mO2Hgnwk9ppwFiHkDrKYyre+RdfzIvmBFwZyHBOHLIlyxDsb3oo30CVUaAMsgn70eNMxz4w28KdLO1ahsyZUOQ7IIl7O+u2pq6GO+RlP7mqd99Ro6ViqBPzJ/vQtIenlsCmjTso0nfabK8+kovLahpkgaJLgBs1q9ubIGkxuRLVUJXWVoxpuqxAT0/Ra9n+gHMQyyew==",
-    "expiration": "2026-05-28T09:05:11.000Z"
+    "access_key_id": "ASIAZV3A2ECZLXQBNGIS",
+    "secret_access_key": "Cfo+My3UZJVIPVdQXtSw8rjQdu68u+GKdTMQ0GaP",
+    "session_token": "IQoJb3JpZ2luX2VjEEEaCXVzLWVhc3QtMSJHMEUCIGg0hxNambg0juDFYdRM3egMrWNbbY+4lAc4bMyuQ0wfAiEAkNGsXdfwpJXdf30y+VLOzejUSOpczceZB3ffmh2zjZUq9gMIChAEGgw2NjUzODYwOTg4NjYiDFqLCnJ+rgBG7v4rmSrTA7AwvQKy5cOX4SfCYoT95yFPZALjpdPxVkZQphVWhRtBqnMs4a5H/bOPw45H8wf4dCeN320STU3TctJtPcvIcfCoDZ0zI4LuPAovbTXAaiPx6fFjXAfrXtVIgw+tps7iNkKzaOSL34Ssvx5Kl5eBl4oW1x1a3jPpM8mLHz4r/6IYdltrSg8ExaYaWfVfxazfQVHPjHJvrZdDv6Da44Qmd1Lb/l4o3/Y/oX3OEhQYdAH2uAQvG7csnMtIpsTdWjGkdl5T1n0CF83OGlMFWVPyj9hmbaZ3ivGi8abOjnC9tu05FzA0O39J+1Mp370kNha9SmKQcLsAWYTKQmrONgbigdpYmuoPs36rQUo1SOBAd75srQJjyCSXSawloLyO68n8RXcZCmQOxiLaV4krzJHGc72UaflkPbOqQDbCEJ/sKYLyLO22Q7xO4vmEuQdUxFCzn1JvVsurheniMqF50GJV0yQmIuB/HntOVQOYqqIzVuyhFCsoYFHZ9wQwXm/taUGe9Ymdq8tWirixps7JOOiFBR5DTf076wywpdx7bP8efVsU4xilHgc8vAkW6OzYMOdMVnmFh36yKYwED/lsj92Q7++9n0ICKEJKAx5nWZfBKa+hFtl5MN2N9dAGOp0BeOzCjcZZjif2AFN7iOgwNOOmQHcZJtUwERqz8zPCLV+CwQzCz+y/F4shmqmA5S/y8G8kuegm8VOEfWS0hAPBXRm9O+TxxSdn4IwrL+QWWOgimkoifPoqSs9d0UlUSg+bTWOyJ0zx9zcZZwQLcNJWm9wHg46YbPTHzKyCRtIwYvTg6LqBCigzpX+vUqRp2ES3PgUXehz1l8oXSXjUqA==",
+    "expiration": "2026-06-01T20:46:21.000Z"
   },
   "name": "houston_apartment_locator",
   "path": "/home/ubuntu/houston_apartment_locator",
@@ -32,7 +32,7 @@
     "OAUTH_SERVER_URL": "https://api.manus.im",
     "OWNER_NAME": "Eric Johnson",
     "OWNER_OPEN_ID": "mYhMBTPXswDDchG8X4wdvp",
-    "PROPERTY_DATABASE_CSV": "/home/ubuntu/houston_apartment_locator/data/all-properties-with-info-and-photos.csv",
+    "PROPERTY_DATABASE_CSV": "data/all-properties-merged.csv",
     "RENTCAST_API_KEY": "09d9abf371934a04b1e9849d0df05e87",
     "VITE_ANALYTICS_ENDPOINT": "https://manus-analytics.com",
     "VITE_ANALYTICS_WEBSITE_ID": "22fad27b-d2d1-4b26-97c5-02f1c776d59f",

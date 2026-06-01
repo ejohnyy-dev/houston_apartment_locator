@@ -477,6 +477,11 @@ function listingToApartment(listing: RentCastListing, index: number, fallbackPho
     bathrooms: listing.bathrooms ?? 0,
     rentMin: listing.price,
     rentMax: null,
+    // RentCast doesn't provide per-bedroom price splits
+    price1brMin: null,
+    price1brMax: null,
+    price2brMin: null,
+    price2brMax: null,
     description: descriptionParts.length ? descriptionParts.join(" ") : null,
     latitude: listing.latitude ?? 29.7604,
     longitude: listing.longitude ?? -95.3698,
@@ -488,6 +493,11 @@ function listingToApartment(listing: RentCastListing, index: number, fallbackPho
     builtYear: listing.yearBuilt ?? null,
     managedBy: listing.listingOffice?.name || listing.listingAgent?.name || null,
     photoCount: finalPhotos.length,
+    phone: null,
+    email: null,
+    website: null,
+    verifiedAddress: null,
+    addressMatchStatus: null,
   };
 }
 
