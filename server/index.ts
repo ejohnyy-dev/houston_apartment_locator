@@ -10,10 +10,8 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
 
-  // JSON parsing middleware
   app.use(express.json({ limit: "1mb" }));
 
-  // Serve static files from dist/public in production
   const staticPath =
     process.env.NODE_ENV === "production"
       ? path.resolve(__dirname, "public")
@@ -21,31 +19,15 @@ async function startServer() {
 
   app.use(express.static(staticPath));
 
-  // POST /api/leads - Send to HubSpot (required) and Google Sheets (optional)
   app.post("/api/leads", async (req, res) => {
     try {
       const body = (req.body as Record<string, unknown>) ?? {};
-      const first_name = body.first_name;
-      const last_name = body.last_name;
-      const name = body.name;
       const email = body.email;
-      const phone = body.phone;
-      const budget = body.budget;
-      const bedrooms = body.bedrooms;
-      const move_in_timeline = body.move_in_timeline;
-      const preferred_area = body.preferred_area;
-      const pets = body.pets;
-      const notes = body.notes;
-      const smsConsent = body.smsConsent;
 
       if (!email || typeof email !== "string") {
         return res.status(400).json({ ok: false, error: "Email is required" });
       }
 
-      let hubspotSuccess = false;
-      let hubspotError: string | null = null;
-
-      // Send to HubSpot (REQUIRED)
       const hubspotToken = process.env.HUBSPOT_PRIVATE_APP_TOKEN;
       if (!hubspotToken) {
         console.error("HubSpot token not configured");
@@ -55,37 +37,31 @@ async function startServer() {
         });
       }
 
+      const properties = filterEmptyProperties({
+        email: toStr(email),
+        firstname: toStr(
+          body.first_name ||
+            (typeof body.name === "string" ? body.name.split(" ")?.[0] : "")
+        ),
+        lastname: toStr(
+          body.last_name ||
+            (typeof body.name === "string"
+              ? body.name.split(" ")?.slice(1).join(" ")
+              : "")
+        ),
+        phone: toStr(body.phone),
+        budget: toStr(body.budget),
+        bedrooms: toStr(body.bedrooms),
+        movein_timeline: toStr(body.move_in_timeline),
+        preferred_area: toStr(body.preferred_area),
+        pets: toStr(body.pets),
+        notes: toStr(body.notes),
+      });
+
+      let hubspotError: string | null = null;
       try {
-        const properties: Record<string, string> = {
-          email: String(email),
-          firstname: String(
-            first_name ||
-              (typeof name === "string" ? name.split(" ")?.[0] : "") ||
-              ""
-          ),
-          lastname: String(
-            last_name ||
-              (typeof name === "string" ? name.split(" ")?.slice(1).join(" ") : "") ||
-              ""
-          ),
-          phone: String(phone || ""),
-          budget: String(budget || ""),
-          bedrooms: String(bedrooms || ""),
-          movein_timeline: String(move_in_timeline || ""),
-          preferred_area: String(preferred_area || ""),
-          pets: String(pets || ""),
-          notes: String(notes || ""),
-        };
-
-        // Remove empty properties
-        Object.keys(properties).forEach((key) => {
-          if (!properties[key]) {
-            delete properties[key];
-          }
-        });
-
         const updateUrl = `https://api.hubapi.com/crm/v3/objects/contacts/${encodeURIComponent(
-          String(email)
+          email
         )}?idProperty=email`;
 
         const hubspotResponse = await fetch(updateUrl, {
@@ -102,40 +78,38 @@ async function startServer() {
           hubspotError = `HubSpot error: ${hubspotResponse.status}`;
           console.error("HubSpot API error:", hubspotResponse.status, errorData);
         } else {
-          hubspotSuccess = true;
           console.log("Lead successfully sent to HubSpot:", email);
         }
-      } catch (hubspotError) {
-        console.error("HubSpot fetch error:", hubspotError);
+      } catch (err) {
+        console.error("HubSpot fetch error:", err);
         return res.status(500).json({
           ok: false,
           error: "Failed to send lead to HubSpot",
         });
       }
 
-      // Send to Google Sheets (OPTIONAL)
       const googleSheetsUrl = process.env.GOOGLE_SHEETS_ENDPOINT;
       if (googleSheetsUrl) {
         try {
           const googlePayload = new URLSearchParams({
-            firstName: String(first_name || ""),
-            lastName: String(last_name || ""),
-            email: String(email || ""),
-            phone: String(phone || ""),
-            budget: String(budget || ""),
-            bedrooms: String(bedrooms || ""),
-            moveIn: String(move_in_timeline || ""),
-            areas: String(preferred_area || ""),
-            pets: String(pets || ""),
-            notes: String(notes || ""),
-            smsConsent: String(smsConsent || false),
-            sms_consent: String(smsConsent || false),
-            contact_consent: String(smsConsent || false),
+            firstName: toStr(body.first_name),
+            lastName: toStr(body.last_name),
+            email: toStr(email),
+            phone: toStr(body.phone),
+            budget: toStr(body.budget),
+            bedrooms: toStr(body.bedrooms),
+            moveIn: toStr(body.move_in_timeline),
+            areas: toStr(body.preferred_area),
+            pets: toStr(body.pets),
+            notes: toStr(body.notes),
+            smsConsent: toStr(body.smsConsent || false),
+            sms_consent: toStr(body.smsConsent || false),
+            contact_consent: toStr(body.smsConsent || false),
             consent_source: "txaptfinder.com contact form",
             consent_timestamp: new Date().toISOString(),
             _source: "txaptfinder.com",
-            page_url: String(req.headers.referer || ""),
-            user_agent: String(req.headers["user-agent"] || ""),
+            page_url: toStr(req.headers.referer),
+            user_agent: toStr(req.headers["user-agent"]),
           });
 
           await fetch(googleSheetsUrl, {
@@ -145,21 +119,19 @@ async function startServer() {
           });
 
           console.log("Lead successfully sent to Google Sheets:", email);
-        } catch (googleError) {
-          console.error("Google Sheets error:", googleError);
-          // Don't fail the request if Google Sheets fails
+        } catch (err) {
+          console.error("Google Sheets error:", err);
         }
       } else {
         console.warn("Google Sheets endpoint not configured, skipping");
       }
 
-      // Return success if HubSpot succeeded
-      if (hubspotSuccess) {
+      if (!hubspotError) {
         return res.status(200).json({ ok: true, message: "Lead saved to HubSpot" });
       } else {
         return res.status(500).json({
           ok: false,
-          error: hubspotError || "Failed to save lead",
+          error: hubspotError,
         });
       }
     } catch (error) {
@@ -173,7 +145,6 @@ async function startServer() {
     }
   });
 
-  // Handle client-side routing - serve index.html for all routes
   app.get("*", (_req, res) => {
     res.sendFile(path.join(staticPath, "index.html"));
   });
@@ -183,6 +154,18 @@ async function startServer() {
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
   });
+}
+
+function toStr(val: unknown): string {
+  return String(val || "");
+}
+
+function filterEmptyProperties(
+  obj: Record<string, string>
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, value]) => value !== "")
+  );
 }
 
 startServer().catch(console.error);

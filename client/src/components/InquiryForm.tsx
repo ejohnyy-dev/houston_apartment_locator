@@ -23,6 +23,7 @@ export function InquiryForm({ apartmentId, apartmentName, favorites, qualificati
     phone: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const createInquiry = trpc.inquiries.create.useMutation({
     onSuccess: () => {
@@ -44,12 +45,16 @@ export function InquiryForm({ apartmentId, apartmentName, favorites, qualificati
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     let processedValue = value;
-    
-    // For phone field, strip non-numeric characters
+
     if (name === "phone") {
-      processedValue = value.replace(/\D/g, "");
+      const digitsOnly = value.replace(/\D/g, "");
+      if (digitsOnly.length <= 10) {
+        processedValue = digitsOnly;
+      } else {
+        return;
+      }
     }
-    
+
     setFormData(prev => ({
       ...prev,
       [name]: processedValue,
@@ -58,10 +63,29 @@ export function InquiryForm({ apartmentId, apartmentName, favorites, qualificati
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.name.trim()) {
+      setErrorMessage("Please enter your name");
+      setStage("error");
+      return;
+    }
+
+    if (!formData.email.includes("@")) {
+      setErrorMessage("Please enter a valid email address");
+      setStage("error");
+      return;
+    }
+
+    const phoneDigits = formData.phone.replace(/\D/g, "");
+    if (phoneDigits.length < 10) {
+      setErrorMessage("Please enter a valid 10-digit phone number");
+      setStage("error");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      // Include favorite IDs and qualification data in the inquiry
       const favoriteIds = favorites?.map(fav => fav.apartmentId) || [];
       await createInquiry.mutateAsync({
         apartmentId,
@@ -74,6 +98,7 @@ export function InquiryForm({ apartmentId, apartmentName, favorites, qualificati
       });
     } catch (error) {
       console.error("Failed to submit inquiry:", error);
+      setErrorMessage("We had trouble submitting your request. Please try again.");
       setStage("error");
     } finally {
       setIsSubmitting(false);
@@ -154,7 +179,7 @@ export function InquiryForm({ apartmentId, apartmentName, favorites, qualificati
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-base min-h-[44px]"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-base min-h-[44px] text-gray-900"
                   placeholder="John Doe"
                   autoComplete="name"
                 />
@@ -170,7 +195,7 @@ export function InquiryForm({ apartmentId, apartmentName, favorites, qualificati
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-base min-h-[44px]"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-base min-h-[44px] text-gray-900"
                   placeholder="john@example.com"
                   autoComplete="email"
                 />
@@ -186,7 +211,7 @@ export function InquiryForm({ apartmentId, apartmentName, favorites, qualificati
                   value={formData.phone}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-base min-h-[44px]"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-base min-h-[44px] text-gray-900"
                   placeholder="(555) 123-4567"
                   autoComplete="tel"
                 />
@@ -225,7 +250,7 @@ export function InquiryForm({ apartmentId, apartmentName, favorites, qualificati
               <div>
                 <p className="text-gray-900 font-semibold text-base mb-2">Something went wrong</p>
                 <p className="text-sm text-gray-600 mb-4">
-                  Please try again or contact us directly.
+                  {errorMessage || "Please try again or contact us directly."}
                 </p>
               </div>
               <button
