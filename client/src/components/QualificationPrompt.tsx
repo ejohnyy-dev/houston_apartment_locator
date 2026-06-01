@@ -17,6 +17,7 @@ export interface QualificationData {
 
 interface QualificationPromptProps {
   onComplete: (data: QualificationData) => void;
+  onSkip?: () => void;
   isOpen: boolean;
   neighborhoods: string[];
 }
@@ -61,6 +62,7 @@ const PET_OPTIONS = [
 
 export function QualificationPrompt({
   onComplete,
+  onSkip,
   isOpen,
   neighborhoods,
 }: QualificationPromptProps) {
@@ -318,6 +320,16 @@ export function QualificationPrompt({
             )}
           </Button>
         </div>
+        {onSkip && (
+          <div className="mt-3 text-center">
+            <button
+              onClick={onSkip}
+              className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
+            >
+              Browse listings first
+            </button>
+          </div>
+        )}
       </Card>
     </div>
   );

@@ -5,24 +5,21 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// Strip street address from apartment name for privacy
-export function getDisplayName(name: string) {
+// Strip street address from apartment name for privacy.
+// Priority: return the complex/marketing name, never a raw street address.
+export function getDisplayName(name: string): string {
   if (!name) return "";
-  
-  // Remove street address patterns (e.g., "123 Main St, City, State 12345")
-  // Keep only the building/complex name
-  const parts = name.split(',');
-  if (parts.length > 1) {
-    // If there's a comma, likely has address, return first part
-    return parts[0].trim();
+
+  // If there is a comma, the part before the comma is the complex name
+  // e.g. "The Oaks, 123 Main St" → "The Oaks"
+  const commaIdx = name.indexOf(',');
+  if (commaIdx > 0) {
+    return name.slice(0, commaIdx).trim();
   }
-  // If no comma, check for patterns like "123 Street Name"
-  const addressPattern = /^\d+\s+/;
-  if (addressPattern.test(name)) {
-    // Remove leading number and street
-    const words = name.split(' ');
-    // Skip first word (number) and second word (street type), return rest
-    return words.slice(2).join(' ') || name;
-  }
-  return name;
+
+  // If the name starts with a number it is likely a raw street address
+  // e.g. "4711 LJ Pkwy" — return it as-is; the neighborhood field provides
+  // the location context and we should not mangle the name into a fragment.
+  // Callers that need to hide the address should use the neighborhood field.
+  return name.trim();
 }

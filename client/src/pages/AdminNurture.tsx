@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
@@ -57,11 +57,16 @@ export default function AdminNurture() {
   const { user, loading } = useAuth();
   const [, navigate] = useLocation();
 
-  // Redirect non-admins
-  if (!loading && (!user || user.role !== "admin")) {
-    navigate("/");
-    return null;
-  }
+  // Redirect non-admins with a helpful toast
+  useEffect(() => {
+    if (!loading && !user) {
+      toast.error("Please log in to access the admin panel.");
+      navigate("/");
+    } else if (!loading && user && user.role !== "admin") {
+      toast.error("You do not have permission to access this page.");
+      navigate("/");
+    }
+  }, [user, loading, navigate]);
 
   const utils = trpc.useUtils();
 

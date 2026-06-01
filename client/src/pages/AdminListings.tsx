@@ -202,7 +202,11 @@ export default function AdminListings() {
   const isAdmin = !loading && !!user && user.role === "admin";
 
   useEffect(() => {
-    if (!loading && (!user || user.role !== "admin")) {
+    if (!loading && !user) {
+      toast.error("Please log in to access the admin panel.");
+      navigate("/");
+    } else if (!loading && user && user.role !== "admin") {
+      toast.error("You do not have permission to access this page.");
       navigate("/");
     }
   }, [user, loading, navigate]);

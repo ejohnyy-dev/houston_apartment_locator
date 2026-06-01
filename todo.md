@@ -118,3 +118,11 @@ All planned features have been successfully implemented and tested. The applicat
 - [x] Client: Update quick-access price buttons to reflect per-bedroom pricing context
 - [x] Client: Show price range hint (e.g. "1BR: $1,100–$1,800") in filter bar when bedroom is selected
 - [x] Tests: Add unit tests for per-bedroom price filter logic (70/72 pass; 2 external API timeouts unrelated to changes)
+
+## /Search Page Audit Fixes
+- [x] Branding: Replace "TX Apt Finder" text in /search nav with Habitat logo image
+- [x] QualificationPrompt: Wire onSkip prop so users can dismiss the modal and browse freely
+- [x] Auth state: Replace hardcoded "Eric" user with real hasQualified badge ("Qualified" / "Get Full Access")
+- [x] Auth state: "Full access" badge in listings panel header now conditionally shown based on hasQualified
+- [x] getDisplayName(): Fixed to not mangle names into fragments; comma-split returns first part, number-prefixed names returned as-is
+- [x] Admin redirect: /admin/listings and /admin/nurture now show a toast explaining login/permission requirement before redirecting

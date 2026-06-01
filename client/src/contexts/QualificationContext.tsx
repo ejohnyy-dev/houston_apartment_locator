@@ -12,8 +12,18 @@ interface QualificationContextType {
 
 const QualificationContext = createContext<QualificationContextType | undefined>(undefined);
 
+function loadStoredQualification(): QualificationData | null {
+  try {
+    const stored = localStorage.getItem("qualification_data");
+    if (stored) return JSON.parse(stored) as QualificationData;
+  } catch {
+    // ignore parse errors
+  }
+  return null;
+}
+
 export function QualificationProvider({ children }: { children: React.ReactNode }) {
-  const [qualificationData, setQualificationData] = useState<QualificationData | null>(null);
+  const [qualificationData, setQualificationData] = useState<QualificationData | null>(() => loadStoredQualification());
   const [showQualificationPrompt, setShowQualificationPrompt] = useState(false);
 
   const handleSetQualificationData = useCallback((data: QualificationData) => {

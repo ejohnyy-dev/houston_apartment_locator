@@ -477,6 +477,7 @@ export default function ApartmentSearch() {
           setQualificationData(data);
           setShowQualificationPrompt(false);
         }}
+        onSkip={() => setShowQualificationPrompt(false)}
         neighborhoods={Array.from(new Set(apartments.map(a => a.neighborhood))).sort()}
       />
       {/* Top Nav */}
@@ -484,8 +485,11 @@ export default function ApartmentSearch() {
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
           <Link href="/">
             <div className="flex items-center gap-2 cursor-pointer">
-              <Home className="w-6 h-6 text-blue-600" />
-              <span className="font-bold text-slate-900 text-lg hidden sm:block">TX Apt Finder</span>
+              <img
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663501304397/4gMGD9qetV63jA9Ts6DXxD/habitat-logo_3360fdb4.png"
+                alt="Habitat Apartment Locators"
+                className="h-8 w-auto"
+              />
             </div>
           </Link>
 
@@ -515,20 +519,17 @@ export default function ApartmentSearch() {
             <span className="hidden sm:inline">Filters</span>
           </Button>
 
-          {true ? (
-            <div className="flex items-center gap-2 shrink-0">
-              <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold">
-                E
-              </div>
-              <span className="text-sm text-slate-700 hidden sm:block">Eric</span>
-            </div>
+          {hasQualified ? (
+            <Badge className="bg-green-100 text-green-700 text-xs shrink-0">
+              Qualified
+            </Badge>
           ) : (
             <Button
               size="sm"
               className="bg-blue-600 hover:bg-blue-700 text-white shrink-0"
-              onClick={() => setShowLeadForm(true)}
+              onClick={() => setShowQualificationPrompt(true)}
             >
-              <Lock className="w-3 h-3 mr-1" /> Unlock Access
+              <Lock className="w-3 h-3 mr-1" /> Get Full Access
             </Button>
           )}
         </div>
@@ -730,7 +731,7 @@ export default function ApartmentSearch() {
                 <p className="text-xs text-blue-600 mt-0.5">Filters active</p>
               )}
             </div>
-            {true && (
+            {hasQualified && (
               <Badge className="bg-green-100 text-green-700 text-xs">
                 Full access
               </Badge>
