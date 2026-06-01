@@ -26,6 +26,7 @@ import {
   Trash2,
   Zap,
 } from "lucide-react";
+import AdminNav from "@/components/AdminNav";
 
 const STAGE_CONFIG: Record<
   string,
@@ -103,7 +104,9 @@ export default function AdminNurture() {
   const cronJob = cronData?.job;
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-6">
+    <div className="min-h-screen bg-background text-foreground">
+      <AdminNav active="nurture" />
+      <div className="p-6">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -328,6 +331,7 @@ export default function AdminNurture() {
             </p>
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   );

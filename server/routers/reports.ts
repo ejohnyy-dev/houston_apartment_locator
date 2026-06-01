@@ -1,5 +1,4 @@
-import { publicProcedure, router } from "../_core/trpc";
-import { z } from "zod";
+import { adminProcedure, router } from "../_core/trpc";
 import { generateApartmentInventoryReport } from "../reports/apartmentInventory";
 import { generateLeadsReport, type LeadRecord } from "../reports/leadsReport";
 import { getRentCastDatabaseApartments } from "../rentcastDatabase";
@@ -20,7 +19,7 @@ export const reportsRouter = router({
    * Generate apartment inventory report
    * Includes all properties with pricing, photos, neighborhoods
    */
-  apartmentInventory: publicProcedure.query(async () => {
+  apartmentInventory: adminProcedure.query(async () => {
     try {
       // Get all apartments from RentCast + local database
       const apartments = await getRentCastDatabaseApartments();
@@ -51,7 +50,7 @@ export const reportsRouter = router({
    * Generate leads report
    * Includes all inquiries with contact info and apartment details
    */
-  leadsReport: publicProcedure.query(async () => {
+  leadsReport: adminProcedure.query(async () => {
     try {
       const db = await getDb();
       
@@ -101,7 +100,7 @@ export const reportsRouter = router({
    * Get report generation status
    * Useful for checking if reports are available
    */
-  status: publicProcedure.query(async () => {
+  status: adminProcedure.query(async () => {
     try {
       const apartments = await getRentCastDatabaseApartments();
       const db = await getDb();

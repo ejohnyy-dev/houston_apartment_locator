@@ -126,3 +126,13 @@ All planned features have been successfully implemented and tested. The applicat
 - [x] Auth state: "Full access" badge in listings panel header now conditionally shown based on hasQualified
 - [x] getDisplayName(): Fixed to not mangle names into fragments; comma-split returns first part, number-prefixed names returned as-is
 - [x] Admin redirect: /admin/listings and /admin/nurture now show a toast explaining login/permission requirement before redirecting
+
+## Admin Reports Dashboard & Navigation
+- [x] Admin navigation bar: Created AdminNav component linking /admin/listings, /admin/nurture, /admin/reports with active state highlighting
+- [x] AdminNav: Added to AdminListings page
+- [x] AdminNav: Added to AdminNurture page
+- [x] /admin/reports page: Created with Apartment Inventory and Leads Report download cards
+- [x] /admin/reports: Shows live status (apartment count, lead count) from reports.status
+- [x] /admin/reports: On-demand Excel generation with loading states and error handling
+- [x] /admin/reports: Registered route in App.tsx
+- [x] Reports router: Secured all procedures with adminProcedure (was publicProcedure)
