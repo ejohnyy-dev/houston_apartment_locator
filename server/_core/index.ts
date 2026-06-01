@@ -8,7 +8,11 @@ import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+<<<<<<< Updated upstream
 import { initializeIntegrations } from "./integrations";
+=======
+import { leadsRateLimiter, leadsIpRateLimiter } from "./rateLimiter";
+>>>>>>> Stashed changes
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -76,6 +80,32 @@ async function startServer() {
 
       if (!email || typeof email !== "string") {
         return res.status(400).json({ ok: false, error: "Email is required" });
+      }
+
+      // === RATE LIMITING ===
+      // Get client IP for IP-based rate limiting
+      const clientIp = (req.headers["x-forwarded-for"] as string)?.split(",")?.[0] || 
+                       req.socket.remoteAddress || 
+                       "unknown";
+
+      // Check email-based rate limit (5 per hour)
+      if (!leadsRateLimiter.isAllowed(email)) {
+        const resetTime = leadsRateLimiter.getResetTime(email);
+        return res.status(429).json({
+          ok: false,
+          error: "Too many submissions from this email. Please try again later.",
+          retryAfter: resetTime,
+        });
+      }
+
+      // Check IP-based rate limit (20 per hour)
+      if (!leadsIpRateLimiter.isAllowed(clientIp)) {
+        const resetTime = leadsIpRateLimiter.getResetTime(clientIp);
+        return res.status(429).json({
+          ok: false,
+          error: "Too many submissions from your location. Please try again later.",
+          retryAfter: resetTime,
+        });
       }
 
       let hubspotSuccess = false;

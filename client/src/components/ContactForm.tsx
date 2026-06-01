@@ -113,7 +113,8 @@ export default function ContactForm() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to submit form");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to submit form");
       }
 
       toast.success("Thanks! Eric will be in touch soon.");
