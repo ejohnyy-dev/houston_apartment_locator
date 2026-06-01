@@ -69,7 +69,7 @@ export const reportsRouter = router({
         email: inquiry.email || "",
         phone: inquiry.phone || "",
         apartmentName: inquiry.apartmentName || "",
-        moveInDate: inquiry.moveInDate?.toISOString().split("T")[0],
+        moveInDate: inquiry.moveInDate ? String(inquiry.moveInDate).split("T")[0] : undefined,
         message: inquiry.message || undefined,
         createdAt: inquiry.createdAt || new Date(),
         source: inquiry.source || "website",
