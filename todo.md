@@ -173,3 +173,9 @@ All planned features have been successfully implemented and tested. The applicat
 - [x] QualificationContext: persist server session token in localStorage as fallback identifier
 - [x] InquiryForm: store sessionToken from mutation response and mark as qualified immediately
 - [x] Tests: cover createQualifiedSession, getQualifiedSessionByEmail, qualification.check procedure (13 tests passing)
+
+## Google Sheets Integration - Qualification Data Sync
+- [x] Parse qualificationData JSON in inquiries.create mutation
+- [x] Map qualification fields (preferredAreas, moveInTimeline, bedrooms, bathrooms, budget, pets) to Google Sheets payload
+- [x] Include qualification fields in the POST body sent to GOOGLE_SHEETS_ENDPOINT
+- [x] Verify TypeScript is clean and all tests pass

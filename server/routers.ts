@@ -278,6 +278,24 @@ export const appRouter = router({
             }
           }
 
+          // Parse qualification data if provided
+          let qualificationFields: Record<string, any> = {};
+          if (input.qualificationData) {
+            try {
+              const qual = JSON.parse(input.qualificationData);
+              qualificationFields = {
+                preferredAreas: qual.preferredAreas?.join(", ") || "",
+                moveInTimeline: qual.moveInTimeline || "",
+                bedrooms: qual.bedrooms || "",
+                bathrooms: qual.bathrooms || "",
+                budget: qual.budget || "",
+                pets: qual.pets?.join(", ") || "",
+              };
+            } catch (e) {
+              console.warn("Failed to parse qualificationData:", e);
+            }
+          }
+
           // Prepare payload for Google Sheets and HubSpot
           const payload = {
             firstName,
@@ -294,6 +312,8 @@ export const appRouter = router({
             smsConsent: true,
             consentSource: "txaptfinder.com",
             pageUrl: "https://txaptfinder.com",
+            // Include qualification fields
+            ...qualificationFields,
           };
 
           // Send to Google Sheets
