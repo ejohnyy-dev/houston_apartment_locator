@@ -80,6 +80,39 @@ async function startServer() {
         return;
       }
 
+      // Forward the lead to the in-app CRM (FB bot intake webhook), if configured.
+      // Non-blocking and fail-safe: a CRM outage must never break the public form.
+      const crmUrl = process.env.CRM_WEBHOOK_URL;
+      if (crmUrl) {
+        const toNumber = (v: unknown) => {
+          const n = parseInt(String(v ?? "").replace(/[^0-9]/g, ""), 10);
+          return Number.isFinite(n) ? n : undefined;
+        };
+        const crmPayload = {
+          first_name: clean(req.body.first_name || req.body.firstName),
+          last_name: clean(req.body.last_name || req.body.lastName),
+          email,
+          phone: clean(req.body.phone),
+          bedrooms: toNumber(req.body.bedrooms),
+          budget_max: toNumber(req.body.budget),
+          move_in_date: clean(req.body.move_in_timeline || req.body.moveIn),
+          preferred_area: clean(req.body.preferred_area || req.body.areas),
+          sms_consent: req.body.sms_consent ?? req.body.smsConsent ?? false,
+          source: "txaptfinder",
+        };
+        const controller = new AbortController();
+        const t = setTimeout(() => controller.abort(), 4000);
+        fetch(crmUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(crmPayload),
+          signal: controller.signal,
+        })
+          .then((r) => console.log(`[CRM forward] ${r.status}`))
+          .catch((e) => console.warn(`[CRM forward] failed: ${e?.message || e}`))
+          .finally(() => clearTimeout(t));
+      }
+
       res.json({
         ok: true,
         contactId: responseBody.id || null,
