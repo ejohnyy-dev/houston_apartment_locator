@@ -161,3 +161,15 @@ All planned features have been successfully implemented and tested. The applicat
 - [x] Specials page: wire to real special field from DB/CSV instead of hardcoded seoContent.ts array
 - [x] Error state in ApartmentSearch: show a user-friendly message when the apartments.list query fails
 - [x] inquiries.create tRPC procedure: add rate limiting (currently only the REST /api/leads has it)
+
+## Qualification Persistence (Server-Side)
+- [x] DB schema: qualified_sessions table (email, sessionToken, qualificationData JSON, createdAt, expiresAt)
+- [x] DB migration: generate and apply schema
+- [x] DB helpers: createQualifiedSession, getQualifiedSessionByToken, getQualifiedSessionByEmail
+- [x] inquiry creation: after successful inquiry, create a qualified_session row and set a long-lived cookie
+- [x] tRPC procedure: qualification.check — reads session cookie, returns { qualified, qualificationData }
+- [x] tRPC procedure: qualification.checkByEmail — re-qualify visitor by email on new device
+- [x] QualificationContext: on mount, call qualification.check and hydrate hasQualified + qualificationData from server
+- [x] QualificationContext: persist server session token in localStorage as fallback identifier
+- [x] InquiryForm: store sessionToken from mutation response and mark as qualified immediately
+- [x] Tests: cover createQualifiedSession, getQualifiedSessionByEmail, qualification.check procedure (13 tests passing)

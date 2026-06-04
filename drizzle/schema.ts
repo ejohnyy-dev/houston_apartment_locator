@@ -159,3 +159,23 @@ export const rentcastCronConfig = mysqlTable("rentcast_cron_config", {
 
 export type RentcastCronConfig = typeof rentcastCronConfig.$inferSelect;
 export type InsertRentcastCronConfig = typeof rentcastCronConfig.$inferInsert;
+
+// Qualified sessions — persists lead-gate qualification across browser sessions.
+// Created when a visitor submits their first inquiry. Keyed by a secure random token
+// stored in a long-lived cookie (qual_session) and also indexed by email for
+// re-identification when the cookie is missing (e.g. new device).
+export const qualifiedSessions = mysqlTable("qualified_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Secure random token stored in the qual_session cookie (32 hex bytes = 64 chars) */
+  sessionToken: varchar("sessionToken", { length: 128 }).notNull().unique(),
+  /** Email used in the inquiry — allows re-identification on new devices */
+  email: varchar("email", { length: 320 }).notNull(),
+  /** JSON snapshot of the qualification form data at time of inquiry */
+  qualificationData: text("qualificationData"),
+  /** When this session expires (default: 1 year from creation) */
+  expiresAt: timestamp("expiresAt").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type QualifiedSession = typeof qualifiedSessions.$inferSelect;
+export type InsertQualifiedSession = typeof qualifiedSessions.$inferInsert;

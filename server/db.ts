@@ -1,6 +1,6 @@
 import { eq, and, lte, isNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, inquiries, InsertInquiry, Inquiry, listings, InsertListing, Listing } from "../drizzle/schema";
+import { InsertUser, users, inquiries, InsertInquiry, Inquiry, listings, InsertListing, Listing, qualifiedSessions, InsertQualifiedSession, QualifiedSession } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -259,4 +259,62 @@ export async function toggleListingActive(id: number, isActive: boolean): Promis
   const db = await getDb();
   if (!db) throw new Error('Database not available');
   await db.update(listings).set({ isActive: isActive ? 1 : 0 }).where(eq(listings.id, id));
+}
+
+// ─── Qualified Sessions ───────────────────────────────────────────────────────
+
+/**
+ * Create a new qualified session row. Returns the inserted row.
+ */
+export async function createQualifiedSession(
+  data: Pick<InsertQualifiedSession, 'sessionToken' | 'email' | 'qualificationData' | 'expiresAt'>
+): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  await db.insert(qualifiedSessions).values(data);
+}
+
+/**
+ * Look up a qualified session by its cookie token.
+ * Returns null if not found or expired.
+ */
+export async function getQualifiedSessionByToken(
+  token: string
+): Promise<QualifiedSession | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db
+    .select()
+    .from(qualifiedSessions)
+    .where(eq(qualifiedSessions.sessionToken, token))
+    .limit(1);
+  const row = rows[0] ?? null;
+  if (!row) return null;
+  // Treat expired sessions as non-existent
+  if (row.expiresAt < new Date()) return null;
+  return row;
+}
+
+/**
+ * Look up the most recent non-expired qualified session by email.
+ * Used to re-qualify visitors on a new device.
+ */
+export async function getQualifiedSessionByEmail(
+  email: string
+): Promise<QualifiedSession | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const now = new Date();
+  const rows = await db
+    .select()
+    .from(qualifiedSessions)
+    .where(and(
+      eq(qualifiedSessions.email, email.toLowerCase().trim()),
+    ))
+    .limit(10);
+  // Filter expired in JS (MySQL timestamp comparison is fine, but this is safer)
+  const valid = rows.filter(r => r.expiresAt > now);
+  if (valid.length === 0) return null;
+  // Return the most recently created
+  return valid.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
 }

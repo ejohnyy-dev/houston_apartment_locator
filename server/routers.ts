@@ -9,7 +9,8 @@ import {
   getRentCastDatabaseStats,
 } from "./rentcastDatabase";
 import { notifyOwner } from "./_core/notification";
-import { createInquiry, getActiveListings } from "./db";
+import { createInquiry, getActiveListings, createQualifiedSession, getQualifiedSessionByToken, getQualifiedSessionByEmail } from "./db";
+import { randomBytes } from "crypto";
 import { integrationsRouter } from "./routers/integrations";
 import { reportsRouter } from "./routers/reports";
 import { nurtureRouter } from "./routers/nurture";
@@ -377,13 +378,97 @@ export const appRouter = router({
             nurtureScheduledFor,
           });
 
+          // Create a qualified session so this visitor stays qualified across sessions.
+          // The token is set as a long-lived cookie (1 year) and also returned in the
+          // response so the client can store it in localStorage as a fallback.
+          const sessionToken = randomBytes(32).toString('hex');
+          const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 year
+          try {
+            await createQualifiedSession({
+              sessionToken,
+              email: input.email.toLowerCase().trim(),
+              qualificationData: input.qualificationData || null,
+              expiresAt,
+            });
+            // Set a long-lived cookie so the browser sends it back automatically
+            ctx.res.cookie('qual_session', sessionToken, {
+              httpOnly: true,
+              secure: process.env.NODE_ENV === 'production',
+              sameSite: 'lax',
+              maxAge: 365 * 24 * 60 * 60 * 1000, // 1 year in ms
+              path: '/',
+            });
+          } catch (sessionError) {
+            // Non-fatal: log but don't fail the inquiry submission
+            console.warn('[QualSession] Failed to create qualified session:', sessionError);
+          }
+
           return {
             success: true,
             message: "Inquiry submitted successfully",
+            sessionToken, // also returned so client can store in localStorage
           };
         } catch (error) {
           console.error("Failed to create inquiry:", error);
           throw new Error("Failed to submit inquiry. Please try again.");
+        }
+      }),
+  }),
+
+  // ============= QUALIFICATION PERSISTENCE ROUTER =============
+  qualification: router({
+    /**
+     * Check if the current visitor has a valid qualified session.
+     * Reads the qual_session cookie (set after first inquiry submission).
+     * Returns { qualified: true, qualificationData } if found, else { qualified: false }.
+     */
+    check: publicProcedure.query(async ({ ctx }) => {
+      const cookieHeader = ctx.req.headers.cookie || '';
+      // Parse qual_session from cookie string
+      const match = cookieHeader.match(/(?:^|;\s*)qual_session=([^;]+)/);
+      const token = match ? decodeURIComponent(match[1]) : null;
+      if (!token) return { qualified: false, qualificationData: null };
+      try {
+        const session = await getQualifiedSessionByToken(token);
+        if (!session) return { qualified: false, qualificationData: null };
+        return {
+          qualified: true,
+          qualificationData: session.qualificationData
+            ? JSON.parse(session.qualificationData)
+            : null,
+        };
+      } catch {
+        return { qualified: false, qualificationData: null };
+      }
+    }),
+
+    /**
+     * Re-qualify a visitor by email (e.g. on a new device where the cookie is absent).
+     * If a valid session exists for this email, sets the qual_session cookie and returns qualified.
+     */
+    checkByEmail: publicProcedure
+      .input(z.object({ email: z.string().email() }))
+      .mutation(async ({ ctx, input }) => {
+        try {
+          const session = await getQualifiedSessionByEmail(input.email);
+          if (!session) return { qualified: false, qualificationData: null };
+          // Re-issue the cookie so future page loads are automatic
+          ctx.res.cookie('qual_session', session.sessionToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 365 * 24 * 60 * 60 * 1000,
+            path: '/',
+          });
+          return {
+            qualified: true,
+            qualificationData: session.qualificationData
+              ? JSON.parse(session.qualificationData)
+              : null,
+            sessionToken: session.sessionToken,
+          };
+        } catch {
+          return { qualified: false, qualificationData: null };
         }
       }),
   }),

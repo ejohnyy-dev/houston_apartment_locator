@@ -4,6 +4,7 @@ import { cn, getDisplayName } from "@/lib/utils";
 import { FavoriteApartment } from "@/hooks/useFavorites";
 import { trpc } from "@/lib/trpc";
 import { QualificationData } from "./QualificationPrompt";
+import { useQualification } from "@/contexts/QualificationContext";
 
 interface InquiryFormProps {
   apartmentId: string;
@@ -24,9 +25,22 @@ export function InquiryForm({ apartmentId, apartmentName, favorites, qualificati
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const { setQualificationData } = useQualification();
 
   const createInquiry = trpc.inquiries.create.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Persist qualification state so this visitor stays qualified across sessions.
+      // The server sets a qual_session cookie; we also store the token in localStorage
+      // as a fallback identifier for new-device re-qualification.
+      if (data?.sessionToken) {
+        try {
+          localStorage.setItem("qual_session_token", data.sessionToken);
+        } catch { /* ignore */ }
+      }
+      // Mark as qualified in the context so the lead gate lifts immediately
+      if (qualificationData) {
+        setQualificationData(qualificationData);
+      }
       setStage("success");
       setFormData({
         name: "",

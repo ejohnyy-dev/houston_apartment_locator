@@ -43,6 +43,13 @@
       "when": 1780308491519,
       "tag": "0005_safe_otto_octavius",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1780311965120,
+      "tag": "0006_long_starbolt",
+      "breakpoints": true
     }
   ]
 }
