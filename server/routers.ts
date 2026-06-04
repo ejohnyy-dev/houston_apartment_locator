@@ -297,23 +297,26 @@ export const appRouter = router({
           }
 
           // Prepare payload for Google Sheets and HubSpot
+          // Build payload matching Google Sheet column order: source, first_name, last_name, name, email, phone, budget, bedrooms, move_in_timeline, preferred_area, pets, notes, sms_consent, consent_source, consent_timestamp, opt_out, page_url, user_agent
           const payload = {
-            firstName,
-            lastName,
+            source: "website",
+            first_name: firstName,
+            last_name: lastName,
             name: input.name,
             email: input.email,
             phone: input.phone,
-            apartmentName: input.apartmentName,
-            apartmentId: input.apartmentId,
-            moveInDate: input.moveInDate || "",
-            message: input.message || "",
-            favoriteApartmentIds: favoriteApartmentIds.join(", ") || "None",
-            source: "website",
-            smsConsent: true,
-            consentSource: "txaptfinder.com",
-            pageUrl: "https://txaptfinder.com",
-            // Include qualification fields
-            ...qualificationFields,
+            budget: qualificationFields.budget || "",
+            bedrooms: qualificationFields.bedrooms || "",
+            move_in_timeline: qualificationFields.moveInTimeline || "",
+            preferred_area: qualificationFields.preferredAreas || "",
+            pets: qualificationFields.pets || "",
+            notes: input.message || "",
+            sms_consent: true,
+            consent_source: "txaptfinder.com",
+            consent_timestamp: new Date().toISOString(),
+            opt_out: false,
+            page_url: "https://txaptfinder.com",
+            user_agent: (ctx.req.headers["user-agent"] as string) || "",
           };
 
           // Send to Google Sheets
