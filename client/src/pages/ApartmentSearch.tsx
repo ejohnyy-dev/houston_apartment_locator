@@ -304,7 +304,7 @@ export default function ApartmentSearch() {
     if (!hasQualified && !showQualificationPrompt) {
       setShowQualificationPrompt(true);
     }
-  }, [hasQualified, showQualificationPrompt, setShowQualificationPrompt]);
+  }, [hasQualified, showQualificationPrompt]);
 
   const queryInput = useMemo(() => ({
     neighborhood: selectedNeighborhood && selectedNeighborhood !== '__all__' ? selectedNeighborhood : undefined,
