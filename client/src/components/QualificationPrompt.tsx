@@ -5,13 +5,14 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronRight } from "lucide-react";
 import { BottomSheet } from "./BottomSheet";
+import BudgetRangeSelector from "./BudgetRangeSelector";
 
 export interface QualificationData {
   preferredAreas: string[];
   moveInTimeline: string;
   bedrooms: string;
   bathrooms: string;
-  budget: string;
+  budget: string | { min: number | null; max: number };
   pets: string[];
 }
 
@@ -45,14 +46,7 @@ const BATHROOM_OPTIONS = [
   { value: "2.5plus", label: "2.5+ Bathrooms" },
 ];
 
-const BUDGET_OPTIONS = [
-  { value: "under-1000", label: "Under $1,000" },
-  { value: "1000-1500", label: "$1,000 - $1,500" },
-  { value: "1500-2000", label: "$1,500 - $2,000" },
-  { value: "2000-2500", label: "$2,000 - $2,500" },
-  { value: "2500-3000", label: "$2,500 - $3,000" },
-  { value: "3000-plus", label: "$3,000+" },
-];
+// BUDGET_OPTIONS removed - now using BudgetRangeSelector component
 
 const PET_OPTIONS = [
   { value: "dogs", label: "Dogs" },
@@ -121,7 +115,7 @@ export function QualificationPrompt({
       case 3:
         return formData.bathrooms !== "";
       case 4:
-        return formData.budget !== "";
+        return formData.budget !== "" && typeof formData.budget === "string" && formData.budget.includes("-");
       case 5:
         return true; // Pets are optional
       default:
@@ -160,11 +154,11 @@ export function QualificationPrompt({
                   <Checkbox
                     id={area}
                     checked={formData.preferredAreas.includes(area)}
-                    onCheckedChange={() => handleAreaToggle(area)}
+                    onCheckedChange={() => handleAreaToggle(area)} style={{borderStyle: 'double', borderWidth: '2px'}}
                   />
                   <label
                     htmlFor={area}
-                    className="text-sm cursor-pointer font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    className="text-sm cursor-pointer font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" style={{display: 'none'}}
                   >
                     {area}
                   </label>
@@ -250,23 +244,14 @@ export function QualificationPrompt({
         {step === 4 && (
           <div className="space-y-4">
             <Label className="text-base font-semibold">What's your monthly budget?</Label>
-            <div className="space-y-2">
-              {BUDGET_OPTIONS.map((option) => (
-                <button
-                  key={option.value}
-                  onClick={() =>
-                    setFormData((prev) => ({ ...prev, budget: option.value }))
-                  }
-                  className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
-                    formData.budget === option.value
-                      ? "border-primary bg-primary/10"
-                      : "border-muted hover:border-primary/50"
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
+            <BudgetRangeSelector
+              onChange={(range) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  budget: `$${range.min ?? 0}-$${range.max}`,
+                }));
+              }}
+            />
           </div>
         )}
 

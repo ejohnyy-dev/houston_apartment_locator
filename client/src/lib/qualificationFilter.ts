@@ -51,8 +51,28 @@ function parseBathroomRange(value: string): { min: number; max: number } {
 
 /**
  * Parse budget value from qualification
+ * Handles both old format (string like "1000-1500") and new format ("$min-$max")
  */
-function parseBudgetRange(value: string): { min: number; max: number } {
+function parseBudgetRange(value: string | { min: number | null; max: number }): { min: number; max: number } {
+  // Handle new BudgetRangeSelector format
+  if (typeof value === 'object' && value !== null) {
+    return {
+      min: value.min ?? 0,
+      max: value.max ?? 100000,
+    };
+  }
+
+  // Handle new string format from BudgetRangeSelector ("$0-$2400")
+  if (typeof value === 'string' && value.startsWith('$')) {
+    const parts = value.split('-');
+    if (parts.length === 2) {
+      const min = parseInt(parts[0].replace('$', ''), 10) || 0;
+      const max = parseInt(parts[1].replace('$', ''), 10) || 100000;
+      return { min, max };
+    }
+  }
+
+  // Handle old format (legacy)
   switch (value) {
     case "under-1000":
       return { min: 0, max: 999 };
