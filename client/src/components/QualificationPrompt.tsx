@@ -150,19 +150,17 @@ export function QualificationPrompt({
             </Label>
             <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto">
               {neighborhoods.map((area) => (
-                <div key={area} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={area}
-                    checked={formData.preferredAreas.includes(area)}
-                    onCheckedChange={() => handleAreaToggle(area)} style={{borderStyle: 'double', borderWidth: '2px'}}
-                  />
-                  <label
-                    htmlFor={area}
-                    className="text-sm cursor-pointer font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" style={{display: 'none'}}
-                  >
-                    {area}
-                  </label>
-                </div>
+                <button
+                  key={area}
+                  onClick={() => handleAreaToggle(area)}
+                  className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
+                    formData.preferredAreas.includes(area)
+                      ? "border-primary bg-primary/10"
+                      : "border-muted hover:border-primary/50"
+                  }`}
+                >
+                  {area}
+                </button>
               ))}
             </div>
           </div>
