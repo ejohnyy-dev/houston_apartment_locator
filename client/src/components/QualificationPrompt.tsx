@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -69,6 +69,14 @@ export function QualificationPrompt({
     budget: "",
     pets: [],
   });
+
+  // Memoize the budget onChange callback to prevent infinite loop
+  const handleBudgetChange = useCallback((range: { min: number | null; max: number }) => {
+    setFormData((prev) => ({
+      ...prev,
+      budget: `$${range.min ?? 0}-${range.max}`,
+    }));
+  }, []);
 
   if (!isOpen) return null;
 
@@ -243,12 +251,7 @@ export function QualificationPrompt({
           <div className="space-y-4">
             <Label className="text-base font-semibold">What's your monthly budget?</Label>
             <BudgetRangeSelector
-              onChange={(range) => {
-                setFormData((prev) => ({
-                  ...prev,
-                  budget: `$${range.min ?? 0}-$${range.max}`,
-                }));
-              }}
+              onChange={handleBudgetChange}
             />
           </div>
         )}
