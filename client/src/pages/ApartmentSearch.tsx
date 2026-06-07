@@ -464,8 +464,13 @@ export default function ApartmentSearch() {
   const handleLearnMore = (apt: ApartmentTeased) => {
     setSelectedApartment(apt);
     setPendingApartment(apt);
-    // Open the real InquiryForm (replaces the old dead showLeadForm placeholder)
-    setShowInquiryForm(true);
+    // If not qualified, show qualification prompt first
+    if (!hasQualified) {
+      setShowQualificationPrompt(true);
+    } else {
+      // Open the real InquiryForm (replaces the old dead showLeadForm placeholder)
+      setShowInquiryForm(true);
+    }
   };
 
   const handleViewDetails = (apt: ApartmentTeased) => {
@@ -494,6 +499,10 @@ export default function ApartmentSearch() {
         onComplete={(data) => {
           setQualificationData(data);
           setShowQualificationPrompt(false);
+          // If there's a pending apartment, open the inquiry form
+          if (pendingApartment) {
+            setShowInquiryForm(true);
+          }
         }}
         onSkip={() => setShowQualificationPrompt(false)}
         neighborhoods={Array.from(new Set(apartments.map(a => a.neighborhood))).sort()}
