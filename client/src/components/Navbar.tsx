@@ -38,7 +38,7 @@ export default function Navbar() {
               {l.label}
             </a>
           ))}
-          <a href="#contact" className="px-5 py-2 bg-gold text-dark text-sm font-semibold rounded hover:opacity-90 transition-opacity">
+          <a href="/search" className="px-5 py-2 bg-gold text-dark text-sm font-semibold rounded hover:opacity-90 transition-opacity">
             Get Started
           </a>
         </div>
@@ -56,7 +56,7 @@ export default function Navbar() {
               {l.label}
             </a>
           ))}
-          <a href="#contact" onClick={() => setOpen(false)} className="block text-center py-2.5 bg-gold text-dark text-sm font-semibold rounded">
+          <a href="/search" onClick={() => setOpen(false)} className="block text-center py-2.5 bg-gold text-dark text-sm font-semibold rounded">
             Get Started
           </a>
         </div>
