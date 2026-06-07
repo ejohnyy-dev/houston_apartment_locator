@@ -355,6 +355,12 @@ export const appRouter = router({
                   message: input.message || "",
                   favorite_apartments: favoriteApartmentIds.join(", ") || "None",
                   lifecyclestage: "lead",
+                  // Qualification fields
+                  budget: qualificationFields.budget || "",
+                  bedrooms: qualificationFields.bedrooms || "",
+                  move_in_timeline: qualificationFields.moveInTimeline || "",
+                  preferred_area: qualificationFields.preferredAreas || "",
+                  pets: qualificationFields.pets || "",
                 },
               };
 
@@ -370,7 +376,9 @@ export const appRouter = router({
               if (hubspotResponse.ok) {
                 console.log("[HubSpot] Lead submitted successfully");
               } else {
-                console.warn("[HubSpot] Unexpected status:", hubspotResponse.status);
+                const errorBody = await hubspotResponse.text();
+                console.error("[HubSpot] Error status:", hubspotResponse.status);
+                console.error("[HubSpot] Error body:", errorBody);
               }
             } catch (hubspotError) {
               console.error("[HubSpot] Error:", hubspotError);
