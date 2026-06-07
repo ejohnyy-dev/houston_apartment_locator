@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { toast } from "sonner";
 
-
+const CRM_API_URL =
+  import.meta.env.VITE_CRM_API_URL ||
+  "https://wallpapers-transmitted-friends-molecular.trycloudflare.com";
 
 const budgetOptions = [
   "Under $1,000",
@@ -36,7 +38,7 @@ const areaOptions = [
 ];
 
 export default function ContactForm() {
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     firstName: "",
     lastName: "",
     email: "",
@@ -47,97 +49,75 @@ export default function ContactForm() {
     areas: "",
     pets: "",
     notes: "",
-    smsConsent: false,
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
-  const handleInputChange = (field: string, value: string | boolean) => {
-    let processedValue: string | boolean = value;
+  const update = (field: string, value: string) =>
+    setForm((prev) => ({ ...prev, [field]: value }));
 
-    if (field === "phone" && typeof value === "string") {
-      const digitsOnly = value.replace(/\D/g, "");
-      processedValue = digitsOnly.slice(0, 10);
-    }
-
-    setFormData((prev) => ({ ...prev, [field]: processedValue }));
-  };
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (!formData.firstName.trim()) {
-      toast.error("Please enter your first name.");
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.firstName || !form.email || !form.phone) {
+      toast.error("Please fill in your name, email, and phone number.");
       return;
     }
-
-    if (!formData.email.includes("@")) {
-      toast.error("Please enter a valid email address.");
-      return;
-    }
-
-    const phoneDigits = formData.phone.replace(/\D/g, "");
-    if (phoneDigits.length < 10) {
-      toast.error("Please enter a valid 10-digit phone number.");
-      return;
-    }
-
-    if (!formData.smsConsent) {
-      toast.error("Please agree to be contacted so I can follow up.");
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    const payload = {
-      first_name: formData.firstName,
-      last_name: formData.lastName,
-      email: formData.email,
-      phone: formData.phone,
-      budget: formData.budget,
-      bedrooms: formData.bedrooms,
-      move_in_timeline: formData.moveIn,
-      preferred_area: formData.areas,
-      pets: formData.pets,
-      notes: formData.notes,
-      smsConsent: formData.smsConsent,
-    };
+    setSubmitting(true);
 
     try {
-      const response = await fetch("/api/leads", {
+      const response = await fetch(`${CRM_API_URL}/api/leads`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: form.firstName,
+          lastName: form.lastName,
+          email: form.email,
+          phone: form.phone,
+          budget: form.budget,
+          bedrooms: form.bedrooms,
+          moveInTimeline: form.moveIn,
+          preferredArea: form.areas,
+          pets: form.pets,
+          notes: form.notes,
+          source: "txaptfinder-contact",
+          smsConsent: true,
+        }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to submit form");
+        const error = await response.text().catch(() => "Submission failed");
+        throw new Error(error);
       }
 
+      const result = await response.json();
+      console.log("Lead submitted to CRM:", result);
+      setSubmitted(true);
       toast.success("Thanks! Eric will be in touch soon.");
-      setIsSubmitted(true);
     } catch (error) {
-      toast.error("Could not save your information. Please call or text Eric.");
+      console.error("Form submission error:", error);
+      toast.error(
+        "Something went wrong. Please try again or call (832) 603-7278."
+      );
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
   };
 
-  if (isSubmitted) {
+  if (submitted) {
     return (
       <section id="contact" className="py-20 md:py-28 bg-dark-card">
         <div className="container">
           <div className="max-w-lg mx-auto text-center py-16">
             <h2 className="font-display text-3xl text-white mb-4">Thank You!</h2>
             <p className="text-white/50 text-base leading-relaxed mb-6">
-              Eric Johnson has received your information and will reach out within 24 hours to start your apartment search.
+              Eric Johnson has received your information and will reach out
+              within 24 hours to start your apartment search.
             </p>
             <p className="text-white/40 text-sm">
               Need something sooner? Call directly at{" "}
-              <a href="tel:8326037278" className="text-gold hover:underline">(832) 603-7278</a>
+              <a href="tel:8326037278" className="text-gold hover:underline">
+                (832) 603-7278
+              </a>
             </p>
           </div>
         </div>
@@ -146,22 +126,26 @@ export default function ContactForm() {
   }
 
   const inputClass =
-    "w-full bg-white border border-white/10 rounded px-4 py-3 text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gold/50 transition-colors";
+    "w-full bg-dark border border-white/10 rounded px-4 py-3 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-gold/50 transition-colors";
   const selectClass =
-    "w-full bg-white border border-white/10 rounded px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gold/50 transition-colors appearance-none";
-  const labelClass = "block text-white/60 text-xs font-medium tracking-wide uppercase mb-1.5";
+    "w-full bg-dark border border-white/10 rounded px-4 py-3 text-sm text-white focus:outline-none focus:border-gold/50 transition-colors appearance-none";
+  const labelClass =
+    "block text-white/60 text-xs font-medium tracking-wide uppercase mb-1.5";
 
   return (
     <section id="contact" className="py-20 md:py-28 bg-dark-card">
       <div className="container">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-12">
-            <p className="text-gold text-xs font-medium tracking-widest uppercase mb-3">Get Started</p>
+            <p className="text-gold text-xs font-medium tracking-widest uppercase mb-3">
+              Get Started
+            </p>
             <h2 className="font-display text-3xl md:text-4xl text-white mb-4">
-              Start Your Houston Apartment Search Today
+              Let's Find Your Apartment
             </h2>
             <p className="text-white/50 text-base leading-relaxed">
-              Tell me a bit about yourself and what you're looking for. I'll take it from there.
+              Tell me a bit about yourself and what you're looking for. I'll
+              take it from there.
             </p>
           </div>
 
@@ -173,8 +157,8 @@ export default function ContactForm() {
                 <input
                   type="text"
                   placeholder="John"
-                  value={formData.firstName}
-                  onChange={(e) => handleInputChange("firstName", e.target.value)}
+                  value={form.firstName}
+                  onChange={(e) => update("firstName", e.target.value)}
                   className={inputClass}
                   required
                 />
@@ -184,8 +168,8 @@ export default function ContactForm() {
                 <input
                   type="text"
                   placeholder="Doe"
-                  value={formData.lastName}
-                  onChange={(e) => handleInputChange("lastName", e.target.value)}
+                  value={form.lastName}
+                  onChange={(e) => update("lastName", e.target.value)}
                   className={inputClass}
                 />
               </div>
@@ -198,8 +182,8 @@ export default function ContactForm() {
                 <input
                   type="email"
                   placeholder="john@example.com"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange("email", e.target.value)}
+                  value={form.email}
+                  onChange={(e) => update("email", e.target.value)}
                   className={inputClass}
                   required
                 />
@@ -209,8 +193,8 @@ export default function ContactForm() {
                 <input
                   type="tel"
                   placeholder="(555) 123-4567"
-                  value={formData.phone}
-                  onChange={(e) => handleInputChange("phone", e.target.value)}
+                  value={form.phone}
+                  onChange={(e) => update("phone", e.target.value)}
                   className={inputClass}
                   required
                 />
@@ -219,7 +203,9 @@ export default function ContactForm() {
 
             {/* Divider */}
             <div className="border-t border-white/5 pt-6">
-              <p className="text-white/40 text-xs font-medium tracking-wide uppercase mb-5">Apartment Preferences</p>
+              <p className="text-white/40 text-xs font-medium tracking-wide uppercase mb-5">
+                Apartment Preferences
+              </p>
             </div>
 
             {/* Budget & Bedrooms */}
@@ -227,26 +213,30 @@ export default function ContactForm() {
               <div>
                 <label className={labelClass}>Monthly Budget</label>
                 <select
-                  value={formData.budget}
-                  onChange={(e) => handleInputChange("budget", e.target.value)}
+                  value={form.budget}
+                  onChange={(e) => update("budget", e.target.value)}
                   className={selectClass}
                 >
                   <option value="">Select budget</option>
                   {budgetOptions.map((o) => (
-                    <option key={o} value={o}>{o}</option>
+                    <option key={o} value={o}>
+                      {o}
+                    </option>
                   ))}
                 </select>
               </div>
               <div>
                 <label className={labelClass}>Bedrooms</label>
                 <select
-                  value={formData.bedrooms}
-                  onChange={(e) => handleInputChange("bedrooms", e.target.value)}
+                  value={form.bedrooms}
+                  onChange={(e) => update("bedrooms", e.target.value)}
                   className={selectClass}
                 >
                   <option value="">Select bedrooms</option>
                   {bedroomOptions.map((o) => (
-                    <option key={o} value={o}>{o}</option>
+                    <option key={o} value={o}>
+                      {o}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -257,26 +247,30 @@ export default function ContactForm() {
               <div>
                 <label className={labelClass}>Move-In Timeline</label>
                 <select
-                  value={formData.moveIn}
-                  onChange={(e) => handleInputChange("moveIn", e.target.value)}
+                  value={form.moveIn}
+                  onChange={(e) => update("moveIn", e.target.value)}
                   className={selectClass}
                 >
                   <option value="">Select timeline</option>
                   {moveInOptions.map((o) => (
-                    <option key={o} value={o}>{o}</option>
+                    <option key={o} value={o}>
+                      {o}
+                    </option>
                   ))}
                 </select>
               </div>
               <div>
                 <label className={labelClass}>Preferred Area</label>
                 <select
-                  value={formData.areas}
-                  onChange={(e) => handleInputChange("areas", e.target.value)}
+                  value={form.areas}
+                  onChange={(e) => update("areas", e.target.value)}
                   className={selectClass}
                 >
                   <option value="">Select area</option>
                   {areaOptions.map((o) => (
-                    <option key={o} value={o}>{o}</option>
+                    <option key={o} value={o}>
+                      {o}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -286,8 +280,8 @@ export default function ContactForm() {
             <div>
               <label className={labelClass}>Do you have pets?</label>
               <select
-                value={formData.pets}
-                onChange={(e) => handleInputChange("pets", e.target.value)}
+                value={form.pets}
+                onChange={(e) => update("pets", e.target.value)}
                 className={selectClass}
               >
                 <option value="">Select</option>
@@ -305,38 +299,24 @@ export default function ContactForm() {
               <textarea
                 rows={3}
                 placeholder="Amenities you need, specific complexes you're interested in, etc."
-                value={formData.notes}
-                onChange={(e) => handleInputChange("notes", e.target.value)}
+                value={form.notes}
+                onChange={(e) => update("notes", e.target.value)}
                 className={`${inputClass} resize-none`}
               />
             </div>
 
-            {/* SMS Consent Checkbox */}
-            <label className="flex items-start gap-3 text-white/40 text-xs leading-relaxed">
-              <input
-                type="checkbox"
-                checked={formData.smsConsent}
-                onChange={(event) => handleInputChange("smsConsent", event.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-white/20 bg-dark text-gold focus:ring-gold/40"
-                required
-              />
-              <span>
-                I agree to be contacted by call, text, or email about apartment options.
-                Message/data rates may apply. Reply STOP to opt out.
-              </span>
-            </label>
-
-            {/* Submit Button */}
+            {/* Submit */}
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={submitting}
               className="w-full py-3.5 bg-gold text-dark font-semibold text-sm rounded hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              {isSubmitting ? "Sending..." : "Submit"}
+              {submitting ? "Sending..." : "Submit"}
             </button>
 
             <p className="text-white/25 text-xs text-center">
-              By submitting, you agree to be contacted about apartment options. We'll never spam you.
+              By submitting, you agree to be contacted about apartment options.
+              We'll never spam you.
             </p>
           </form>
         </div>
