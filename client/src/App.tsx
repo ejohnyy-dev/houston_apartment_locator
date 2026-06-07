@@ -20,7 +20,6 @@ import AdminNurture from "./pages/AdminNurture";
 import AdminListings from "./pages/AdminListings";
 import AdminReports from "./pages/AdminReports";
 import AdminRentcast from "./pages/AdminRentcast";
-import ApartmentDetail from "./pages/ApartmentDetail";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -36,8 +35,7 @@ function Router() {
         <Route path={"/contact"} component={ContactPage} />
         <Route path={"/houston-apartment-move-in-specials"} component={MoveInSpecials} />
         <Route path={"/faq"} component={FAQ} />
-        <Route path={"/:neighborhoods/:slug"} component={NeighborhoodPage} />
-        <Route path={"/apartments/:slug"} component={ApartmentDetail} />
+        <Route path={"/neighborhoods/:slug"} component={NeighborhoodPage} />
         <Route path={"/admin"}><Redirect to="/admin/listings" /></Route>
         <Route path={"/admin/nurture"} component={AdminNurture} />
         <Route path={"/admin/listings"} component={AdminListings} />
