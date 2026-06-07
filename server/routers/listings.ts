@@ -75,6 +75,23 @@ export const listingsRouter = router({
   }),
 
   /**
+   * Get a single listing by slug (public — used by apartment detail page)
+   */
+  getBySlug: publicProcedure
+    .input(z.object({ slug: z.string() }))
+    .query(async ({ input }) => {
+      const id = parseInt(input.slug, 10);
+      if (isNaN(id)) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Listing not found" });
+      }
+      const listing = await getListingById(id);
+      if (!listing) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Listing not found" });
+      }
+      return listing;
+    }),
+
+  /**
    * Get a single listing by ID (admin only)
    */
   get: adminProcedure
