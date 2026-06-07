@@ -495,7 +495,7 @@ export default function ApartmentSearch() {
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Qualification Prompt */}
       <QualificationPrompt
-        isOpen={showQualificationPrompt && !hasQualified}
+        isOpen={showQualificationPrompt}
         onComplete={(data) => {
           setQualificationData(data);
           setShowQualificationPrompt(false);
