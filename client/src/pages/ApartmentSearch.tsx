@@ -50,6 +50,10 @@ interface ApartmentTeased {
 
 const DEFAULT_RENT_RANGE: [number, number] = [0, 15000];
 
+// Listings rendered per "page" in the results panel; more load on demand so
+// an unfiltered 500+ listing search doesn't render hundreds of cards at once.
+const PAGE_SIZE = 30;
+
 // City center fallbacks for Houston-area inventory.
 const NEIGHBORHOOD_COORDS: Record<string, { lat: number; lng: number }> = {
   Houston: { lat: 29.7604, lng: -95.3698 },
@@ -330,6 +334,12 @@ export default function ApartmentSearch() {
     return () => clearTimeout(timer);
   }, [searchText]);
 
+  // Incremental rendering of results; resets whenever the result set changes
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [debouncedSearch, selectedNeighborhood, bedroomFilter, committedRentRange, sortBy]);
+
   // The map is gated: visitors must complete the questionnaire AND leave
   // contact details before browsing. The prompt opens immediately on page
   // load and cannot be dismissed. We wait for the server session check so
@@ -340,17 +350,12 @@ export default function ApartmentSearch() {
     }
   }, [isCheckingServer, hasQualified, showQualificationPrompt, setShowQualificationPrompt]);
 
-  const queryInput = useMemo(() => ({
-    neighborhood: selectedNeighborhood && selectedNeighborhood !== '__all__' ? selectedNeighborhood : undefined,
-    minBedrooms: bedroomFilter && bedroomFilter !== '__any__' ? parseInt(bedroomFilter) : undefined,
-    maxBedrooms: bedroomFilter && bedroomFilter !== '__any__' ? parseInt(bedroomFilter) : undefined,
-    minRent: committedRentRange[0],
-    maxRent: committedRentRange[1],
-  }), [selectedNeighborhood, bedroomFilter, committedRentRange]);
-
+  // Fetch the full inventory once and filter client-side: filters respond
+  // instantly with no loading flicker, and the neighborhood dropdown keeps
+  // every option (filtering server-side shrank the list to the selection).
   const { data: apartmentsData, isLoading, isError } = trpc.apartments.list.useQuery(
-    queryInput,
-    { staleTime: 30_000 }
+    undefined,
+    { staleTime: 60_000 }
   );
 
   const apartments: ApartmentTeased[] = useMemo(
@@ -358,12 +363,43 @@ export default function ApartmentSearch() {
     [apartmentsData]
   );
 
-  // Precomputed search index: one lowercase haystack per listing, built once
-  // per data load instead of re-deriving every field on every keystroke.
-  // Includes bedroom synonyms so "studio", "2 bed", or "1br" all match.
+  // Structured filters (neighborhood / bedrooms / rent). Mirrors the
+  // server's per-bedroom pricing rule: when a 1BR/2BR filter is active and
+  // the listing has a price split for it, that price drives the rent range.
+  const clientFiltered = useMemo(() => {
+    const bedrooms = bedroomFilter ? parseInt(bedroomFilter) : null;
+    const [minRent, maxRent] = committedRentRange;
+    const maxIsUncapped = maxRent >= DEFAULT_RENT_RANGE[1];
+
+    return apartments.filter(apt => {
+      if (selectedNeighborhood && apt.neighborhood !== selectedNeighborhood) return false;
+
+      if (bedrooms !== null) {
+        // "4+" means four or more; every other option is an exact match
+        if (bedrooms === 4 ? apt.bedrooms < 4 : apt.bedrooms !== bedrooms) return false;
+      }
+
+      const { min } = getBedroomAwareRent(apt, bedroomFilter);
+      const price = typeof min === 'string' ? parseFloat(min) : min;
+      const hasPrice = Number.isFinite(price) && price > 0;
+      // "Pricing by request" listings stay visible unless a minimum is set
+      if (hasPrice) {
+        if (price < minRent) return false;
+        if (!maxIsUncapped && price > maxRent) return false;
+      } else if (minRent > 0) {
+        return false;
+      }
+      return true;
+    });
+  }, [apartments, selectedNeighborhood, bedroomFilter, committedRentRange]);
+
+  // Precomputed search index: one lowercase haystack per listing, rebuilt
+  // only when the structured filters change instead of re-deriving every
+  // field on every keystroke. Includes bedroom synonyms so "studio",
+  // "2 bed", or "1br" all match.
   const searchIndex = useMemo(
     () =>
-      apartments.map(apt => ({
+      clientFiltered.map(apt => ({
         apt,
         haystack: [
           apt.neighborhood,
@@ -377,7 +413,7 @@ export default function ApartmentSearch() {
           .join(' ')
           .toLowerCase(),
       })),
-    [apartments]
+    [clientFiltered]
   );
 
   // Every search term must match (AND semantics), so "katy special" finds
@@ -387,11 +423,11 @@ export default function ApartmentSearch() {
   // markers/clusters to be torn down and rebuilt on every render.
   const filtered = useMemo(() => {
     const terms = debouncedSearch.toLowerCase().trim().split(/\s+/).filter(Boolean);
-    if (terms.length === 0) return apartments;
+    if (terms.length === 0) return clientFiltered;
     return searchIndex
       .filter(({ haystack }) => terms.every(term => haystack.includes(term)))
       .map(entry => entry.apt);
-  }, [apartments, searchIndex, debouncedSearch]);
+  }, [clientFiltered, searchIndex, debouncedSearch]);
 
   // Sorted view for the listings panel only — the map doesn't care about
   // order, so markers keep using `filtered` and aren't rebuilt on sort.
@@ -417,6 +453,27 @@ export default function ApartmentSearch() {
     () => Array.from(new Set(apartments.map(a => a.neighborhood))).sort(),
     [apartments]
   );
+
+  // Bring the selected listing's card into view, expanding the paginated
+  // list first if the card isn't rendered yet (e.g. selected via map pin).
+  useEffect(() => {
+    if (!selectedApartment) return;
+    const index = sorted.findIndex(a => a.id === selectedApartment.id);
+    if (index === -1) return;
+    if (index >= visibleCount) {
+      setVisibleCount(Math.ceil((index + 1) / PAGE_SIZE) * PAGE_SIZE);
+      return; // re-runs after the expanded list renders
+    }
+    document
+      .getElementById(`apt-card-${selectedApartment.id}`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [selectedApartment, sorted, visibleCount]);
+
+  const activeFilterCount =
+    (selectedNeighborhood ? 1 : 0) +
+    (bedroomFilter ? 1 : 0) +
+    (committedRentRange[0] !== DEFAULT_RENT_RANGE[0] || committedRentRange[1] !== DEFAULT_RENT_RANGE[1] ? 1 : 0) +
+    (searchText.trim() ? 1 : 0);
 
   // ── Map markers with clustering ──────────────────────────────────────────────────────────────
   const placeMarkers = useCallback((map: google.maps.Map, apts: ApartmentTeased[], activeBrFilter: string) => {
@@ -481,16 +538,11 @@ export default function ApartmentSearch() {
         pin.style.background = '#1d4ed8';
         pin.style.transform = 'scale(1.15)';
 
-        // Always show the teaser preview card first (for both visitors and leads)
+        // Always show the teaser preview card first (for both visitors and
+        // leads); a separate effect scrolls the matching card into view.
         setSelectedApartment(apt);
         setShowPinPreview(true);
-
-        // On mobile, switch to list view and scroll to the matching card
         setMobileView('list');
-        setTimeout(() => {
-          const cardEl = document.getElementById(`apt-card-${apt.id}`);
-          if (cardEl) cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 100);
       });
 
       newMarkers.push(marker);
@@ -627,9 +679,15 @@ export default function ApartmentSearch() {
             size="sm"
             onClick={() => setShowFilters(v => !v)}
             className="gap-2 shrink-0"
+            aria-expanded={showFilters}
           >
             <SlidersHorizontal className="w-4 h-4" />
             <span className="hidden sm:inline">Filters</span>
+            {activeFilterCount > 0 && (
+              <Badge className="bg-blue-600 text-white h-5 min-w-5 px-1.5 justify-center text-[10px]">
+                {activeFilterCount}
+              </Badge>
+            )}
           </Button>
 
           {!hasQualified && (
@@ -708,7 +766,10 @@ export default function ApartmentSearch() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-600 mb-2">Neighborhood</label>
-                  <Select value={selectedNeighborhood} onValueChange={setSelectedNeighborhood}>
+                  <Select
+                    value={selectedNeighborhood || '__all__'}
+                    onValueChange={v => setSelectedNeighborhood(v === '__all__' ? '' : v)}
+                  >
                     <SelectTrigger className="h-9 text-xs">
                       <SelectValue placeholder="All areas" />
                     </SelectTrigger>
@@ -723,7 +784,10 @@ export default function ApartmentSearch() {
 
                 <div>
                   <label className="block text-xs font-medium text-slate-600 mb-2">Bedrooms</label>
-                  <Select value={bedroomFilter} onValueChange={setBedroomFilter}>
+                  <Select
+                    value={bedroomFilter || '__any__'}
+                    onValueChange={v => setBedroomFilter(v === '__any__' ? '' : v)}
+                  >
                     <SelectTrigger className="h-9 text-xs">
                       <SelectValue placeholder="Any" />
                     </SelectTrigger>
@@ -740,7 +804,8 @@ export default function ApartmentSearch() {
 
                 <div>
                   <label className="block text-xs font-medium text-slate-600 mb-2">
-                    {bedroomFilter === '1' ? '1BR Max Rent' : bedroomFilter === '2' ? '2BR Max Rent' : bedroomFilter === '3' ? '3BR Max Rent' : 'Max Rent'}: ${sliderRentRange[1] >= 15000 ? 'Any' : sliderRentRange[1].toLocaleString() + '/mo'}
+                    {bedroomFilter === '1' ? '1BR Rent' : bedroomFilter === '2' ? '2BR Rent' : bedroomFilter === '3' ? '3BR Rent' : 'Rent'}:{' '}
+                    ${sliderRentRange[0].toLocaleString()} – {sliderRentRange[1] >= DEFAULT_RENT_RANGE[1] ? 'Any' : `$${sliderRentRange[1].toLocaleString()}/mo`}
                   </label>
                   <Slider
                     min={0}
@@ -750,6 +815,7 @@ export default function ApartmentSearch() {
                     onValueChange={v => setSliderRentRange(v as [number, number])}
                     onValueCommit={v => setCommittedRentRange(v as [number, number])}
                     className="w-full"
+                    aria-label="Monthly rent range"
                   />
                 </div>
               </div>
@@ -858,9 +924,9 @@ export default function ApartmentSearch() {
               <h2 className="font-semibold text-slate-900 text-sm">
                 {isLoading ? 'Loading...' : `${filtered.length} listing${filtered.length !== 1 ? 's' : ''}`}
               </h2>
-              {(selectedNeighborhood || bedroomFilter || searchText) && (
+              {activeFilterCount > 0 && (
                 <button onClick={resetFilters} className="text-xs text-blue-600 mt-0.5 hover:underline">
-                  Filters active — clear
+                  {activeFilterCount} filter{activeFilterCount !== 1 ? 's' : ''} active — clear
                 </button>
               )}
             </div>
@@ -904,27 +970,38 @@ export default function ApartmentSearch() {
                 </Button>
               </div>
             ) : (
-              sorted.map(apt => (
-                <ApartmentCard
-                  key={apt.id}
-                  id={`apt-card-${apt.id}`}
-                  apt={apt}
-                  isLead={hasQualified}
-                  bedroomFilter={bedroomFilter}
-                  onLearnMore={() => handleLearnMore(apt)}
-                  onViewDetails={() => handleViewDetails(apt)}
-                  isSelected={selectedApartment?.id === apt.id}
-                  isFavorited={isFavorited(apt.id.toString())}
-                  onToggleFavorite={() => toggleFavorite({
-                    apartmentId: apt.id.toString(),
-                    apartmentName: getDisplayName(apt.name),
-                    neighborhood: apt.neighborhood,
-                    rentMin: typeof apt.rentMin === 'string' ? parseInt(apt.rentMin) : apt.rentMin,
-                    rentMax: typeof apt.rentMax === 'string' ? parseInt(apt.rentMax) : apt.rentMax || undefined,
-                    bedrooms: apt.bedrooms,
-                  })}
-                />
-              ))
+              <>
+                {sorted.slice(0, visibleCount).map(apt => (
+                  <ApartmentCard
+                    key={apt.id}
+                    id={`apt-card-${apt.id}`}
+                    apt={apt}
+                    isLead={hasQualified}
+                    bedroomFilter={bedroomFilter}
+                    onLearnMore={() => handleLearnMore(apt)}
+                    onViewDetails={() => handleViewDetails(apt)}
+                    isSelected={selectedApartment?.id === apt.id}
+                    isFavorited={isFavorited(apt.id.toString())}
+                    onToggleFavorite={() => toggleFavorite({
+                      apartmentId: apt.id.toString(),
+                      apartmentName: getDisplayName(apt.name),
+                      neighborhood: apt.neighborhood,
+                      rentMin: typeof apt.rentMin === 'string' ? parseInt(apt.rentMin) : apt.rentMin,
+                      rentMax: typeof apt.rentMax === 'string' ? parseInt(apt.rentMax) : apt.rentMax || undefined,
+                      bedrooms: apt.bedrooms,
+                    })}
+                  />
+                ))}
+                {sorted.length > visibleCount && (
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setVisibleCount(count => count + PAGE_SIZE)}
+                  >
+                    Show {Math.min(PAGE_SIZE, sorted.length - visibleCount)} more of {sorted.length - visibleCount} remaining
+                  </Button>
+                )}
+              </>
             )}
           </div>
         </div>
