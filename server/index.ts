@@ -13,11 +13,11 @@ async function startServer() {
   app.use(express.json({ limit: "1mb" }));
 
   app.post("/api/leads", async (req, res) => {
-    const token = process.env.HUBSPOT_PRIVATE_APP_TOKEN;
+    const crmUrl = process.env.CRM_WEBHOOK_URL;
 
-    if (!token) {
-      res.status(500).json({ error: "HubSpot API token is not configured" });
-      return;
+    if (!crmUrl) {
+      console.error("[Lead intake] CRM_WEBHOOK_URL not configured");
+      return res.status(500).json({ error: "CRM not configured" });
     }
 
     const clean = (value: unknown) =>
@@ -26,146 +26,87 @@ async function startServer() {
     const email = clean(req.body.email).toLowerCase();
 
     if (!email) {
-      res.status(400).json({ error: "Email is required" });
-      return;
+      return res.status(400).json({ error: "Email is required" });
     }
 
-    const properties = Object.fromEntries(
-      Object.entries({
-        email,
-        firstname: clean(req.body.first_name || req.body.firstName),
-        lastname: clean(req.body.last_name || req.body.lastName),
-        phone: clean(req.body.phone),
-        budget: clean(req.body.budget),
-        bedrooms: clean(req.body.bedrooms),
-        movein_timeline: clean(req.body.move_in_timeline || req.body.moveIn),
-        preferred_area: clean(req.body.preferred_area || req.body.areas),
-      }).filter(([, value]) => value !== "")
-    );
+    const toNumber = (v: unknown) => {
+      const n = parseInt(String(v ?? "").replace(/[^0-9]/g, ""), 10);
+      return Number.isFinite(n) ? n : undefined;
+    };
 
-    const hubspotHeaders = {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
+    const crmPayload = {
+      first_name: clean(req.body.first_name || req.body.firstName),
+      last_name: clean(req.body.last_name || req.body.lastName),
+      email,
+      phone: clean(req.body.phone),
+      bedrooms: toNumber(req.body.bedrooms),
+      budget_max: toNumber(req.body.budget),
+      move_in_date: clean(req.body.move_in_timeline || req.body.moveIn),
+      preferred_area: clean(req.body.preferred_area || req.body.areas),
+      sms_consent: req.body.sms_consent ?? req.body.smsConsent ?? false,
+      source: "txaptfinder",
+    };
+
+    // Retry logic: exponential backoff (1s, 2s, 4s)
+    const submitToCrm = async (retryCount = 0): Promise<void> => {
+      const maxRetries = 3;
+      const timeout = 5000;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeout);
+
+      try {
+        const response = await fetch(crmUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(crmPayload),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timer);
+
+        if (response.ok) {
+          const data = await response.json().catch(() => ({}));
+          console.log(`[Lead intake] ✓ Success for ${email} (leadId: ${data.leadId})`);
+          return;
+        } else if (response.status >= 500 && retryCount < maxRetries) {
+          // Server error — retry
+          console.warn(
+            `[Lead intake] Server error (${response.status}) — retrying (attempt ${retryCount + 2}/${maxRetries + 1})`
+          );
+          await new Promise((r) => setTimeout(r, Math.pow(2, retryCount) * 1000));
+          await submitToCrm(retryCount + 1);
+        } else {
+          // Client error (4xx) or max retries reached
+          const body = await response.json().catch(() => ({}));
+          throw new Error(
+            `CRM error ${response.status}: ${body.error || "unknown error"}`
+          );
+        }
+      } catch (error) {
+        clearTimeout(timer);
+
+        if (retryCount < maxRetries) {
+          console.warn(
+            `[Lead intake] Network error — retrying (attempt ${retryCount + 2}/${maxRetries + 1}):`,
+            error instanceof Error ? error.message : String(error)
+          );
+          await new Promise((r) => setTimeout(r, Math.pow(2, retryCount) * 1000));
+          await submitToCrm(retryCount + 1);
+        } else {
+          throw new Error(
+            `Failed after ${maxRetries} retries: ${error instanceof Error ? error.message : String(error)}`
+          );
+        }
+      }
     };
 
     try {
-      let hubspotResponse = await fetch(
-        `https://api.hubapi.com/crm/v3/objects/contacts/${encodeURIComponent(
-          email
-        )}?idProperty=email`,
-        {
-          method: "PATCH",
-          headers: hubspotHeaders,
-          body: JSON.stringify({ properties }),
-        }
-      );
-
-      if (hubspotResponse.status === 404) {
-        hubspotResponse = await fetch(
-          "https://api.hubapi.com/crm/v3/objects/contacts",
-          {
-            method: "POST",
-            headers: hubspotHeaders,
-            body: JSON.stringify({ properties }),
-          }
-        );
-      }
-
-      const responseBody = await hubspotResponse.json().catch(() => ({}));
-
-      if (!hubspotResponse.ok) {
-        res.status(hubspotResponse.status).json({
-          error: responseBody.message || "HubSpot request failed",
-        });
-        return;
-      }
-
-      // Forward the lead to the in-app CRM (FB bot intake webhook), if configured.
-      // Non-blocking and fail-safe: a CRM outage must never break the public form.
-      // Retry with exponential backoff on network failures.
-      const crmUrl = process.env.CRM_WEBHOOK_URL;
-      if (crmUrl) {
-        const toNumber = (v: unknown) => {
-          const n = parseInt(String(v ?? "").replace(/[^0-9]/g, ""), 10);
-          return Number.isFinite(n) ? n : undefined;
-        };
-        const crmPayload = {
-          first_name: clean(req.body.first_name || req.body.firstName),
-          last_name: clean(req.body.last_name || req.body.lastName),
-          email,
-          phone: clean(req.body.phone),
-          bedrooms: toNumber(req.body.bedrooms),
-          budget_max: toNumber(req.body.budget),
-          move_in_date: clean(req.body.move_in_timeline || req.body.moveIn),
-          preferred_area: clean(req.body.preferred_area || req.body.areas),
-          sms_consent: req.body.sms_consent ?? req.body.smsConsent ?? false,
-          source: "txaptfinder",
-        };
-
-        // Retry logic: exponential backoff (1s, 2s, 4s)
-        const forwardToCrm = async (retryCount = 0): Promise<void> => {
-          const maxRetries = 3;
-          const timeout = 5000;
-          const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), timeout);
-
-          try {
-            const response = await fetch(crmUrl, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(crmPayload),
-              signal: controller.signal,
-            });
-
-            clearTimeout(timer);
-
-            if (response.ok) {
-              console.log(`[CRM forward] ✓ Success (${response.status}) for ${email}`);
-            } else if (response.status >= 500 && retryCount < maxRetries) {
-              // Server error — retry
-              console.warn(
-                `[CRM forward] Server error (${response.status}) — retrying (attempt ${retryCount + 2}/${maxRetries + 1})`
-              );
-              await new Promise((r) => setTimeout(r, Math.pow(2, retryCount) * 1000));
-              await forwardToCrm(retryCount + 1);
-            } else {
-              // Client error (4xx) or max retries reached
-              const body = await response.json().catch(() => ({}));
-              console.error(
-                `[CRM forward] ✗ Failed (${response.status}) for ${email}:`,
-                body.error || "unknown error"
-              );
-            }
-          } catch (error) {
-            clearTimeout(timer);
-
-            if (retryCount < maxRetries) {
-              console.warn(
-                `[CRM forward] Network error — retrying (attempt ${retryCount + 2}/${maxRetries + 1}):`,
-                error instanceof Error ? error.message : String(error)
-              );
-              await new Promise((r) => setTimeout(r, Math.pow(2, retryCount) * 1000));
-              await forwardToCrm(retryCount + 1);
-            } else {
-              console.error(
-                `[CRM forward] ✗ Failed after ${maxRetries} retries for ${email}:`,
-                error instanceof Error ? error.message : String(error)
-              );
-            }
-          }
-        };
-
-        // Fire and forget — don't block the response
-        forwardToCrm().catch((e) => console.error("[CRM forward] Unexpected error:", e));
-      }
-
-      res.json({
-        ok: true,
-        contactId: responseBody.id || null,
-      });
+      await submitToCrm();
+      res.json({ ok: true, message: "Lead saved to CRM" });
     } catch (error) {
-      res.status(500).json({
-        error: error instanceof Error ? error.message : "Unexpected server error",
+      console.error(`[Lead intake] ✗ Failed for ${email}:`, error);
+      res.status(503).json({
+        error: error instanceof Error ? error.message : "Failed to save lead",
       });
     }
   });
