@@ -10,9 +10,9 @@ import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  MapPin, Home, DollarSign, BedDouble, Bath, Lock, ArrowRight,
-  Phone, Mail, ChevronLeft, ChevronRight, Search, SlidersHorizontal,
-  X, Eye, MessageCircle, Heart, ZoomIn, ZoomOut, Compass
+  MapPin, Home, Lock, ArrowRight,
+  ChevronLeft, ChevronRight, Search, SlidersHorizontal,
+  X, Eye, MessageCircle, Heart, Compass
 } from 'lucide-react';
 import { MapView } from '@/components/Map';
 import { InquiryForm } from '@/components/InquiryForm';
@@ -147,6 +147,7 @@ function ApartmentCard({
   bedroomFilter: string;
 }) {
   const photo = apt.photos?.[0];
+  const [photoFailed, setPhotoFailed] = useState(false);
 
   return (
     <Card
@@ -158,8 +159,15 @@ function ApartmentCard({
     >
       {/* Photo */}
       <div className="relative h-44 bg-slate-100 overflow-hidden">
-        {photo ? (
-          <img src={photo} alt={getDisplayName(apt.name)} className="w-full h-full object-cover" />
+        {photo && !photoFailed ? (
+          <img
+            src={photo}
+            alt={`${getDisplayName(apt.name)} — ${apt.neighborhood}`}
+            loading="lazy"
+            decoding="async"
+            onError={() => setPhotoFailed(true)}
+            className="w-full h-full object-cover"
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <Home className="w-12 h-12 text-slate-300" />
@@ -193,6 +201,8 @@ function ApartmentCard({
           }}
           className="absolute top-2 right-2 bg-white/90 hover:bg-white rounded-full p-2 transition-colors"
           title={isFavorited ? "Remove from favorites" : "Add to favorites"}
+          aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+          aria-pressed={isFavorited}
         >
           <Heart
             className={`w-5 h-5 ${
@@ -244,17 +254,19 @@ function PhotoCarousel({ photos, name }: { photos: string[]; name: string }) {
   );
   return (
     <div className="relative h-56 rounded-lg overflow-hidden bg-slate-100">
-      <img src={photos[idx]} alt={`${name} ${idx + 1}`} className="w-full h-full object-cover" />
+      <img src={photos[idx]} alt={`${name} photo ${idx + 1} of ${photos.length}`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
       {photos.length > 1 && (
         <>
           <button
             onClick={() => setIdx(i => (i - 1 + photos.length) % photos.length)}
+            aria-label="Previous photo"
             className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
             onClick={() => setIdx(i => (i + 1) % photos.length)}
+            aria-label="Next photo"
             className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1 transition-colors"
           >
             <ChevronRight className="w-4 h-4" />
@@ -264,6 +276,7 @@ function PhotoCarousel({ photos, name }: { photos: string[]; name: string }) {
               <button
                 key={i}
                 onClick={() => setIdx(i)}
+                aria-label={`Go to photo ${i + 1}`}
                 className={`w-1.5 h-1.5 rounded-full transition-colors ${i === idx ? 'bg-white' : 'bg-white/50'}`}
               />
             ))}
@@ -291,6 +304,7 @@ export default function ApartmentSearch() {
   const [showFilters, setShowFilters] = useState(false);
   const [showPinPreview, setShowPinPreview] = useState(false);
   const [showInquiryForm, setShowInquiryForm] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const clustererRef = useRef<any>(null);
@@ -303,8 +317,18 @@ export default function ApartmentSearch() {
   const [sliderRentRange, setSliderRentRange] = useState<[number, number]>(DEFAULT_RENT_RANGE);
   const [committedRentRange, setCommittedRentRange] = useState<[number, number]>(DEFAULT_RENT_RANGE);
   const [searchText, setSearchText] = useState('');
+  // Sort order for the listings panel
+  const [sortBy, setSortBy] = useState<'recommended' | 'price-asc' | 'price-desc'>('recommended');
   // Mobile view toggle: 'map' | 'list'
   const [mobileView, setMobileView] = useState<'map' | 'list'>('list');
+
+  // Debounce free-text search so the list and map markers aren't rebuilt on
+  // every keystroke.
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchText), 250);
+    return () => clearTimeout(timer);
+  }, [searchText]);
 
   // The map is gated: visitors must complete the questionnaire AND leave
   // contact details before browsing. The prompt opens immediately on page
@@ -334,23 +358,60 @@ export default function ApartmentSearch() {
     [apartmentsData]
   );
 
+  // Precomputed search index: one lowercase haystack per listing, built once
+  // per data load instead of re-deriving every field on every keystroke.
+  // Includes bedroom synonyms so "studio", "2 bed", or "1br" all match.
+  const searchIndex = useMemo(
+    () =>
+      apartments.map(apt => ({
+        apt,
+        haystack: [
+          apt.neighborhood,
+          apt.description,
+          apt.special,
+          apt.availability,
+          formatBedrooms(apt.bedrooms),
+          `${apt.bedrooms}br ${apt.bedrooms} bed ${apt.bedrooms} beds ${apt.bedrooms} bedroom`,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase(),
+      })),
+    [apartments]
+  );
+
+  // Every search term must match (AND semantics), so "katy special" finds
+  // Katy listings that currently have a move-in special.
   // Memoized so the array identity is stable between renders — the marker
   // effect below depends on it, and an unstable reference caused all map
   // markers/clusters to be torn down and rebuilt on every render.
-  const filtered = useMemo(() => apartments.filter(apt => {
-    if (!searchText) return true;
-    const term = searchText.toLowerCase();
-    return [
-      apt.name,
-      apt.neighborhood,
-      apt.special,
-      apt.availability,
-      apt.description,
-      apt.managedBy,
-    ]
-      .filter((value): value is string => Boolean(value))
-      .some(value => value.toLowerCase().includes(term));
-  }), [apartments, searchText]);
+  const filtered = useMemo(() => {
+    const terms = debouncedSearch.toLowerCase().trim().split(/\s+/).filter(Boolean);
+    if (terms.length === 0) return apartments;
+    return searchIndex
+      .filter(({ haystack }) => terms.every(term => haystack.includes(term)))
+      .map(entry => entry.apt);
+  }, [apartments, searchIndex, debouncedSearch]);
+
+  // Sorted view for the listings panel only — the map doesn't care about
+  // order, so markers keep using `filtered` and aren't rebuilt on sort.
+  const sorted = useMemo(() => {
+    if (sortBy === 'recommended') return filtered;
+    const direction = sortBy === 'price-asc' ? 1 : -1;
+    const priceOf = (apt: ApartmentTeased): number | null => {
+      const { min } = getBedroomAwareRent(apt, bedroomFilter);
+      const value = typeof min === 'string' ? parseFloat(min) : min;
+      return Number.isFinite(value) && value > 0 ? value : null;
+    };
+    return [...filtered].sort((a, b) => {
+      const priceA = priceOf(a);
+      const priceB = priceOf(b);
+      // Listings without pricing always sort last
+      if (priceA === null) return priceB === null ? 0 : 1;
+      if (priceB === null) return -1;
+      return (priceA - priceB) * direction;
+    });
+  }, [filtered, sortBy, bedroomFilter]);
 
   const neighborhoods = useMemo(
     () => Array.from(new Set(apartments.map(a => a.neighborhood))).sort(),
@@ -454,6 +515,7 @@ export default function ApartmentSearch() {
 
   const handleMapReady = useCallback((map: google.maps.Map) => {
     mapRef.current = map;
+    setMapReady(true);
     if (filtered.length > 0) {
       placeMarkers(map, filtered, bedroomFilter);
     }
@@ -508,6 +570,7 @@ export default function ApartmentSearch() {
     setSliderRentRange(DEFAULT_RENT_RANGE);
     setCommittedRentRange(DEFAULT_RENT_RANGE);
     setSearchText('');
+    setSortBy('recommended');
   };
 
   return (
@@ -541,13 +604,19 @@ export default function ApartmentSearch() {
           <div className="flex-1 relative max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <Input
-              placeholder="Search name, city, special..."
+              type="search"
+              placeholder="Search area, beds, special..."
+              aria-label="Search listings by area, bedrooms, or special"
               value={searchText}
               onChange={e => setSearchText(e.target.value)}
-              className="pl-9 h-9 text-sm"
+              className="pl-9 h-9 text-sm [&::-webkit-search-cancel-button]:hidden"
             />
             {searchText && (
-              <button onClick={() => setSearchText('')} className="absolute right-3 top-1/2 -translate-y-1/2">
+              <button
+                onClick={() => setSearchText('')}
+                aria-label="Clear search"
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+              >
                 <X className="w-4 h-4 text-slate-400 hover:text-slate-600" />
               </button>
             )}
@@ -582,38 +651,17 @@ export default function ApartmentSearch() {
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wide">Quick Filters</label>
                 <div className="flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    variant={bedroomFilter === '0' ? 'default' : 'outline'}
-                    className="text-xs h-8"
-                    onClick={() => setBedroomFilter(bedroomFilter === '0' ? '' : '0')}
-                  >
-                    Studio
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={bedroomFilter === '1' ? 'default' : 'outline'}
-                    className="text-xs h-8"
-                    onClick={() => setBedroomFilter(bedroomFilter === '1' ? '' : '1')}
-                  >
-                    1 Bed
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={bedroomFilter === '2' ? 'default' : 'outline'}
-                    className="text-xs h-8"
-                    onClick={() => setBedroomFilter(bedroomFilter === '2' ? '' : '2')}
-                  >
-                    2 Beds
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={bedroomFilter === '3' ? 'default' : 'outline'}
-                    className="text-xs h-8"
-                    onClick={() => setBedroomFilter(bedroomFilter === '3' ? '' : '3')}
-                  >
-                    3 Beds
-                  </Button>
+                  {([['0', 'Studio'], ['1', '1 Bed'], ['2', '2 Beds'], ['3', '3 Beds']] as const).map(([value, label]) => (
+                    <Button
+                      key={value}
+                      size="sm"
+                      variant={bedroomFilter === value ? 'default' : 'outline'}
+                      className="text-xs h-8"
+                      onClick={() => setBedroomFilter(bedroomFilter === value ? '' : value)}
+                    >
+                      {label}
+                    </Button>
+                  ))}
                   <Button
                     size="sm"
                     variant={committedRentRange[1] <= 1500 ? 'default' : 'outline'}
@@ -637,14 +685,16 @@ export default function ApartmentSearch() {
 
               {/* Per-bedroom price range hint */}
               {(bedroomFilter === '1' || bedroomFilter === '2') && (() => {
-                const priceKey = bedroomFilter === '1' ? 'price1brMin' : 'price2brMin';
-                const priceMaxKey = bedroomFilter === '1' ? 'price1brMax' : 'price2brMax';
+                const isOneBr = bedroomFilter === '1';
+                const isPrice = (p: number | null | undefined): p is number => typeof p === 'number' && p > 0;
                 const prices = filtered
-                  .map(a => (a as any)[priceKey])
-                  .filter((p): p is number => typeof p === 'number' && p > 0);
+                  .map(a => (isOneBr ? a.price1brMin : a.price2brMin))
+                  .filter(isPrice);
                 if (prices.length === 0) return null;
                 const lo = Math.min(...prices);
-                const hi = Math.max(...filtered.map(a => (a as any)[priceMaxKey] ?? (a as any)[priceKey]).filter((p): p is number => typeof p === 'number' && p > 0));
+                const hi = Math.max(...filtered
+                  .map(a => (isOneBr ? a.price1brMax ?? a.price1brMin : a.price2brMax ?? a.price2brMin))
+                  .filter(isPrice));
                 return (
                   <div className="flex items-center gap-1.5 text-xs text-blue-700 bg-blue-50 border border-blue-100 rounded px-3 py-1.5">
                     <span className="font-semibold">{bedroomFilter === '1' ? '1 BR' : '2 BR'} range in results:</span>
@@ -722,6 +772,7 @@ export default function ApartmentSearch() {
       <div className="flex lg:hidden items-center justify-center gap-1 bg-white border-b border-slate-200 px-4 py-2">
         <button
           onClick={() => setMobileView('list')}
+          aria-pressed={mobileView === 'list'}
           className={cn(
             'flex-1 py-1.5 rounded-l-md text-xs font-semibold border transition-colors',
             mobileView === 'list'
@@ -733,6 +784,7 @@ export default function ApartmentSearch() {
         </button>
         <button
           onClick={() => setMobileView('map')}
+          aria-pressed={mobileView === 'map'}
           className={cn(
             'flex-1 py-1.5 rounded-r-md text-xs font-semibold border-t border-b border-r transition-colors',
             mobileView === 'map'
@@ -754,6 +806,16 @@ export default function ApartmentSearch() {
             onMapReady={handleMapReady}
           />
 
+          {/* Loading overlay until the Google Maps script initialises */}
+          {!mapReady && (
+            <div className="absolute inset-0 z-10 bg-slate-100 flex items-center justify-center">
+              <div className="text-center">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                <p className="text-sm text-slate-500 mt-2">Loading map...</p>
+              </div>
+            </div>
+          )}
+
           {/* Map controls */}
           <div className="absolute bottom-6 right-4 flex flex-col gap-2 z-20">
             <Button
@@ -762,6 +824,7 @@ export default function ApartmentSearch() {
               className="h-10 w-10 p-0 bg-white hover:bg-slate-50 shadow-md"
               onClick={fitMapBounds}
               title="Fit all listings in view"
+              aria-label="Fit all listings in view"
             >
               <Compass className="w-4 h-4" />
             </Button>
@@ -771,7 +834,8 @@ export default function ApartmentSearch() {
                 variant="outline"
                 className="h-10 w-10 p-0 bg-white hover:bg-slate-50 shadow-md"
                 onClick={centerOnSelected}
-                title="Center on selected"
+                title="Center on selected listing"
+                aria-label="Center map on selected listing"
               >
                 <MapPin className="w-4 h-4 text-blue-600" />
               </Button>
@@ -795,14 +859,21 @@ export default function ApartmentSearch() {
                 {isLoading ? 'Loading...' : `${filtered.length} listing${filtered.length !== 1 ? 's' : ''}`}
               </h2>
               {(selectedNeighborhood || bedroomFilter || searchText) && (
-                <p className="text-xs text-blue-600 mt-0.5">Filters active</p>
+                <button onClick={resetFilters} className="text-xs text-blue-600 mt-0.5 hover:underline">
+                  Filters active — clear
+                </button>
               )}
             </div>
-            {hasQualified && (
-              <Badge className="bg-green-100 text-green-700 text-xs">
-                Full access
-              </Badge>
-            )}
+            <Select value={sortBy} onValueChange={v => setSortBy(v as typeof sortBy)}>
+              <SelectTrigger className="h-8 w-[150px] text-xs" aria-label="Sort listings">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recommended">Recommended</SelectItem>
+                <SelectItem value="price-asc">Price: Low to High</SelectItem>
+                <SelectItem value="price-desc">Price: High to Low</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Listings scroll area */}
@@ -819,7 +890,12 @@ export default function ApartmentSearch() {
                   </div>
                 </Card>
               ))
-            ) : filtered.length === 0 ? (
+            ) : isError ? (
+              <div className="text-center py-16">
+                <p className="text-slate-500 text-sm font-medium">Unable to load listings right now.</p>
+                <p className="text-slate-400 text-xs mt-1">Please check your connection and try again.</p>
+              </div>
+            ) : sorted.length === 0 ? (
               <div className="text-center py-16">
                 <MapPin className="w-12 h-12 text-slate-200 mx-auto mb-3" />
                 <p className="text-slate-500 text-sm font-medium">No listings match your filters</p>
@@ -827,13 +903,8 @@ export default function ApartmentSearch() {
                   Clear filters
                 </Button>
               </div>
-            ) : isError ? (
-              <div className="text-center py-16">
-                <p className="text-slate-500 text-sm font-medium">Unable to load listings right now.</p>
-                <p className="text-slate-400 text-xs mt-1">Please check your connection and try again.</p>
-              </div>
             ) : (
-              filtered.map(apt => (
+              sorted.map(apt => (
                 <ApartmentCard
                   key={apt.id}
                   id={`apt-card-${apt.id}`}
@@ -1069,7 +1140,6 @@ export default function ApartmentSearch() {
         />
       )}
 
-      {/* showLeadForm is no longer used — handleLearnMore now opens InquiryForm directly */}
     </div>
   );
 }

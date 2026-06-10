@@ -5,7 +5,6 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { ChevronRight } from "lucide-react";
-import { BottomSheet } from "./BottomSheet";
 import BudgetRangeSelector from "./BudgetRangeSelector";
 import { trpc } from "@/lib/trpc";
 
