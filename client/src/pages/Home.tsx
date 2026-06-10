@@ -8,7 +8,7 @@ import { QualificationPrompt } from "@/components/QualificationPrompt";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useQualification } from "@/contexts/QualificationContext";
 import { trpc } from "@/lib/trpc";
-import { filterApartmentsByQualification, sortByMatchScore } from "@/lib/qualificationFilter";
+import { rankApartments, getMatchTier } from "@/lib/qualificationFilter";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Bed, Bath, DollarSign } from "lucide-react";
@@ -35,11 +35,13 @@ export default function Home() {
     maxRent: 10000,
   });
 
+  // Top-ranked listings for this visitor's answers. Threshold-based rather
+  // than a hard filter so the section still surfaces near-misses (slightly
+  // over budget, one bedroom off) instead of disappearing entirely.
   const matchedApartments = qualificationData && apartments
-    ? sortByMatchScore(
-        filterApartmentsByQualification(apartments, qualificationData),
-        qualificationData
-      ).slice(0, 6)
+    ? rankApartments(apartments, qualificationData)
+        .filter(({ match }) => getMatchTier(match.score) !== null)
+        .slice(0, 6)
     : [];
 
   useEffect(() => {
@@ -84,7 +86,7 @@ export default function Home() {
               Based on your preferences, we found {matchedApartments.length} apartments that match your criteria. Click any to request full details.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {matchedApartments.map((apt) => {
+              {matchedApartments.map(({ apartment: apt, match }) => {
                 const rentMin = apt.rentMin ? parseInt(String(apt.rentMin)) : 0;
                 const rentMax = apt.rentMax ? parseInt(String(apt.rentMax)) : 0;
                 return (
@@ -92,8 +94,13 @@ export default function Home() {
                     <div className="p-6">
                       <div className="flex items-start justify-between mb-3">
                         <h3 className="text-lg font-semibold text-white flex-1">{getDisplayName(apt.name)}</h3>
-                        <Badge className="bg-gold/20 text-gold border-gold/30">Match</Badge>
+                        <Badge className="bg-gold/20 text-gold border-gold/30">
+                          {getMatchTier(match.score) === "great" ? "Great match" : "Good match"}
+                        </Badge>
                       </div>
+                      {match.reasons.length > 0 && (
+                        <p className="text-xs text-gold/80 mb-3">{match.reasons.join(" · ")}</p>
+                      )}
                       <div className="space-y-2 text-sm text-white/70 mb-4">
                         <div className="flex items-center gap-2">
                           <MapPin className="w-4 h-4 text-gold" />

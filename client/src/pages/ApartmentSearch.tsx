@@ -21,6 +21,7 @@ import { useFavorites } from '@/hooks/useFavorites';
 import { useQualification } from '@/contexts/QualificationContext';
 import { QualificationPrompt } from '@/components/QualificationPrompt';
 import { loadMarkerClustererLibrary, createMarkerClusterer } from '@/lib/markerClusterer';
+import { getMatchResult, getMatchTier, type MatchResult } from '@/lib/qualificationFilter';
 
 interface ApartmentTeased {
   id: number;
@@ -139,6 +140,7 @@ function ApartmentCard({
   isFavorited,
   onToggleFavorite,
   bedroomFilter,
+  match,
 }: {
   id?: string;
   apt: ApartmentTeased;
@@ -149,9 +151,11 @@ function ApartmentCard({
   isFavorited: boolean;
   onToggleFavorite: () => void;
   bedroomFilter: string;
+  match?: MatchResult | null;
 }) {
   const photo = apt.photos?.[0];
   const [photoFailed, setPhotoFailed] = useState(false);
+  const matchTier = match ? getMatchTier(match.score) : null;
 
   return (
     <Card
@@ -220,6 +224,22 @@ function ApartmentCard({
 
       {/* Content */}
       <div className="p-4">
+        {matchTier && (
+          <div className="flex items-center gap-2 mb-2">
+            <Badge
+              className={
+                matchTier === 'great'
+                  ? 'bg-emerald-600 text-white text-[10px] px-1.5'
+                  : 'bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] px-1.5'
+              }
+            >
+              {matchTier === 'great' ? 'Great match' : 'Good match'}
+            </Badge>
+            {match && match.reasons.length > 0 && (
+              <span className="text-[11px] text-emerald-700 truncate">{match.reasons.join(' · ')}</span>
+            )}
+          </div>
+        )}
         <h3 className="font-semibold text-slate-900 text-sm mb-1 truncate">{getDisplayName(apt.name)}</h3>
         <p className="text-xs text-slate-500 flex items-center gap-1 mb-2">
           <MapPin className="w-3 h-3 shrink-0" />
@@ -429,10 +449,29 @@ export default function ApartmentSearch() {
       .map(entry => entry.apt);
   }, [clientFiltered, searchIndex, debouncedSearch]);
 
+  // Match scores against the visitor's questionnaire answers; null until
+  // they've completed it. Keyed by listing id so cards and the sort below
+  // share one computation over the full inventory.
+  const matchById = useMemo(() => {
+    if (!qualificationData) return null;
+    const map = new Map<number, MatchResult>();
+    apartments.forEach(apt => map.set(apt.id, getMatchResult(apt, qualificationData)));
+    return map;
+  }, [apartments, qualificationData]);
+
   // Sorted view for the listings panel only — the map doesn't care about
   // order, so markers keep using `filtered` and aren't rebuilt on sort.
   const sorted = useMemo(() => {
-    if (sortBy === 'recommended') return filtered;
+    if (sortBy === 'recommended') {
+      // Once the questionnaire is done, "Recommended" means ranked by how
+      // well each listing matches their budget, bedrooms, and areas.
+      // Stable sort: ties keep the server's original order.
+      if (!matchById) return filtered;
+      return filtered
+        .map((apt, index) => ({ apt, index, score: matchById.get(apt.id)?.score ?? 0 }))
+        .sort((a, b) => b.score - a.score || a.index - b.index)
+        .map(entry => entry.apt);
+    }
     const direction = sortBy === 'price-asc' ? 1 : -1;
     const priceOf = (apt: ApartmentTeased): number | null => {
       const { min } = getBedroomAwareRent(apt, bedroomFilter);
@@ -447,7 +486,7 @@ export default function ApartmentSearch() {
       if (priceB === null) return -1;
       return (priceA - priceB) * direction;
     });
-  }, [filtered, sortBy, bedroomFilter]);
+  }, [filtered, sortBy, bedroomFilter, matchById]);
 
   const neighborhoods = useMemo(
     () => Array.from(new Set(apartments.map(a => a.neighborhood))).sort(),
@@ -924,6 +963,9 @@ export default function ApartmentSearch() {
               <h2 className="font-semibold text-slate-900 text-sm">
                 {isLoading ? 'Loading...' : `${filtered.length} listing${filtered.length !== 1 ? 's' : ''}`}
               </h2>
+              {sortBy === 'recommended' && matchById && !isLoading && (
+                <p className="text-[11px] text-slate-400">Ranked by your preferences</p>
+              )}
               {activeFilterCount > 0 && (
                 <button onClick={resetFilters} className="text-xs text-blue-600 mt-0.5 hover:underline">
                   {activeFilterCount} filter{activeFilterCount !== 1 ? 's' : ''} active — clear
@@ -978,6 +1020,7 @@ export default function ApartmentSearch() {
                     apt={apt}
                     isLead={hasQualified}
                     bedroomFilter={bedroomFilter}
+                    match={matchById?.get(apt.id)}
                     onLearnMore={() => handleLearnMore(apt)}
                     onViewDetails={() => handleViewDetails(apt)}
                     isSelected={selectedApartment?.id === apt.id}
@@ -1013,7 +1056,25 @@ export default function ApartmentSearch() {
           {selectedApartment && (
             <>
               <DialogHeader>
-                <DialogTitle className="text-base">{getDisplayName(selectedApartment.name)}</DialogTitle>
+                <DialogTitle className="text-base flex items-center gap-2">
+                  {getDisplayName(selectedApartment.name)}
+                  {(() => {
+                    const match = matchById?.get(selectedApartment.id);
+                    const tier = match ? getMatchTier(match.score) : null;
+                    if (!tier) return null;
+                    return (
+                      <Badge
+                        className={
+                          tier === 'great'
+                            ? 'bg-emerald-600 text-white text-[10px] px-1.5'
+                            : 'bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] px-1.5'
+                        }
+                      >
+                        {tier === 'great' ? 'Great match' : 'Good match'}
+                      </Badge>
+                    );
+                  })()}
+                </DialogTitle>
                 <DialogDescription className="flex items-center gap-1">
                   <MapPin className="w-3.5 h-3.5" />{selectedApartment.neighborhood} area
                 </DialogDescription>

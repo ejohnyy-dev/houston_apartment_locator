@@ -8,7 +8,40 @@ export interface ApartmentData {
   bathrooms?: number | string;
   rentMin?: number | string | null;
   rentMax?: number | string | null;
+  // Per-bedroom price splits from merged CSV
+  price1brMin?: number | null;
+  price1brMax?: number | null;
+  price2brMin?: number | null;
+  price2brMax?: number | null;
   [key: string]: any;
+}
+
+export interface MatchResult {
+  /** 0–100, normalized over the preference questions the visitor answered. */
+  score: number;
+  /** Renter-facing highlights, e.g. "Fits your budget". Empty when nothing fully matches. */
+  reasons: string[];
+}
+
+export type MatchTier = "great" | "good";
+
+// Category weights. Budget is the strongest signal of whether a listing is
+// actually workable for a renter, so it carries the most weight.
+const BUDGET_WEIGHT = 40;
+const BEDROOM_WEIGHT = 30;
+const AREA_WEIGHT = 30;
+
+// A listing priced within 15% of the budget bounds still earns partial
+// credit — locators routinely negotiate or find specials in that band.
+const NEAR_BUDGET_TOLERANCE = 0.15;
+
+const GREAT_MATCH_THRESHOLD = 75;
+const GOOD_MATCH_THRESHOLD = 45;
+
+function toPrice(value: number | string | null | undefined): number | null {
+  if (value == null) return null;
+  const num = typeof value === "string" ? parseFloat(value) : value;
+  return Number.isFinite(num) && num > 0 ? num : null;
 }
 
 /**
@@ -32,30 +65,14 @@ function parseBedroomRange(value: string): { min: number; max: number } {
 }
 
 /**
- * Parse bathroom value from qualification
- */
-function parseBathroomRange(value: string): { min: number; max: number } {
-  switch (value) {
-    case "1bath":
-      return { min: 1, max: 1.4 };
-    case "1.5bath":
-      return { min: 1.5, max: 1.9 };
-    case "2bath":
-      return { min: 2, max: 2.4 };
-    case "2.5plus":
-      return { min: 2.5, max: 10 };
-    default:
-      return { min: 0, max: 10 };
-  }
-}
-
-/**
  * Parse budget value from qualification
  * Handles both old format (string like "1000-1500") and new format ("$min-$max")
  */
-function parseBudgetRange(value: string | { min: number | null; max: number }): { min: number; max: number } {
+export function parseBudgetRange(
+  value: string | { min: number | null; max: number }
+): { min: number; max: number } {
   // Handle new BudgetRangeSelector format
-  if (typeof value === 'object' && value !== null) {
+  if (typeof value === "object" && value !== null) {
     return {
       min: value.min ?? 0,
       max: value.max ?? 100000,
@@ -63,11 +80,11 @@ function parseBudgetRange(value: string | { min: number | null; max: number }): 
   }
 
   // Handle new string format from BudgetRangeSelector ("$0-$2400")
-  if (typeof value === 'string' && value.startsWith('$')) {
-    const parts = value.split('-');
+  if (typeof value === "string" && value.startsWith("$")) {
+    const parts = value.split("-");
     if (parts.length === 2) {
-      const min = parseInt(parts[0].replace('$', ''), 10) || 0;
-      const max = parseInt(parts[1].replace('$', ''), 10) || 100000;
+      const min = parseInt(parts[0].replace("$", ""), 10) || 0;
+      const max = parseInt(parts[1].replace("$", ""), 10) || 100000;
       return { min, max };
     }
   }
@@ -92,122 +109,112 @@ function parseBudgetRange(value: string | { min: number | null; max: number }): 
 }
 
 /**
- * Filter apartments based on user qualification preferences
+ * Representative price for a listing given the renter's bedroom preference.
+ * Uses the 1BR/2BR price split when the renter wants that size, otherwise
+ * the listing-wide range. Returns null for "pricing by request" listings.
  */
-export function filterApartmentsByQualification(
-  apartments: ApartmentData[],
-  qualification: QualificationData
-): ApartmentData[] {
-  return apartments.filter((apt) => {
-    // Filter by preferred areas/neighborhoods
-    if (
-      qualification.preferredAreas.length > 0 &&
-      apt.neighborhood &&
-      !qualification.preferredAreas.includes(apt.neighborhood)
-    ) {
-      return false;
-    }
-
-    // Filter by bedrooms
-    if (qualification.bedrooms) {
-      const { min: minBed, max: maxBed } = parseBedroomRange(qualification.bedrooms);
-      const bedrooms = apt.bedrooms ? parseInt(String(apt.bedrooms)) : 0;
-      if (bedrooms < minBed || bedrooms > maxBed) {
-        return false;
-      }
-    }
-
-    // Filter by bathrooms
-    if (qualification.bathrooms) {
-      const { min: minBath, max: maxBath } = parseBathroomRange(qualification.bathrooms);
-      const bathrooms = apt.bathrooms ? parseFloat(String(apt.bathrooms)) : 0;
-      if (bathrooms < minBath || bathrooms > maxBath) {
-        return false;
-      }
-    }
-
-    // Filter by rent budget
-    if (qualification.budget) {
-      const { min: minBudget, max: maxBudget } = parseBudgetRange(qualification.budget);
-      const rentMin = apt.rentMin ? parseInt(String(apt.rentMin)) : 0;
-      const rentMax = apt.rentMax ? parseInt(String(apt.rentMax)) : 0;
-      const avgRent = rentMax > 0 ? (rentMin + rentMax) / 2 : rentMin;
-
-      if (avgRent < minBudget || avgRent > maxBudget) {
-        return false;
-      }
-    }
-
-    return true;
-  });
+function listingPriceFor(apt: ApartmentData, bedroomPref: string): number | null {
+  if (bedroomPref === "1bed") {
+    const min = toPrice(apt.price1brMin);
+    if (min !== null) return (min + (toPrice(apt.price1brMax) ?? min)) / 2;
+  }
+  if (bedroomPref === "2bed") {
+    const min = toPrice(apt.price2brMin);
+    if (min !== null) return (min + (toPrice(apt.price2brMax) ?? min)) / 2;
+  }
+  const min = toPrice(apt.rentMin);
+  if (min === null) return null;
+  return (min + (toPrice(apt.rentMax) ?? min)) / 2;
 }
 
 /**
- * Calculate match score for an apartment based on qualification
- * Returns 0-100 score
+ * Score a listing against the visitor's questionnaire answers.
+ *
+ * Graded rather than all-or-nothing: a listing slightly over budget or one
+ * bedroom off still earns partial credit, so the ranking surfaces "close"
+ * options instead of dropping them entirely. The score is normalized over
+ * the questions the visitor actually answered, so skipping a question
+ * doesn't penalize every listing.
  */
-export function calculateMatchScore(
+export function getMatchResult(
   apartment: ApartmentData,
   qualification: QualificationData
-): number {
-  let score = 0;
-  let maxScore = 0;
+): MatchResult {
+  let earned = 0;
+  let possible = 0;
+  const reasons: string[] = [];
 
-  // Neighborhood match (30 points)
-  maxScore += 30;
-  if (
-    apartment.neighborhood &&
-    qualification.preferredAreas.includes(apartment.neighborhood)
-  ) {
-    score += 30;
-  }
-
-  // Bedrooms match (20 points)
-  maxScore += 20;
-  if (qualification.bedrooms) {
-    const { min: minBed, max: maxBed } = parseBedroomRange(qualification.bedrooms);
-    const bedrooms = apartment.bedrooms ? parseInt(String(apartment.bedrooms)) : 0;
-    if (bedrooms >= minBed && bedrooms <= maxBed) {
-      score += 20;
-    }
-  }
-
-  // Bathrooms match (20 points)
-  maxScore += 20;
-  if (qualification.bathrooms) {
-    const { min: minBath, max: maxBath } = parseBathroomRange(qualification.bathrooms);
-    const bathrooms = apartment.bathrooms ? parseFloat(String(apartment.bathrooms)) : 0;
-    if (bathrooms >= minBath && bathrooms <= maxBath) {
-      score += 20;
-    }
-  }
-
-  // Rent match (30 points)
-  maxScore += 30;
+  // Budget
   if (qualification.budget) {
+    possible += BUDGET_WEIGHT;
     const { min: minBudget, max: maxBudget } = parseBudgetRange(qualification.budget);
-    const rentMin = apartment.rentMin ? parseInt(String(apartment.rentMin)) : 0;
-    const rentMax = apartment.rentMax ? parseInt(String(apartment.rentMax)) : 0;
-    const avgRent = rentMax > 0 ? (rentMin + rentMax) / 2 : rentMin;
-
-    if (avgRent >= minBudget && avgRent <= maxBudget) {
-      score += 30;
+    const price = listingPriceFor(apartment, qualification.bedrooms);
+    if (price !== null) {
+      if (price >= minBudget && price <= maxBudget) {
+        earned += BUDGET_WEIGHT;
+        reasons.push("Fits your budget");
+      } else {
+        const nearLow = minBudget > 0 && price >= minBudget * (1 - NEAR_BUDGET_TOLERANCE) && price < minBudget;
+        const nearHigh = price > maxBudget && price <= maxBudget * (1 + NEAR_BUDGET_TOLERANCE);
+        if (nearLow || nearHigh) {
+          earned += BUDGET_WEIGHT / 2;
+        }
+      }
     }
   }
 
-  return maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
+  // Bedrooms
+  if (qualification.bedrooms) {
+    possible += BEDROOM_WEIGHT;
+    const { min: minBed, max: maxBed } = parseBedroomRange(qualification.bedrooms);
+    const bedrooms = apartment.bedrooms ?? 0;
+    if (bedrooms >= minBed && bedrooms <= maxBed) {
+      earned += BEDROOM_WEIGHT;
+      reasons.push("Right bedroom count");
+    } else if (bedrooms === minBed - 1 || bedrooms === maxBed + 1) {
+      earned += BEDROOM_WEIGHT / 2;
+    }
+  }
+
+  // Preferred areas
+  if (qualification.preferredAreas.length > 0) {
+    possible += AREA_WEIGHT;
+    if (
+      apartment.neighborhood &&
+      qualification.preferredAreas.includes(apartment.neighborhood)
+    ) {
+      earned += AREA_WEIGHT;
+      reasons.push("Preferred area");
+    }
+  }
+
+  return {
+    score: possible > 0 ? Math.round((earned / possible) * 100) : 0,
+    reasons,
+  };
+}
+
+/** Display tier for a match score; null means no badge is shown. */
+export function getMatchTier(score: number): MatchTier | null {
+  if (score >= GREAT_MATCH_THRESHOLD) return "great";
+  if (score >= GOOD_MATCH_THRESHOLD) return "good";
+  return null;
 }
 
 /**
- * Sort apartments by match score
+ * Rank listings by match score, best first. The sort is stable: ties keep
+ * their original (server-recommended) order.
  */
-export function sortByMatchScore(
-  apartments: ApartmentData[],
+export function rankApartments<T extends ApartmentData>(
+  apartments: T[],
   qualification: QualificationData
-): ApartmentData[] {
-  return [...apartments].sort((a, b) => {
-    const scoreA = calculateMatchScore(a, qualification);
-    const scoreB = calculateMatchScore(b, qualification);
-    return scoreB - scoreA;
-  });
+): { apartment: T; match: MatchResult }[] {
+  return apartments
+    .map((apartment, index) => ({
+      apartment,
+      match: getMatchResult(apartment, qualification),
+      index,
+    }))
+    .sort((a, b) => b.match.score - a.match.score || a.index - b.index)
+    .map(({ apartment, match }) => ({ apartment, match }));
 }
