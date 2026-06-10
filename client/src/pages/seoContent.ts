@@ -52,7 +52,7 @@ export const neighborhoods = {
       commute: "Close to major corporate headquarters, easy freeway access, short drive to downtown.",
       lifestyle: "World-class shopping at the Galleria, fine dining, upscale bars, and luxury services nearby.",
       landmarks: "The Galleria, Uptown Park, Westheimer corridor, Premium dining districts",
-      specials: "Luxury move-in specials include concierge services and waived fees for qualified applicants.",
+      specials: "Luxury move-in specials include concierge services and waived fees on select properties.",
     },
   },
   "medical-center-apartments": {

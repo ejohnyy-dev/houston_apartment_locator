@@ -80,16 +80,16 @@ export function HomeMapView({ className, filters }: HomeMapViewProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [filteredCount, setFilteredCount] = useState(0);
   const [hasError, setHasError] = useState(false);
-  const { hasCompletedQuestionnaire, isCheckingServer, setShowQualificationPrompt } = useQualification();
+  const { hasQualified, isCheckingServer, setShowQualificationPrompt } = useQualification();
   // Ref mirror so map event listeners see fresh state without re-initialising the map
-  const questionnaireDoneRef = useRef(hasCompletedQuestionnaire);
+  const hasAccessRef = useRef(hasQualified);
   useEffect(() => {
-    questionnaireDoneRef.current = hasCompletedQuestionnaire;
-  }, [hasCompletedQuestionnaire]);
+    hasAccessRef.current = hasQualified;
+  }, [hasQualified]);
 
   // Immediately prompt with the questionnaire as soon as the visitor reaches the map
   useEffect(() => {
-    if (isCheckingServer || hasCompletedQuestionnaire) return;
+    if (isCheckingServer || hasQualified) return;
     const el = mapContainer.current;
     if (!el) return;
     const observer = new IntersectionObserver(
@@ -103,7 +103,7 @@ export function HomeMapView({ className, filters }: HomeMapViewProps) {
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [isCheckingServer, hasCompletedQuestionnaire, setShowQualificationPrompt]);
+  }, [isCheckingServer, hasQualified, setShowQualificationPrompt]);
   const { data: apartments } = trpc.apartments.list.useQuery({
     minRent: 0,
     maxRent: 10000,
@@ -221,8 +221,8 @@ export function HomeMapView({ className, filters }: HomeMapViewProps) {
             infoWindows.set(marker, infoWindow);
 
             marker.addListener("click", () => {
-              // Questionnaire is mandatory before browsing listing details
-              if (!questionnaireDoneRef.current) {
+              // Preferences + contact info are mandatory before browsing listings
+              if (!hasAccessRef.current) {
                 setShowQualificationPrompt(true);
                 return;
               }

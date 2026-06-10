@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 import { MapView } from '@/components/Map';
 import { InquiryForm } from '@/components/InquiryForm';
-import { toast } from 'sonner';
 import { Link } from 'wouter';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useQualification } from '@/contexts/QualificationContext';
@@ -279,9 +278,9 @@ export default function ApartmentSearch() {
   const {
     qualificationData,
     hasQualified,
-    hasCompletedQuestionnaire,
     isCheckingServer,
     setQualificationData,
+    markQualified,
     setShowQualificationPrompt,
     showQualificationPrompt,
   } = useQualification();
@@ -307,14 +306,15 @@ export default function ApartmentSearch() {
   // Mobile view toggle: 'map' | 'list'
   const [mobileView, setMobileView] = useState<'map' | 'list'>('list');
 
-  // Immediately show the (mandatory) qualification questionnaire to anyone who
-  // hasn't completed it yet. We wait for the server session check so returning
-  // leads on a fresh device aren't flashed with the prompt unnecessarily.
+  // The map is gated: visitors must complete the questionnaire AND leave
+  // contact details before browsing. The prompt opens immediately on page
+  // load and cannot be dismissed. We wait for the server session check so
+  // returning clients aren't flashed with the prompt unnecessarily.
   useEffect(() => {
-    if (!isCheckingServer && !hasCompletedQuestionnaire && !showQualificationPrompt) {
+    if (!isCheckingServer && !hasQualified && !showQualificationPrompt) {
       setShowQualificationPrompt(true);
     }
-  }, [isCheckingServer, hasCompletedQuestionnaire, showQualificationPrompt, setShowQualificationPrompt]);
+  }, [isCheckingServer, hasQualified, showQualificationPrompt, setShowQualificationPrompt]);
 
   const queryInput = useMemo(() => ({
     neighborhood: selectedNeighborhood && selectedNeighborhood !== '__all__' ? selectedNeighborhood : undefined,
@@ -483,8 +483,9 @@ export default function ApartmentSearch() {
   const handleLearnMore = (apt: ApartmentTeased) => {
     setSelectedApartment(apt);
     setPendingApartment(apt);
-    // Questionnaire first; once answered, collect contact info to unlock
-    if (!hasCompletedQuestionnaire) {
+    // The prompt collects preferences + contact info; once a client has
+    // access, Learn More goes straight to the inquiry form for that listing.
+    if (!hasQualified) {
       setShowQualificationPrompt(true);
     } else {
       setShowInquiryForm(true);
@@ -511,18 +512,17 @@ export default function ApartmentSearch() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      {/* Qualification Prompt */}
+      {/* Mandatory preferences + contact prompt (submits the inquiry itself) */}
       <QualificationPrompt
         isOpen={showQualificationPrompt}
         onComplete={(data) => {
           setQualificationData(data);
+          markQualified();
           setShowQualificationPrompt(false);
-          // If there's a pending apartment, open the inquiry form
-          if (pendingApartment) {
-            setShowInquiryForm(true);
-          }
         }}
         neighborhoods={neighborhoods}
+        apartment={pendingApartment ? { id: pendingApartment.id.toString(), name: getDisplayName(pendingApartment.name) } : null}
+        initialData={qualificationData}
       />
       {/* Top Nav */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
@@ -563,24 +563,11 @@ export default function ApartmentSearch() {
             <span className="hidden sm:inline">Filters</span>
           </Button>
 
-          {hasQualified ? (
-            <Badge className="bg-green-100 text-green-700 text-xs shrink-0">
-              Qualified
-            </Badge>
-          ) : (
+          {!hasQualified && (
             <Button
               size="sm"
               className="bg-blue-600 hover:bg-blue-700 text-white shrink-0"
-              onClick={() => {
-                if (!hasCompletedQuestionnaire) {
-                  setShowQualificationPrompt(true);
-                } else if (selectedApartment) {
-                  setPendingApartment(selectedApartment);
-                  setShowInquiryForm(true);
-                } else {
-                  toast.info('Tap "Learn More" on any listing to unlock full details.');
-                }
-              }}
+              onClick={() => setShowQualificationPrompt(true)}
             >
               <Lock className="w-3 h-3 mr-1" /> Get Full Access
             </Button>
@@ -959,11 +946,7 @@ export default function ApartmentSearch() {
                     onClick={() => {
                       setShowPinPreview(false);
                       setPendingApartment(selectedApartment);
-                      if (!hasCompletedQuestionnaire) {
-                        setShowQualificationPrompt(true);
-                      } else {
-                        setShowInquiryForm(true);
-                      }
+                      setShowQualificationPrompt(true);
                     }}
                   >
                     <Lock className="w-4 h-4 mr-2" /> Unlock Details
@@ -1069,7 +1052,7 @@ export default function ApartmentSearch() {
                   setShowInquiryForm(true);
                 }}
               >
-                <MessageCircle className="w-4 h-4 mr-2" /> Contact Owner
+                <MessageCircle className="w-4 h-4 mr-2" /> Request Property Info
               </Button>
             </>
           )}

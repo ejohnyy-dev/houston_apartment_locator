@@ -17,6 +17,80 @@ import { nurtureRouter } from "./routers/nurture";
 import { listingsRouter } from "./routers/listings";
 import { rentcastRouter } from "./routers/rentcast";
 
+// ── Public listing privacy ──────────────────────────────────────────────────
+// Business rule (TREC compliance): renters must contact the locator to learn
+// which property a listing is. Public API responses therefore never include
+// the property name, street address, owner contact info, or exact coordinates.
+
+// Matches full street addresses like "4711 LJ Pkwy, Sugar Land, TX 77479"
+const FULL_ADDRESS_RE = /\b\d{1,6}\s+[^,\n]{2,60},\s*[^,\n]{2,40},\s*TX\s*\d{5}(-\d{4})?\b/gi;
+
+// Deterministic pseudo-random value in [-1, 1] per seed (FNV-1a hash) so a
+// listing's masked pin stays in the same spot between requests.
+function seededUnitOffset(seed: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return ((h >>> 0) / 4294967295) * 2 - 1;
+}
+
+// ~350m: keeps the pin in the right area without revealing the address
+const COORD_JITTER = 0.0035;
+
+function maskApartmentForPublic<T extends Record<string, any>>(apt: T): T {
+  const neighborhood = apt.neighborhood || "Houston";
+  const lat = typeof apt.latitude === "string" ? parseFloat(apt.latitude) : apt.latitude;
+  const lng = typeof apt.longitude === "string" ? parseFloat(apt.longitude) : apt.longitude;
+  const masked: Record<string, any> = {
+    ...apt,
+    name: `Apartment in ${neighborhood}`,
+    description:
+      typeof apt.description === "string"
+        ? apt.description.replace(FULL_ADDRESS_RE, "(address shared by your locator)")
+        : apt.description ?? null,
+  };
+  if (Number.isFinite(lat) && Number.isFinite(lng) && (lat !== 0 || lng !== 0)) {
+    masked.latitude = lat + seededUnitOffset(`${apt.id}:lat`) * COORD_JITTER;
+    masked.longitude = lng + seededUnitOffset(`${apt.id}:lng`) * COORD_JITTER;
+  }
+  delete masked.phone;
+  delete masked.email;
+  delete masked.website;
+  delete masked.verifiedAddress;
+  delete masked.addressMatchStatus;
+  delete masked.managedBy;
+  return masked as T;
+}
+
+// Resolve the real property internally so the owner/CRM knows which property
+// the lead asked about (public clients only ever see masked names).
+async function resolveApartmentForOwner(
+  apartmentId: string
+): Promise<{ name: string; address: string | null } | null> {
+  try {
+    const dbListings = await getActiveListings();
+    const dbMatch = dbListings.find(
+      (l) => String(l.propertyId ?? `db-${l.id}`) === apartmentId
+    );
+    if (dbMatch) return { name: dbMatch.name, address: dbMatch.address ?? null };
+
+    let base: any[];
+    if (process.env.RENTCAST_API_KEY) {
+      base = await getRentCastDatabaseApartments();
+    } else {
+      const { queryPropertyDatabase } = await import("./propertyDatabase");
+      base = await queryPropertyDatabase();
+    }
+    const match = base.find((a: any) => String(a.id) === apartmentId);
+    if (match) return { name: match.name, address: match.verifiedAddress ?? null };
+  } catch (e) {
+    console.warn("Failed to resolve apartment for inquiry:", e);
+  }
+  return null;
+}
+
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
@@ -66,7 +140,7 @@ export const appRouter = router({
           // DB listings with a propertyId override matching CSV entries;
           // DB listings without a propertyId are appended as new results.
           const dbListings = await getActiveListings();
-          if (dbListings.length === 0) return baseApartments;
+          if (dbListings.length === 0) return baseApartments.map(maskApartmentForPublic);
 
           // Build a map of propertyId overrides
           const overrideMap = new Map<string, any>();
@@ -134,7 +208,7 @@ export const appRouter = router({
             return true;
           });
 
-          return [...merged, ...filteredNew];
+          return [...merged, ...filteredNew].map(maskApartmentForPublic);
         } catch (error) {
           console.error('Failed to fetch apartments:', error);
           throw new Error('Unable to fetch apartments. Please try again.');
@@ -187,7 +261,7 @@ export const appRouter = router({
           ...dbWithSpecials,
         ];
 
-        return merged.slice(0, 50); // cap at 50 for the page
+        return merged.slice(0, 50).map(maskApartmentForPublic); // cap at 50 for the page
       } catch (error) {
         console.error('Failed to fetch specials:', error);
         throw new Error('Unable to fetch move-in specials. Please try again.');
@@ -263,6 +337,11 @@ export const appRouter = router({
           });
         }
         try {
+          // The client only knows masked listing names; resolve the real
+          // property internally so the owner/CRM knows what was asked about.
+          const internalApartment = await resolveApartmentForOwner(input.apartmentId);
+          const internalApartmentName = internalApartment?.name || input.apartmentName;
+
           // Parse name into first and last
           const nameParts = input.name.trim().split(/\s+/);
           const firstName = nameParts[0] || "";
@@ -349,7 +428,7 @@ export const appRouter = router({
                   lastname: lastName,
                   email: input.email,
                   phone: input.phone,
-                  apartment_name: input.apartmentName,
+                  apartment_name: internalApartmentName,
                   apartment_id: input.apartmentId,
                   move_in_date: input.moveInDate || "",
                   message: input.message || "",
@@ -379,8 +458,8 @@ export const appRouter = router({
 
           // Notify owner of new inquiry
           await notifyOwner({
-            title: `New Apartment Inquiry: ${input.apartmentName}`,
-            content: `Name: ${input.name}\nEmail: ${input.email}\nPhone: ${input.phone}\nMove-in Date: ${input.moveInDate || "Not specified"}\nMessage: ${input.message || "No additional message"}\nSaved Apartments: ${favoriteApartmentIds.length > 0 ? favoriteApartmentIds.join(", ") : "None"}`,
+            title: `New Apartment Inquiry: ${internalApartmentName}`,
+            content: `Name: ${input.name}\nEmail: ${input.email}\nPhone: ${input.phone}\nProperty: ${internalApartmentName}${internalApartment?.address ? `\nAddress: ${internalApartment.address}` : ""}\nMove-in Date: ${input.moveInDate || "Not specified"}\nMessage: ${input.message || "No additional message"}\nSaved Apartments: ${favoriteApartmentIds.length > 0 ? favoriteApartmentIds.join(", ") : "None"}`,
           });
 
           // Store inquiry in database
@@ -391,7 +470,7 @@ export const appRouter = router({
             email: input.email,
             phone: input.phone,
             apartmentId: input.apartmentId,
-            apartmentName: input.apartmentName,
+            apartmentName: internalApartmentName,
             moveInDate: input.moveInDate || null,
             message: input.message || null,
             favoriteIds: input.favoriteIds || null,

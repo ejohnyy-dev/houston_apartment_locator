@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { ChevronRight } from "lucide-react";
 import { BottomSheet } from "./BottomSheet";
 import BudgetRangeSelector from "./BudgetRangeSelector";
+import { trpc } from "@/lib/trpc";
 
 export interface QualificationData {
   preferredAreas: string[];
@@ -17,10 +19,15 @@ export interface QualificationData {
 }
 
 interface QualificationPromptProps {
+  /** Fires only after the visitor's preferences AND contact info are submitted successfully. */
   onComplete: (data: QualificationData) => void;
   onSkip?: () => void;
   isOpen: boolean;
   neighborhoods: string[];
+  /** Listing the visitor was trying to view, so the inquiry is recorded against it. */
+  apartment?: { id: string; name: string } | null;
+  /** Previously saved answers — resumes the flow at the contact step. */
+  initialData?: QualificationData | null;
 }
 
 // Fallback shown while listings (and their neighborhoods) are still loading,
@@ -62,14 +69,20 @@ const PET_OPTIONS = [
   { value: "other", label: "Other Pets" },
 ];
 
+const CONTACT_STEP = 6;
+const TOTAL_STEPS = 7;
+
 export function QualificationPrompt({
   onComplete,
   onSkip,
   isOpen,
   neighborhoods,
+  apartment,
+  initialData,
 }: QualificationPromptProps) {
-  const [step, setStep] = useState(0);
-  const [formData, setFormData] = useState<QualificationData>({
+  // Visitors with saved answers (but no contact info yet) resume at the contact step
+  const [step, setStep] = useState(() => (initialData ? CONTACT_STEP : 0));
+  const [formData, setFormData] = useState<QualificationData>(() => initialData ?? {
     preferredAreas: [],
     moveInTimeline: "",
     bedrooms: "",
@@ -77,6 +90,10 @@ export function QualificationPrompt({
     budget: "",
     pets: [],
   });
+  const [contact, setContact] = useState({ name: "", email: "", phone: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const createInquiry = trpc.inquiries.create.useMutation();
 
   // Memoize the budget onChange callback to prevent infinite loop
   const handleBudgetChange = useCallback((range: { min: number | null; max: number }) => {
@@ -108,11 +125,48 @@ export function QualificationPrompt({
     }));
   };
 
+  const handleContactChange = (field: "name" | "email" | "phone", value: string) => {
+    let processed = value;
+    if (field === "phone") {
+      const digitsOnly = value.replace(/\D/g, "");
+      if (digitsOnly.length > 10) return;
+      processed = digitsOnly;
+    }
+    setContact((prev) => ({ ...prev, [field]: processed }));
+  };
+
+  const handleSubmit = async () => {
+    setSubmitError("");
+    setIsSubmitting(true);
+    try {
+      const result = await createInquiry.mutateAsync({
+        apartmentId: apartment?.id ?? "website-access",
+        apartmentName: apartment?.name ?? "Website Access Signup",
+        name: contact.name.trim(),
+        email: contact.email.trim(),
+        phone: contact.phone,
+        moveInDate: formData.moveInTimeline,
+        message: "",
+        qualificationData: JSON.stringify(formData),
+      });
+      if (result?.sessionToken) {
+        try {
+          localStorage.setItem("qual_session_token", result.sessionToken);
+        } catch { /* ignore */ }
+      }
+      onComplete(formData);
+    } catch (error: any) {
+      setSubmitError(error?.message || "We couldn't submit your info. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleNext = () => {
-    if (step < 5) {
+    if (step < CONTACT_STEP) {
       setStep(step + 1);
     } else {
-      onComplete(formData);
+      handleSubmit();
     }
   };
 
@@ -136,6 +190,12 @@ export function QualificationPrompt({
         return formData.budget !== "" && typeof formData.budget === "string" && formData.budget.includes("-");
       case 5:
         return true; // Pets are optional
+      case CONTACT_STEP:
+        return (
+          contact.name.trim().length > 0 &&
+          contact.email.includes("@") &&
+          contact.phone.replace(/\D/g, "").length >= 10
+        );
       default:
         return true;
     }
@@ -150,12 +210,12 @@ export function QualificationPrompt({
             Find Your Perfect Apartment
           </h2>
           <p className="text-sm text-muted-foreground">
-            Step {step + 1} of 6 - Tell us what you're looking for
+            Step {step + 1} of {TOTAL_STEPS} - Tell us what you're looking for
           </p>
           <div className="mt-3 h-1 bg-muted rounded-full overflow-hidden">
             <div
               className="h-full bg-primary transition-all duration-300"
-              style={{ width: `${((step + 1) / 6) * 100}%` }}
+              style={{ width: `${((step + 1) / TOTAL_STEPS) * 100}%` }}
             />
           </div>
         </div>
@@ -290,25 +350,64 @@ export function QualificationPrompt({
           </div>
         )}
 
+        {/* Step 6: Contact details */}
+        {step === CONTACT_STEP && (
+          <div className="space-y-4">
+            <Label className="text-base font-semibold">How can we reach you?</Label>
+            <p className="text-xs text-muted-foreground">
+              Your locator will personally share property details, exact locations, and
+              current specials that match your preferences.
+            </p>
+            <div className="space-y-3">
+              <Input
+                type="text"
+                placeholder="Full name"
+                value={contact.name}
+                onChange={(e) => handleContactChange("name", e.target.value)}
+                autoComplete="name"
+              />
+              <Input
+                type="email"
+                placeholder="Email"
+                value={contact.email}
+                onChange={(e) => handleContactChange("email", e.target.value)}
+                autoComplete="email"
+              />
+              <Input
+                type="tel"
+                placeholder="Phone (10 digits)"
+                value={contact.phone}
+                onChange={(e) => handleContactChange("phone", e.target.value)}
+                autoComplete="tel"
+              />
+            </div>
+            {submitError && (
+              <p className="text-xs text-red-600">{submitError}</p>
+            )}
+          </div>
+        )}
+
         {/* Footer */}
         <div className="mt-8 flex gap-3">
           <Button
             variant="outline"
             onClick={handleBack}
-            disabled={step === 0}
+            disabled={step === 0 || isSubmitting}
             className="flex-1"
           >
             Back
           </Button>
           <Button
             onClick={handleNext}
-            disabled={!isStepValid()}
+            disabled={!isStepValid() || isSubmitting}
             className="flex-1"
           >
-            {step === 5 ? (
-              <>
-                Complete <ChevronRight className="w-4 h-4 ml-2" />
-              </>
+            {step === CONTACT_STEP ? (
+              isSubmitting ? "Submitting..." : (
+                <>
+                  Unlock the Map <ChevronRight className="w-4 h-4 ml-2" />
+                </>
+              )
             ) : (
               <>
                 Next <ChevronRight className="w-4 h-4 ml-2" />

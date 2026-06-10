@@ -5,8 +5,9 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// Strip street address from apartment name for privacy.
-// Priority: return the complex/marketing name, never a raw street address.
+// Strip street address from apartment name for privacy. The server already
+// masks listing names in public API responses; this is defense-in-depth for
+// values cached client-side before masking existed (e.g. saved favorites).
 export function getDisplayName(name: string): string {
   if (!name) return "";
 
@@ -14,12 +15,14 @@ export function getDisplayName(name: string): string {
   // e.g. "The Oaks, 123 Main St" → "The Oaks"
   const commaIdx = name.indexOf(',');
   if (commaIdx > 0) {
-    return name.slice(0, commaIdx).trim();
+    name = name.slice(0, commaIdx);
   }
 
-  // If the name starts with a number it is likely a raw street address
-  // e.g. "4711 LJ Pkwy" — return it as-is; the neighborhood field provides
-  // the location context and we should not mangle the name into a fragment.
-  // Callers that need to hide the address should use the neighborhood field.
+  // A name that starts with a number is a raw street address
+  // (e.g. "4711 LJ Pkwy") and must never be shown to renters.
+  if (/^\d/.test(name.trim())) {
+    return "Private Listing";
+  }
+
   return name.trim();
 }

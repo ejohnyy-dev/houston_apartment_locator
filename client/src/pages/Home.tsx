@@ -16,7 +16,7 @@ import { getDisplayName } from "@/lib/utils";
 
 export default function Home() {
   const { favorites } = useFavorites();
-  const { showQualificationPrompt, setShowQualificationPrompt, setQualificationData } = useQualification();
+  const { showQualificationPrompt, setShowQualificationPrompt, setQualificationData, markQualified } = useQualification();
   const neighborhoods = ["Midtown", "Downtown", "Upper Kirby", "Montrose", "Galleria Area", "Heights", "Westchase", "Uptown", "Memorial", "Bellaire", "Sugar Land", "The Woodlands", "Katy", "Pearland"];
   const [mapFilters, setMapFilters] = useState<MapFilters>({
     searchText: "",
@@ -64,8 +64,10 @@ export default function Home() {
       <QualificationPrompt
         isOpen={showQualificationPrompt}
         neighborhoods={neighborhoods}
+        initialData={qualificationData}
         onComplete={(data) => {
           setQualificationData(data);
+          markQualified();
         }}
       />
       <Navbar />

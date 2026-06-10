@@ -162,8 +162,8 @@ export function InquiryForm({ apartmentId, apartmentName, favorites, qualificati
                 <div className="flex items-start gap-3">
                   <div className="text-amber-600 text-xl mt-1 flex-shrink-0">🔒</div>
                   <div className="text-left min-w-0">
-                    <p className="font-semibold text-amber-900 text-sm">Exact address & landlord contact available upon request</p>
-                    <p className="text-xs text-amber-800 mt-1">The full street address, landlord name, phone, and unit availability are provided directly by the owner after you make an inquiry.</p>
+                    <p className="font-semibold text-amber-900 text-sm">Property name & exact location shared personally</p>
+                    <p className="text-xs text-amber-800 mt-1">Your locator will personally share the property name, full street address, and unit availability with you after you make an inquiry.</p>
                   </div>
                 </div>
               </div>
@@ -179,7 +179,7 @@ export function InquiryForm({ apartmentId, apartmentName, favorites, qualificati
 
               {/* Footer Text */}
               <p className="text-center text-xs text-gray-600">
-                The owner will reach out to you shortly!
+                Your locator will reach out to you shortly!
               </p>
             </div>
           ) : stage === "signup" ? (
