@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   MapPin, Home, Lock, ArrowRight,
   ChevronLeft, ChevronRight, Search, SlidersHorizontal,
-  X, Eye, MessageCircle, Heart, Compass
+  X, Eye, MessageCircle, Heart, Compass, Bell, BellRing
 } from 'lucide-react';
 import { MapView } from '@/components/Map';
 import { InquiryForm } from '@/components/InquiryForm';
@@ -672,6 +672,40 @@ export default function ApartmentSearch() {
     setShowInquiryForm(true);
   };
 
+  // ── Saved-search alerts ──
+  // Leads can save the current filters; a daily job emails them when new
+  // listings match. Saved state resets when the filters change so the same
+  // visitor can save a different search.
+  const createSavedSearch = trpc.savedSearches.create.useMutation();
+  const [alertsSaved, setAlertsSaved] = useState(false);
+  const [alertsError, setAlertsError] = useState('');
+  useEffect(() => {
+    setAlertsSaved(false);
+    setAlertsError('');
+  }, [selectedNeighborhood, bedroomFilter, committedRentRange, debouncedSearch]);
+
+  const handleSaveSearch = async () => {
+    setAlertsError('');
+    try {
+      await createSavedSearch.mutateAsync({
+        filters: {
+          neighborhood: selectedNeighborhood || undefined,
+          bedrooms: (bedroomFilter || undefined) as '0' | '1' | '2' | '3' | '4' | undefined,
+          minRent: committedRentRange[0] > 0 ? committedRentRange[0] : undefined,
+          maxRent: committedRentRange[1] < DEFAULT_RENT_RANGE[1] ? committedRentRange[1] : undefined,
+          searchText: debouncedSearch.trim() || undefined,
+        },
+      });
+      setAlertsSaved(true);
+    } catch (e) {
+      setAlertsError(
+        e instanceof Error && e.message
+          ? e.message
+          : 'Could not save this search. Please try again.'
+      );
+    }
+  };
+
   const resetFilters = () => {
     setSelectedNeighborhood('');
     setBedroomFilter('');
@@ -1000,6 +1034,30 @@ export default function ApartmentSearch() {
               </SelectContent>
             </Select>
           </div>
+
+          {/* Saved-search alerts */}
+          {hasQualified && !isLoading && !isError && (
+            <div className="px-4 py-2 border-b border-slate-100 shrink-0">
+              {alertsSaved ? (
+                <p className="text-xs text-emerald-700 flex items-center gap-1.5">
+                  <BellRing className="w-3.5 h-3.5 shrink-0" />
+                  Alerts on — we'll email you when new listings match this search.
+                </p>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-xs h-8 border-blue-200 text-blue-700 hover:bg-blue-50"
+                  onClick={handleSaveSearch}
+                  disabled={createSavedSearch.isPending}
+                >
+                  <Bell className="w-3.5 h-3.5 mr-1.5" />
+                  {createSavedSearch.isPending ? 'Saving...' : 'Email me new matches for this search'}
+                </Button>
+              )}
+              {alertsError && <p className="text-xs text-red-600 mt-1">{alertsError}</p>}
+            </div>
+          )}
 
           {/* Listings scroll area */}
           <div ref={listScrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">

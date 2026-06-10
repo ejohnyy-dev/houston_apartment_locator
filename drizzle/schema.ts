@@ -179,3 +179,23 @@ export const qualifiedSessions = mysqlTable("qualified_sessions", {
 
 export type QualifiedSession = typeof qualifiedSessions.$inferSelect;
 export type InsertQualifiedSession = typeof qualifiedSessions.$inferInsert;
+
+// Saved searches — leads opt in to email alerts when new listings match their
+// filters. A daily cron diffs current matches against seenListingIds and
+// signals HubSpot (which sends the actual email via a workflow) for new ones.
+export const savedSearches = mysqlTable("saved_searches", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Lead's email, resolved from their qualified session at save time */
+  email: varchar("email", { length: 320 }).notNull(),
+  /** JSON SavedSearchFilters: { neighborhood?, bedrooms?, minRent?, maxRent?, searchText? } */
+  filters: text("filters").notNull(),
+  /** JSON array of listing ids already seen, so only NEW matches trigger an alert */
+  seenListingIds: text("seenListingIds"),
+  isActive: int("isActive").default(1).notNull(), // 1 = active, 0 = removed
+  lastCheckedAt: timestamp("lastCheckedAt"),
+  lastAlertAt: timestamp("lastAlertAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type SavedSearch = typeof savedSearches.$inferSelect;
+export type InsertSavedSearch = typeof savedSearches.$inferInsert;

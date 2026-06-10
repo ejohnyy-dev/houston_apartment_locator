@@ -1,6 +1,6 @@
 import { eq, and, lte, isNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, inquiries, InsertInquiry, Inquiry, listings, InsertListing, Listing, qualifiedSessions, InsertQualifiedSession, QualifiedSession } from "../drizzle/schema";
+import { InsertUser, users, inquiries, InsertInquiry, Inquiry, listings, InsertListing, Listing, qualifiedSessions, InsertQualifiedSession, QualifiedSession, savedSearches, SavedSearch } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -317,4 +317,77 @@ export async function getQualifiedSessionByEmail(
   if (valid.length === 0) return null;
   // Return the most recently created
   return valid.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
+}
+
+// ── Saved searches (email alerts for new matching listings) ──
+
+/**
+ * Save a search for a lead. seenListingIds should be seeded with the ids
+ * currently matching, so only listings added later trigger an alert.
+ */
+export async function createSavedSearch(data: {
+  email: string;
+  filters: string;
+  seenListingIds: string;
+}): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(savedSearches).values({
+    email: data.email.toLowerCase().trim(),
+    filters: data.filters,
+    seenListingIds: data.seenListingIds,
+  });
+  return (result as any)[0]?.insertId ?? 0;
+}
+
+export async function getActiveSavedSearches(): Promise<SavedSearch[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(savedSearches).where(eq(savedSearches.isActive, 1));
+}
+
+export async function getSavedSearchesByEmail(email: string): Promise<SavedSearch[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(savedSearches)
+    .where(and(
+      eq(savedSearches.email, email.toLowerCase().trim()),
+      eq(savedSearches.isActive, 1),
+    ));
+}
+
+/** Record a check run; pass alerted=true when new matches were signaled. */
+export async function updateSavedSearchSeen(
+  id: number,
+  seenListingIds: string,
+  alerted: boolean
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  const now = new Date();
+  await db
+    .update(savedSearches)
+    .set({
+      seenListingIds,
+      lastCheckedAt: now,
+      ...(alerted ? { lastAlertAt: now } : {}),
+    })
+    .where(eq(savedSearches.id, id));
+}
+
+/** Deactivate a saved search, verifying it belongs to the given email. */
+export async function deactivateSavedSearch(id: number, email: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  const rows = await db
+    .select()
+    .from(savedSearches)
+    .where(eq(savedSearches.id, id))
+    .limit(1);
+  const row = rows[0];
+  if (!row || row.email !== email.toLowerCase().trim()) return false;
+  await db.update(savedSearches).set({ isActive: 0 }).where(eq(savedSearches.id, id));
+  return true;
 }

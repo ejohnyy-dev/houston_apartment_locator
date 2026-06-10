@@ -57,6 +57,10 @@ async function startServer() {
   // POST /api/scheduled/nurture-followup - 24-hour lead nurture follow-up
   const { nurtureFollowupHandler } = await import("../scheduled/nurtureFollowup");
   app.post("/api/scheduled/nurture-followup", nurtureFollowupHandler);
+
+  // POST /api/scheduled/saved-search-alerts - daily new-match alerts for saved searches
+  const { savedSearchAlertsHandler } = await import("../scheduled/savedSearchAlerts");
+  app.post("/api/scheduled/saved-search-alerts", savedSearchAlertsHandler);
   
   // POST /api/leads - HubSpot lead capture (MUST be before static files)
   app.post("/api/leads", async (req, res) => {

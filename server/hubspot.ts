@@ -32,6 +32,11 @@ export type HubSpotContactProperties = {
   followup_sent?: string;
   followup_sent_at?: string;
   notes_last_contacted?: string;
+  // Saved-search alert properties (create these as custom contact
+  // properties in HubSpot; a workflow on new_matches_found_at sends the email)
+  new_matches_count?: string;
+  new_matches_summary?: string;
+  new_matches_found_at?: string;
 };
 
 export type HubSpotResult = {
@@ -142,6 +147,39 @@ export async function sendNurtureFollowup(
   };
 
   return upsertHubSpotContact(properties, token);
+}
+
+/**
+ * Signal a saved-search alert for a lead.
+ *
+ * Strategy mirrors the nurture follow-up: update the contact's
+ * new_matches_* properties; a HubSpot workflow triggered on
+ * "new_matches_found_at is known / property changed" sends the alert email.
+ *
+ * To use this:
+ * 1. In HubSpot → Settings → Properties: create contact properties
+ *    new_matches_count (single-line text), new_matches_summary
+ *    (single-line text), new_matches_found_at (single-line text)
+ * 2. Workflows → contact-based workflow, trigger on new_matches_found_at,
+ *    with re-enrollment on property change; action: send your alert email
+ *    template (it can reference the summary/count properties).
+ *
+ * The summary must never identify a property (TREC/privacy rule) — counts,
+ * neighborhoods, and prices only.
+ */
+export async function sendSavedSearchAlert(
+  lead: { email: string; matchCount: number; summary: string },
+  token: string
+): Promise<HubSpotResult> {
+  return upsertHubSpotContact(
+    {
+      email: lead.email,
+      new_matches_count: String(lead.matchCount),
+      new_matches_summary: lead.summary,
+      new_matches_found_at: new Date().toISOString(),
+    },
+    token
+  );
 }
 
 /**
