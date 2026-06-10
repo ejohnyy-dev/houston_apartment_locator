@@ -23,6 +23,14 @@ interface QualificationPromptProps {
   neighborhoods: string[];
 }
 
+// Fallback shown while listings (and their neighborhoods) are still loading,
+// since the questionnaire opens immediately on page load.
+export const DEFAULT_NEIGHBORHOODS = [
+  "Midtown", "Downtown", "Upper Kirby", "Montrose", "Galleria Area", "Heights",
+  "Westchase", "Uptown", "Memorial", "Bellaire", "Sugar Land", "The Woodlands",
+  "Katy", "Pearland",
+];
+
 const TIMELINE_OPTIONS = [
   { value: "immediate", label: "Immediate (within 2 weeks)" },
   { value: "1-3-months", label: "1-3 months" },
@@ -79,6 +87,8 @@ export function QualificationPrompt({
   }, []);
 
   if (!isOpen) return null;
+
+  const areaOptions = neighborhoods.length > 0 ? neighborhoods : DEFAULT_NEIGHBORHOODS;
 
   const handleAreaToggle = (area: string) => {
     setFormData((prev) => ({
@@ -157,7 +167,7 @@ export function QualificationPrompt({
               Which neighborhoods interest you? (Select at least one)
             </Label>
             <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto">
-              {neighborhoods.map((area) => (
+              {areaOptions.map((area) => (
                 <button
                   key={area}
                   onClick={() => handleAreaToggle(area)}

@@ -29,7 +29,7 @@ export default function Home() {
     apartmentId: string;
     apartmentName: string;
   } | null>(null);
-  const { qualificationData, hasQualified } = useQualification();
+  const { qualificationData, hasCompletedQuestionnaire } = useQualification();
   const { data: apartments } = trpc.apartments.list.useQuery({
     minRent: 0,
     maxRent: 10000,
@@ -72,7 +72,7 @@ export default function Home() {
       <HeroSection mapFilters={mapFilters} onFilterChange={setMapFilters} />
 
       {/* Matched Apartments Section */}
-      {hasQualified && matchedApartments.length > 0 && (
+      {hasCompletedQuestionnaire && matchedApartments.length > 0 && (
         <section className="py-16 bg-gold/5 border-t border-gold/20">
           <div className="container">
             <h2 className="text-3xl sm:text-4xl font-semibold text-white mb-4 text-center">

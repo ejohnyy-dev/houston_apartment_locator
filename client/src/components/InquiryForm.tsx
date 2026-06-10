@@ -25,7 +25,7 @@ export function InquiryForm({ apartmentId, apartmentName, favorites, qualificati
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const { setQualificationData } = useQualification();
+  const { setQualificationData, markQualified } = useQualification();
 
   const createInquiry = trpc.inquiries.create.useMutation({
     onSuccess: (data) => {
@@ -38,6 +38,7 @@ export function InquiryForm({ apartmentId, apartmentName, favorites, qualificati
         } catch { /* ignore */ }
       }
       // Mark as qualified in the context so the lead gate lifts immediately
+      markQualified();
       if (qualificationData) {
         setQualificationData(qualificationData);
       }

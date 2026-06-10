@@ -276,7 +276,15 @@ function PhotoCarousel({ photos, name }: { photos: string[]; name: string }) {
 }
 
 export default function ApartmentSearch() {
-  const { qualificationData, hasQualified, setQualificationData, setShowQualificationPrompt, showQualificationPrompt } = useQualification();
+  const {
+    qualificationData,
+    hasQualified,
+    hasCompletedQuestionnaire,
+    isCheckingServer,
+    setQualificationData,
+    setShowQualificationPrompt,
+    showQualificationPrompt,
+  } = useQualification();
   const { favorites, isFavorited, toggleFavorite } = useFavorites();
   const [selectedApartment, setSelectedApartment] = useState<ApartmentTeased | null>(null);
   const [showDetails, setShowDetails] = useState(false);
@@ -299,12 +307,14 @@ export default function ApartmentSearch() {
   // Mobile view toggle: 'map' | 'list'
   const [mobileView, setMobileView] = useState<'map' | 'list'>('list');
 
-  // Show qualification prompt on first visit to /search
+  // Immediately show the (mandatory) qualification questionnaire to anyone who
+  // hasn't completed it yet. We wait for the server session check so returning
+  // leads on a fresh device aren't flashed with the prompt unnecessarily.
   useEffect(() => {
-    if (!hasQualified && !showQualificationPrompt) {
+    if (!isCheckingServer && !hasCompletedQuestionnaire && !showQualificationPrompt) {
       setShowQualificationPrompt(true);
     }
-  }, [hasQualified, showQualificationPrompt]);
+  }, [isCheckingServer, hasCompletedQuestionnaire, showQualificationPrompt, setShowQualificationPrompt]);
 
   const queryInput = useMemo(() => ({
     neighborhood: selectedNeighborhood && selectedNeighborhood !== '__all__' ? selectedNeighborhood : undefined,
@@ -319,9 +329,15 @@ export default function ApartmentSearch() {
     { staleTime: 30_000 }
   );
 
-  const apartments: ApartmentTeased[] = (apartmentsData ?? []) as ApartmentTeased[];
+  const apartments: ApartmentTeased[] = useMemo(
+    () => (apartmentsData ?? []) as ApartmentTeased[],
+    [apartmentsData]
+  );
 
-  const filtered = apartments.filter(apt => {
+  // Memoized so the array identity is stable between renders — the marker
+  // effect below depends on it, and an unstable reference caused all map
+  // markers/clusters to be torn down and rebuilt on every render.
+  const filtered = useMemo(() => apartments.filter(apt => {
     if (!searchText) return true;
     const term = searchText.toLowerCase();
     return [
@@ -334,9 +350,12 @@ export default function ApartmentSearch() {
     ]
       .filter((value): value is string => Boolean(value))
       .some(value => value.toLowerCase().includes(term));
-  });
+  }), [apartments, searchText]);
 
-  const neighborhoods = Array.from(new Set(apartments.map(a => a.neighborhood))).sort();
+  const neighborhoods = useMemo(
+    () => Array.from(new Set(apartments.map(a => a.neighborhood))).sort(),
+    [apartments]
+  );
 
   // ── Map markers with clustering ──────────────────────────────────────────────────────────────
   const placeMarkers = useCallback((map: google.maps.Map, apts: ApartmentTeased[], activeBrFilter: string) => {
@@ -464,11 +483,10 @@ export default function ApartmentSearch() {
   const handleLearnMore = (apt: ApartmentTeased) => {
     setSelectedApartment(apt);
     setPendingApartment(apt);
-    // If not qualified, show qualification prompt first
-    if (!hasQualified) {
+    // Questionnaire first; once answered, collect contact info to unlock
+    if (!hasCompletedQuestionnaire) {
       setShowQualificationPrompt(true);
     } else {
-      // Open the real InquiryForm (replaces the old dead showLeadForm placeholder)
       setShowInquiryForm(true);
     }
   };
@@ -504,8 +522,7 @@ export default function ApartmentSearch() {
             setShowInquiryForm(true);
           }
         }}
-        onSkip={() => setShowQualificationPrompt(false)}
-        neighborhoods={Array.from(new Set(apartments.map(a => a.neighborhood))).sort()}
+        neighborhoods={neighborhoods}
       />
       {/* Top Nav */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
@@ -554,7 +571,16 @@ export default function ApartmentSearch() {
             <Button
               size="sm"
               className="bg-blue-600 hover:bg-blue-700 text-white shrink-0"
-              onClick={() => setShowQualificationPrompt(true)}
+              onClick={() => {
+                if (!hasCompletedQuestionnaire) {
+                  setShowQualificationPrompt(true);
+                } else if (selectedApartment) {
+                  setPendingApartment(selectedApartment);
+                  setShowInquiryForm(true);
+                } else {
+                  toast.info('Tap "Learn More" on any listing to unlock full details.');
+                }
+              }}
             >
               <Lock className="w-3 h-3 mr-1" /> Get Full Access
             </Button>
@@ -865,7 +891,7 @@ export default function ApartmentSearch() {
                     src={selectedApartment.photos[0]}
                     alt={getDisplayName(selectedApartment.name)}
                     className={`w-full h-full object-cover transition-all duration-300 ${
-                      !true ? 'blur-sm scale-105' : ''
+                      !hasQualified ? 'blur-sm scale-105' : ''
                     }`}
                   />
                 ) : (
@@ -873,7 +899,7 @@ export default function ApartmentSearch() {
                     <Home className="w-12 h-12 text-slate-300" />
                   </div>
                 )}
-                {!true && (
+                {!hasQualified && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/20">
                     <Lock className="w-6 h-6 text-white mb-1" />
                     <span className="text-white text-xs font-semibold">Submit info to unlock details</span>
@@ -909,14 +935,14 @@ export default function ApartmentSearch() {
               {/* Teased description */}
               {selectedApartment.description && (
                 <p className={`text-sm text-slate-600 mb-3 leading-relaxed ${
-                  !true ? 'line-clamp-2' : 'line-clamp-3'
+                  !hasQualified ? 'line-clamp-2' : 'line-clamp-3'
                 }`}>
                   {selectedApartment.description}
                 </p>
               )}
 
               {/* CTA */}
-              {true ? (
+              {hasQualified ? (
                 <Button
                   className="w-full bg-blue-600 hover:bg-blue-700"
                   onClick={() => {
@@ -933,7 +959,11 @@ export default function ApartmentSearch() {
                     onClick={() => {
                       setShowPinPreview(false);
                       setPendingApartment(selectedApartment);
-                      setShowInquiryForm(true);
+                      if (!hasCompletedQuestionnaire) {
+                        setShowQualificationPrompt(true);
+                      } else {
+                        setShowInquiryForm(true);
+                      }
                     }}
                   >
                     <Lock className="w-4 h-4 mr-2" /> Unlock Details

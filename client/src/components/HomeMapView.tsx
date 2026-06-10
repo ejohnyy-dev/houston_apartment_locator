@@ -80,8 +80,30 @@ export function HomeMapView({ className, filters }: HomeMapViewProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [filteredCount, setFilteredCount] = useState(0);
   const [hasError, setHasError] = useState(false);
-  const [hasInteracted, setHasInteracted] = useState(false);
-  const { hasQualified, setShowQualificationPrompt } = useQualification();
+  const { hasCompletedQuestionnaire, isCheckingServer, setShowQualificationPrompt } = useQualification();
+  // Ref mirror so map event listeners see fresh state without re-initialising the map
+  const questionnaireDoneRef = useRef(hasCompletedQuestionnaire);
+  useEffect(() => {
+    questionnaireDoneRef.current = hasCompletedQuestionnaire;
+  }, [hasCompletedQuestionnaire]);
+
+  // Immediately prompt with the questionnaire as soon as the visitor reaches the map
+  useEffect(() => {
+    if (isCheckingServer || hasCompletedQuestionnaire) return;
+    const el = mapContainer.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries.some(e => e.isIntersecting)) {
+          setShowQualificationPrompt(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.25 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [isCheckingServer, hasCompletedQuestionnaire, setShowQualificationPrompt]);
   const { data: apartments } = trpc.apartments.list.useQuery({
     minRent: 0,
     maxRent: 10000,
@@ -199,10 +221,10 @@ export function HomeMapView({ className, filters }: HomeMapViewProps) {
             infoWindows.set(marker, infoWindow);
 
             marker.addListener("click", () => {
-              // Trigger qualification on first meaningful interaction
-              if (!hasInteracted && !hasQualified) {
-                setHasInteracted(true);
+              // Questionnaire is mandatory before browsing listing details
+              if (!questionnaireDoneRef.current) {
                 setShowQualificationPrompt(true);
+                return;
               }
               // Close all other info windows
               infoWindows.forEach((iw) => {
@@ -233,19 +255,11 @@ export function HomeMapView({ className, filters }: HomeMapViewProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [apartments, filters, hasInteracted, hasQualified, setShowQualificationPrompt]);
+  }, [apartments, filters, setShowQualificationPrompt]);
 
   useEffect(() => {
     initMap();
   }, [initMap]);
-
-  // Load qualification state from localStorage on mount
-  useEffect(() => {
-    const stored = localStorage.getItem("qualification_data");
-    if (stored) {
-      setHasInteracted(true);
-    }
-  }, []);
 
   return (
     <div className={cn("w-full h-full relative", className)}>
