@@ -82,6 +82,7 @@ async function startServer() {
 
       // Forward the lead to the in-app CRM (FB bot intake webhook), if configured.
       // Non-blocking and fail-safe: a CRM outage must never break the public form.
+      // Retry with exponential backoff on network failures.
       const crmUrl = process.env.CRM_WEBHOOK_URL;
       if (crmUrl) {
         const toNumber = (v: unknown) => {
@@ -100,17 +101,62 @@ async function startServer() {
           sms_consent: req.body.sms_consent ?? req.body.smsConsent ?? false,
           source: "txaptfinder",
         };
-        const controller = new AbortController();
-        const t = setTimeout(() => controller.abort(), 4000);
-        fetch(crmUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(crmPayload),
-          signal: controller.signal,
-        })
-          .then((r) => console.log(`[CRM forward] ${r.status}`))
-          .catch((e) => console.warn(`[CRM forward] failed: ${e?.message || e}`))
-          .finally(() => clearTimeout(t));
+
+        // Retry logic: exponential backoff (1s, 2s, 4s)
+        const forwardToCrm = async (retryCount = 0): Promise<void> => {
+          const maxRetries = 3;
+          const timeout = 5000;
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), timeout);
+
+          try {
+            const response = await fetch(crmUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(crmPayload),
+              signal: controller.signal,
+            });
+
+            clearTimeout(timer);
+
+            if (response.ok) {
+              console.log(`[CRM forward] ✓ Success (${response.status}) for ${email}`);
+            } else if (response.status >= 500 && retryCount < maxRetries) {
+              // Server error — retry
+              console.warn(
+                `[CRM forward] Server error (${response.status}) — retrying (attempt ${retryCount + 2}/${maxRetries + 1})`
+              );
+              await new Promise((r) => setTimeout(r, Math.pow(2, retryCount) * 1000));
+              await forwardToCrm(retryCount + 1);
+            } else {
+              // Client error (4xx) or max retries reached
+              const body = await response.json().catch(() => ({}));
+              console.error(
+                `[CRM forward] ✗ Failed (${response.status}) for ${email}:`,
+                body.error || "unknown error"
+              );
+            }
+          } catch (error) {
+            clearTimeout(timer);
+
+            if (retryCount < maxRetries) {
+              console.warn(
+                `[CRM forward] Network error — retrying (attempt ${retryCount + 2}/${maxRetries + 1}):`,
+                error instanceof Error ? error.message : String(error)
+              );
+              await new Promise((r) => setTimeout(r, Math.pow(2, retryCount) * 1000));
+              await forwardToCrm(retryCount + 1);
+            } else {
+              console.error(
+                `[CRM forward] ✗ Failed after ${maxRetries} retries for ${email}:`,
+                error instanceof Error ? error.message : String(error)
+              );
+            }
+          }
+        };
+
+        // Fire and forget — don't block the response
+        forwardToCrm().catch((e) => console.error("[CRM forward] Unexpected error:", e));
       }
 
       res.json({
