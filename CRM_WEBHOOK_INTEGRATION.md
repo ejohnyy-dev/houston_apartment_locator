@@ -1,7 +1,7 @@
-# CRM Webhook Integration Setup
+# CRM Lead Intake Integration
 
-**Status:** ✅ Configured & Ready  
-**Date:** 2026-06-10  
+**Status:** ✅ Live — CRM is primary system of record  
+**Date:** 2026-06-10 (updated from HubSpot to CRM-only)  
 **CRM Endpoint:** https://innocent-terrace-rides-superior.trycloudflare.com/api/leads
 
 ---
@@ -34,20 +34,21 @@ This URL points to the Cloudflare tunnel running the fb-marketplace-bot CRM serv
 ```
 [txaptfinder.com form submission]
          ↓
-[POST /api/leads]
-         ↓
-[Update HubSpot] ← blocks response until complete
-         ↓
-[Send response to user] (form thanks message)
-         ↓
-[In background: Forward to CRM with retry]
+[POST /api/leads → CRM with retry]
     ├─ Attempt 1 (immediate)
     ├─ Attempt 2 (after 1s) [if 5xx or network error]
     ├─ Attempt 3 (after 2s) [if 5xx or network error]
     └─ Attempt 4 (after 4s) [if 5xx or network error]
          ↓
+[CRM creates/updates lead in MySQL]
+         ↓
+[Send response to user] (form thanks message)
+         ↓
 [Log result to console]
 ```
+
+**Note:** Form submission **blocks** until CRM responds. If all retries fail, user sees error message.
+This ensures no leads are silently lost.
 
 ---
 
@@ -180,10 +181,11 @@ const delayMultiplier = 2;         // Change backoff factor (currently: 1s, 2s, 
 
 ## Summary
 
-The integration is **complete and tested**. All form submissions now:
-1. Save to HubSpot (primary system of record)
-2. Forward to the in-app CRM (secondary sync) with automatic retry
-3. Display success message to user immediately (non-blocking)
-4. Log all retry attempts for debugging
+The integration is **complete and live**. All form submissions now:
+1. Post directly to your CRM (MySQL, primary system of record)
+2. Block the form response until CRM confirms (or retries exhaust)
+3. Retry automatically on network/server errors (3 attempts, exponential backoff)
+4. Log all attempts for debugging/monitoring
+5. Return clear error to user if all retries fail
 
-The CRM is the **future system of record** once you decide to fully migrate from HubSpot.
+HubSpot integration has been **removed** — the CRM is now your only system of record for txaptfinder.com leads.
