@@ -22,6 +22,7 @@ import { useQualification } from '@/contexts/QualificationContext';
 import { QualificationPrompt } from '@/components/QualificationPrompt';
 import { loadMarkerClustererLibrary, createMarkerClusterer } from '@/lib/markerClusterer';
 import { getMatchResult, getMatchTier, type MatchResult } from '@/lib/qualificationFilter';
+import { decodeSearchFilters, encodeSearchFilters, RENT_RANGE_DEFAULT } from '@/lib/searchParams';
 
 interface ApartmentTeased {
   id: number;
@@ -49,7 +50,7 @@ interface ApartmentTeased {
   photoCount?: number;
 }
 
-const DEFAULT_RENT_RANGE: [number, number] = [0, 15000];
+const DEFAULT_RENT_RANGE: [number, number] = RENT_RANGE_DEFAULT;
 
 // Listings rendered per "page" in the results panel; more load on demand so
 // an unfiltered 500+ listing search doesn't render hundreds of cards at once.
@@ -334,25 +335,41 @@ export default function ApartmentSearch() {
   const clustererRef = useRef<any>(null);
   const listScrollRef = useRef<HTMLDivElement | null>(null);
 
-  // Filters
-  const [selectedNeighborhood, setSelectedNeighborhood] = useState('');
-  const [bedroomFilter, setBedroomFilter] = useState('');
-  // sliderRentRange is the live display value; committedRentRange drives the tRPC query
-  const [sliderRentRange, setSliderRentRange] = useState<[number, number]>(DEFAULT_RENT_RANGE);
-  const [committedRentRange, setCommittedRentRange] = useState<[number, number]>(DEFAULT_RENT_RANGE);
-  const [searchText, setSearchText] = useState('');
+  // Filters — initialized from the URL so a filtered view is a shareable
+  // link (e.g. /search?area=Katy&beds=2) and survives refresh.
+  const [initialFilters] = useState(() => decodeSearchFilters(window.location.search));
+  const [selectedNeighborhood, setSelectedNeighborhood] = useState(initialFilters.neighborhood);
+  const [bedroomFilter, setBedroomFilter] = useState(initialFilters.bedrooms);
+  // sliderRentRange is the live display value; committedRentRange drives the filters
+  const [sliderRentRange, setSliderRentRange] = useState<[number, number]>(initialFilters.rentRange);
+  const [committedRentRange, setCommittedRentRange] = useState<[number, number]>(initialFilters.rentRange);
+  const [searchText, setSearchText] = useState(initialFilters.searchText);
   // Sort order for the listings panel
-  const [sortBy, setSortBy] = useState<'recommended' | 'price-asc' | 'price-desc'>('recommended');
+  const [sortBy, setSortBy] = useState<'recommended' | 'price-asc' | 'price-desc'>(initialFilters.sortBy);
   // Mobile view toggle: 'map' | 'list'
   const [mobileView, setMobileView] = useState<'map' | 'list'>('list');
 
   // Debounce free-text search so the list and map markers aren't rebuilt on
   // every keystroke.
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState(initialFilters.searchText);
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchText), 250);
     return () => clearTimeout(timer);
   }, [searchText]);
+
+  // Keep the URL in sync with the active filters so the current view can be
+  // shared or bookmarked. replaceState avoids polluting browser history.
+  useEffect(() => {
+    const qs = encodeSearchFilters({
+      neighborhood: selectedNeighborhood,
+      bedrooms: bedroomFilter,
+      rentRange: committedRentRange,
+      searchText: debouncedSearch,
+      sortBy,
+    });
+    const url = qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
+    window.history.replaceState(window.history.state, '', url);
+  }, [selectedNeighborhood, bedroomFilter, committedRentRange, debouncedSearch, sortBy]);
 
   // Incremental rendering of results; resets whenever the result set changes
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
