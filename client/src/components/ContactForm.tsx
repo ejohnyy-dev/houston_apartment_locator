@@ -46,6 +46,7 @@ export default function ContactForm() {
     pets: "",
     notes: "",
   });
+  const [smsConsent, setSmsConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -81,6 +82,7 @@ export default function ContactForm() {
           preferred_area: form.areas,
           pets: form.pets,
           notes: form.notes,
+          sms_consent: smsConsent,
           page_url: window.location.href,
           user_agent: navigator.userAgent,
         }),
@@ -307,6 +309,20 @@ export default function ContactForm() {
                 className={`${inputClass} resize-none`}
               />
             </div>
+
+            {/* SMS consent */}
+            <label className="flex items-start gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={smsConsent}
+                onChange={e => setSmsConsent(e.target.checked)}
+                className="mt-0.5 accent-[#c9a55c]"
+              />
+              <span className="text-white/40 text-xs leading-relaxed">
+                Yes, you can text me about apartment options. Message and data
+                rates may apply. Reply STOP to opt out anytime.
+              </span>
+            </label>
 
             {/* Submit */}
             <button
