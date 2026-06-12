@@ -5,6 +5,7 @@ const LOGO =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663501304397/4gMGD9qetV63jA9Ts6DXxD/habitat-logo_3360fdb4.png";
 
 const links = [
+  { label: "Search", href: "/search" },
   { label: "Services", href: "/#services" },
   { label: "Houston", href: "/#houston" },
   { label: "How It Works", href: "/#how-it-works" },
