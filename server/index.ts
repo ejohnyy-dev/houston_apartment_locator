@@ -2,6 +2,7 @@ import express from "express";
 import { createServer } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
+import { APARTMENTS, NEIGHBORHOODS } from "./data/apartments";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -140,6 +141,13 @@ async function startServer() {
         error: error instanceof Error ? error.message : "Failed to save lead",
       });
     }
+  });
+
+  // Curated listings for the /search page. Coordinates are pre-jittered to
+  // the neighborhood level and no addresses are stored, so nothing here can
+  // identify a specific property to a renter (TREC compliance).
+  app.get("/api/apartments", (_req, res) => {
+    res.json({ apartments: APARTMENTS, neighborhoods: NEIGHBORHOODS });
   });
 
   // Serve static files from dist/public in production
