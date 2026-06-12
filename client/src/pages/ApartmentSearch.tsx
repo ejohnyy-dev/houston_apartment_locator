@@ -202,6 +202,7 @@ export default function ApartmentSearch() {
   );
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [mapReady, setMapReady] = useState(false);
 
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -319,16 +320,18 @@ export default function ApartmentSearch() {
       mapId: "DEMO_MAP_ID",
     });
     infoWindowRef.current = new window.google.maps.InfoWindow();
+    setMapReady(true);
   }, []);
 
   useEffect(() => {
     initMap();
   }, [initMap]);
 
-  // Sync markers with the filtered list
+  // Sync markers with the filtered list (mapReady re-triggers this once the
+  // async map init finishes, so markers appear even if listings loaded first)
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !window.google?.maps?.marker) return;
+    if (!mapReady || !map || !window.google?.maps?.marker) return;
 
     const wanted = new Set(filteredApartments.map((a) => a.id));
 
@@ -366,7 +369,7 @@ export default function ApartmentSearch() {
       });
       markersRef.current.set(apt.id, marker);
     });
-  }, [filteredApartments, setShowQualificationPrompt]);
+  }, [mapReady, filteredApartments, setShowQualificationPrompt]);
 
   // Pan to a card's marker when selected from the list
   const handleSelect = useCallback((apt: Apartment) => {

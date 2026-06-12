@@ -102,7 +102,10 @@ export function HomeMapView({ className }: HomeMapViewProps) {
         if (!cancelled) setApartments(data.apartments ?? []);
       })
       .catch(() => {
-        if (!cancelled) setHasError(true);
+        if (!cancelled) {
+          setHasError(true);
+          setIsLoading(false);
+        }
       });
     return () => {
       cancelled = true;
