@@ -2,24 +2,30 @@ import express from "express";
 import { createServer } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
+import {
+  failedLeadSinks,
+  getConfigHealth,
+  hasSuccessfulLeadSink,
+  logSinkHealth,
+  type LeadSinkResults,
+} from "./leadSinks";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function startServer() {
+  logSinkHealth();
+
   const app = express();
   const server = createServer(app);
 
   app.use(express.json({ limit: "1mb" }));
 
+  app.get("/api/health/config", (_req, res) => {
+    res.json(getConfigHealth());
+  });
+
   app.post("/api/leads", async (req, res) => {
-    const crmUrl = process.env.CRM_WEBHOOK_URL;
-
-    if (!crmUrl) {
-      console.error("[Lead intake] CRM_WEBHOOK_URL not configured");
-      return res.status(500).json({ error: "CRM not configured" });
-    }
-
     const clean = (value: unknown) =>
       value === null || value === undefined ? "" : String(value).trim();
 
@@ -62,84 +68,66 @@ async function startServer() {
         .filter(Boolean)
         .join(" | ") || undefined;
 
-    const crmPayload = {
-      first_name: clean(req.body.first_name || req.body.firstName),
-      last_name: clean(req.body.last_name || req.body.lastName),
-      email,
-      phone: clean(req.body.phone),
-      bedrooms: parseBedrooms(req.body.bedrooms),
-      budget_min: budget.min,
-      budget_max: budget.max,
-      move_in_date: clean(req.body.move_in_timeline || req.body.moveIn),
-      preferred_area: clean(req.body.preferred_area || req.body.areas),
-      notes: combinedNotes,
-      sms_consent: req.body.sms_consent ?? req.body.smsConsent ?? false,
-      consent_source: "txaptfinder.com contact form",
-      source: "txaptfinder",
+    const sinkResults: LeadSinkResults = {
+      sheets: null,
     };
 
-    // Retry logic: exponential backoff (1s, 2s, 4s)
-    const submitToCrm = async (retryCount = 0): Promise<void> => {
-      const maxRetries = 3;
-      const timeout = 5000;
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeout);
-
+    const sheetsUrl = process.env.GOOGLE_SHEETS_ENDPOINT;
+    if (sheetsUrl) {
       try {
-        const response = await fetch(crmUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(crmPayload),
-          signal: controller.signal,
+        const sheetPayload = new URLSearchParams({
+          firstName: clean(req.body.first_name || req.body.firstName),
+          lastName: clean(req.body.last_name || req.body.lastName),
+          email,
+          phone: clean(req.body.phone),
+          budget: clean(req.body.budget),
+          bedrooms: clean(req.body.bedrooms),
+          moveIn: clean(req.body.move_in_timeline || req.body.moveIn),
+          areas: clean(req.body.preferred_area || req.body.areas),
+          pets,
+          notes: combinedNotes ?? "",
+          smsConsent: String(req.body.sms_consent ?? req.body.smsConsent ?? false),
+          sms_consent: String(req.body.sms_consent ?? req.body.smsConsent ?? false),
+          contact_consent: String(req.body.sms_consent ?? req.body.smsConsent ?? false),
+          consent_source: "txaptfinder.com contact form",
+          consent_timestamp: new Date().toISOString(),
+          _source: "txaptfinder.com",
+          page_url: clean(req.headers.referer),
+          user_agent: clean(req.headers["user-agent"]),
         });
 
-        clearTimeout(timer);
+        const response = await fetch(sheetsUrl, {
+          method: "POST",
+          body: sheetPayload,
+        });
 
+        sinkResults.sheets = response.ok;
         if (response.ok) {
-          const data = await response.json().catch(() => ({}));
-          console.log(`[Lead intake] ✓ Success for ${email} (leadId: ${data.leadId})`);
-          return;
-        } else if (response.status >= 500 && retryCount < maxRetries) {
-          // Server error — retry
-          console.warn(
-            `[Lead intake] Server error (${response.status}) — retrying (attempt ${retryCount + 2}/${maxRetries + 1})`
-          );
-          await new Promise((r) => setTimeout(r, Math.pow(2, retryCount) * 1000));
-          await submitToCrm(retryCount + 1);
+          console.log(`[Google Sheets] Lead submitted successfully: ${email}`);
         } else {
-          // Client error (4xx) or max retries reached
-          const body = await response.json().catch(() => ({}));
-          throw new Error(
-            `CRM error ${response.status}: ${body.error || "unknown error"}`
-          );
+          console.warn("[Google Sheets] Unexpected status:", response.status);
         }
       } catch (error) {
-        clearTimeout(timer);
-
-        if (retryCount < maxRetries) {
-          console.warn(
-            `[Lead intake] Network error — retrying (attempt ${retryCount + 2}/${maxRetries + 1}):`,
-            error instanceof Error ? error.message : String(error)
-          );
-          await new Promise((r) => setTimeout(r, Math.pow(2, retryCount) * 1000));
-          await submitToCrm(retryCount + 1);
-        } else {
-          throw new Error(
-            `Failed after ${maxRetries} retries: ${error instanceof Error ? error.message : String(error)}`
-          );
-        }
+        sinkResults.sheets = false;
+        console.error("Google Sheets error:", error);
       }
-    };
+    } else {
+      console.warn("Google Sheets endpoint not configured, skipping");
+    }
 
-    try {
-      await submitToCrm();
-      res.json({ ok: true, message: "Lead saved to CRM" });
-    } catch (error) {
-      console.error(`[Lead intake] ✗ Failed for ${email}:`, error);
-      res.status(503).json({
-        error: error instanceof Error ? error.message : "Failed to save lead",
+    if (!hasSuccessfulLeadSink(sinkResults)) {
+      console.error(`[leads] All sinks missing or failed for ${email}. Returning 503.`);
+      return res.status(503).json({
+        ok: false,
+        error: "Lead could not be saved. Please try again or contact us directly.",
       });
     }
+
+    for (const sink of failedLeadSinks(sinkResults)) {
+      console.warn(`[leads] sink ${sink} failed for ${email}`);
+    }
+
+    return res.status(200).json({ ok: true, message: "Lead received" });
   });
 
   // Serve static files from dist/public in production

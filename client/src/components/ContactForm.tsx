@@ -108,15 +108,15 @@ export default function ContactForm() {
 
   if (submitted) {
     return (
-      <section id="contact" className="py-20 md:py-28 bg-dark-card">
+      <section id="search-portal" className="py-20 md:py-28 bg-dark-card">
         <div className="container">
           <div className="max-w-lg mx-auto text-center py-16">
             <h2 className="font-display text-3xl text-white mb-4">
-              Thank You!
+              Search Sent
             </h2>
             <p className="text-white/50 text-base leading-relaxed mb-6">
-              Eric Johnson has received your information and will reach out
-              within 24 hours to start your apartment search.
+              Eric Johnson has received your search criteria and will reach out
+              within 24 hours with matches.
             </p>
             <p className="text-white/40 text-sm">
               Need something sooner? Call directly at{" "}
@@ -138,19 +138,19 @@ export default function ContactForm() {
     "block text-white/60 text-xs font-medium tracking-wide uppercase mb-1.5";
 
   return (
-    <section id="contact" className="py-20 md:py-28 bg-dark-card">
+    <section id="search-portal" className="py-20 md:py-28 bg-dark-card">
       <div className="container">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-12">
             <p className="text-gold text-xs font-medium tracking-widest uppercase mb-3">
-              Get Started
+              Search Portal
             </p>
             <h2 className="font-display text-3xl md:text-4xl text-white mb-4">
-              Start Your Houston Apartment Search Today
+              Build Your Houston Apartment Search
             </h2>
             <p className="text-white/50 text-base leading-relaxed">
-              Tell me a bit about yourself and what you're looking for. I'll
-              take it from there.
+              Enter your criteria and I’ll turn it into a shortlist, lead folder,
+              and CRM handoff.
             </p>
           </div>
 
@@ -209,7 +209,7 @@ export default function ContactForm() {
             {/* Divider */}
             <div className="border-t border-white/5 pt-6">
               <p className="text-white/40 text-xs font-medium tracking-wide uppercase mb-5">
-                Apartment Preferences
+                Search Criteria
               </p>
             </div>
 
@@ -330,7 +330,7 @@ export default function ContactForm() {
               disabled={submitting}
               className="w-full py-3.5 bg-gold text-dark font-semibold text-sm rounded hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              {submitting ? "Sending..." : "Submit"}
+              {submitting ? "Searching..." : "Send Search"}
             </button>
 
             <p className="text-white/25 text-xs text-center">

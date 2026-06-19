@@ -1,20 +1,19 @@
 #!/bin/bash
 
-# Test CRM Webhook Integration
-# Tests that form submissions forward to the CRM with retry logic
+# Test CRM intake endpoint used by the GAS v5 / poller handoff
 
 set -e
 
-CRM_URL="https://innocent-terrace-rides-superior.trycloudflare.com/api/leads"
+CRM_URL="https://innocent-terrace-rides-superior.trycloudflare.com/api/leads/intake"
 TEST_EMAIL="test-$(date +%s)@txaptfinder.test"
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "Testing CRM Webhook Integration"
+echo "Testing CRM Intake Endpoint"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
-# Test 1: Direct CRM endpoint (no retry)
-echo "Test 1: Direct POST to CRM /api/leads"
+# Test 1: Direct CRM intake endpoint
+echo "Test 1: Direct POST to CRM /api/leads/intake"
 echo "URL: $CRM_URL"
 echo "Payload:"
 cat << EOF
