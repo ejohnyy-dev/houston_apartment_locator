@@ -1,3 +1,8 @@
+/**
+ * DEPRECATED: This legacy server is deprecated.
+ * Please use houston_apartment_locator_new_new instead.
+ * If NEW_APP_URL is set, all requests will be redirected to the new application.
+ */
 import express from "express";
 import { createServer } from "http";
 import path from "path";
@@ -9,6 +14,7 @@ import {
   logSinkHealth,
   type LeadSinkResults,
 } from "./leadSinks";
+import { redactEmail } from "./redactEmail";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,6 +24,15 @@ async function startServer() {
 
   const app = express();
   const server = createServer(app);
+
+  const newAppUrl = process.env.NEW_APP_URL;
+  if (newAppUrl) {
+    // Redirect all traffic to the new application when configured.
+    // 307 preserves the HTTP method so POST /api/leads is forwarded correctly.
+    app.use((req, res) => {
+      return res.redirect(307, newAppUrl + req.originalUrl);
+    });
+  }
 
   app.use(express.json({ limit: "1mb" }));
 
@@ -103,7 +118,8 @@ async function startServer() {
 
         sinkResults.sheets = response.ok;
         if (response.ok) {
-          console.log(`[Google Sheets] Lead submitted successfully: ${email}`);
+          // Mask PII in logs to prevent accidental email leakage (HAL-SEC-01)
+          console.log(`[Google Sheets] Lead submitted successfully: ${redactEmail(email)}`);
         } else {
           console.warn("[Google Sheets] Unexpected status:", response.status);
         }
@@ -116,7 +132,8 @@ async function startServer() {
     }
 
     if (!hasSuccessfulLeadSink(sinkResults)) {
-      console.error(`[leads] All sinks missing or failed for ${email}. Returning 503.`);
+      // Mask PII in logs to prevent accidental email leakage (HAL-SEC-01)
+      console.error(`[leads] All sinks missing or failed for ${redactEmail(email)}. Returning 503.`);
       return res.status(503).json({
         ok: false,
         error: "Lead could not be saved. Please try again or contact us directly.",
@@ -124,7 +141,8 @@ async function startServer() {
     }
 
     for (const sink of failedLeadSinks(sinkResults)) {
-      console.warn(`[leads] sink ${sink} failed for ${email}`);
+      // Mask PII in logs to prevent accidental email leakage (HAL-SEC-01)
+      console.warn(`[leads] sink ${sink} failed for ${redactEmail(email)}`);
     }
 
     return res.status(200).json({ ok: true, message: "Lead received" });
