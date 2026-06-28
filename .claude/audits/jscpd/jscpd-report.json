@@ -1,0 +1,165 @@
+{
+  "duplicates": [
+    {
+      "firstFile": {
+        "end": 234,
+        "endLoc": {
+          "column": 46,
+          "line": 234,
+          "position": 7601
+        },
+        "name": "components/ContactForm.tsx",
+        "start": 226,
+        "startLoc": {
+          "column": 32,
+          "line": 226,
+          "position": 7351
+        }
+      },
+      "format": "tsx",
+      "fragment": "",
+      "lines": 9,
+      "secondFile": {
+        "end": 268,
+        "endLoc": {
+          "column": 46,
+          "line": 268,
+          "position": 8833
+        },
+        "name": "components/ContactForm.tsx",
+        "start": 260,
+        "startLoc": {
+          "column": 32,
+          "line": 260,
+          "position": 8583
+        }
+      },
+      "tokens": 54
+    },
+    {
+      "firstFile": {
+        "end": 251,
+        "endLoc": {
+          "column": 16,
+          "line": 251,
+          "position": 8159
+        },
+        "name": "components/ContactForm.tsx",
+        "start": 241,
+        "startLoc": {
+          "column": 33,
+          "line": 241,
+          "position": 7904
+        }
+      },
+      "format": "tsx",
+      "fragment": "",
+      "lines": 11,
+      "secondFile": {
+        "end": 285,
+        "endLoc": {
+          "column": 16,
+          "line": 285,
+          "position": 9374
+        },
+        "name": "components/ContactForm.tsx",
+        "start": 275,
+        "startLoc": {
+          "column": 30,
+          "line": 275,
+          "position": 9129
+        }
+      },
+      "tokens": 52
+    },
+    {
+      "firstFile": {
+        "end": 53,
+        "endLoc": {
+          "column": 5,
+          "line": 53,
+          "position": 1797
+        },
+        "name": "components/ui/input.tsx",
+        "start": 29,
+        "startLoc": {
+          "column": 28,
+          "line": 29,
+          "position": 1106
+        }
+      },
+      "format": "tsx",
+      "fragment": "",
+      "lines": 25,
+      "secondFile": {
+        "end": 53,
+        "endLoc": {
+          "column": 5,
+          "line": 53,
+          "position": 1885
+        },
+        "name": "components/ui/textarea.tsx",
+        "start": 29,
+        "startLoc": {
+          "column": 43,
+          "line": 29,
+          "position": 1194
+        }
+      },
+      "tokens": 78
+    }
+  ],
+  "statistics": {
+    "detectionDate": "2026-06-28T22:54:13.729Z",
+    "formats": {
+      "css": {
+        "clones": 0,
+        "duplicatedLines": 0,
+        "duplicatedTokens": 0,
+        "lines": 139,
+        "newClones": 0,
+        "newDuplicatedLines": 0,
+        "percentage": 0.0,
+        "percentageTokens": 0.0,
+        "sources": 1,
+        "tokens": 1382
+      },
+      "tsx": {
+        "clones": 3,
+        "duplicatedLines": 42,
+        "duplicatedTokens": 184,
+        "lines": 7922,
+        "newClones": 0,
+        "newDuplicatedLines": 0,
+        "percentage": 0.5301691492047462,
+        "percentageTokens": 0.5928026031766487,
+        "sources": 71,
+        "tokens": 31039
+      },
+      "typescript": {
+        "clones": 0,
+        "duplicatedLines": 0,
+        "duplicatedTokens": 0,
+        "lines": 466,
+        "newClones": 0,
+        "newDuplicatedLines": 0,
+        "percentage": 0.0,
+        "percentageTokens": 0.0,
+        "sources": 6,
+        "tokens": 2433
+      }
+    },
+    "total": {
+      "clones": 3,
+      "duplicatedLines": 42,
+      "duplicatedTokens": 184,
+      "lines": 8527,
+      "newClones": 0,
+      "newDuplicatedLines": 0,
+      "percentage": 0.4925530667292131,
+      "percentageTokens": 0.5279164514833304,
+      "sources": 78,
+      "tokens": 34854
+    }
+  }
+}
