@@ -149,5 +149,3 @@ export const neighborhoods: Record<NeighborhoodSlug, Neighborhood> = {
     cta: "Send me your work or school location and shift pattern. I will prioritize buildings that make the daily routine easier.",
   },
 };
-
-export const neighborhoodList = Object.values(neighborhoods);
