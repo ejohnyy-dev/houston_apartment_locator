@@ -33,6 +33,44 @@ const areaOptions = [
   "Other / Not Sure",
 ];
 
+interface SelectFieldProps {
+  label: string;
+  placeholder: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+  labelClassName: string;
+  selectClassName: string;
+}
+
+function SelectField({
+  label,
+  placeholder,
+  value,
+  onChange,
+  options,
+  labelClassName,
+  selectClassName,
+}: SelectFieldProps) {
+  return (
+    <div>
+      <label className={labelClassName}>{label}</label>
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className={selectClassName}
+      >
+        <option value="">{placeholder}</option>
+        {options.map(o => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 export default function ContactForm() {
   const [form, setForm] = useState({
     firstName: "",
@@ -215,70 +253,46 @@ export default function ContactForm() {
 
             {/* Budget & Bedrooms */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className={labelClass}>Monthly Budget</label>
-                <select
-                  value={form.budget}
-                  onChange={e => update("budget", e.target.value)}
-                  className={selectClass}
-                >
-                  <option value="">Select budget</option>
-                  {budgetOptions.map(o => (
-                    <option key={o} value={o}>
-                      {o}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className={labelClass}>Bedrooms</label>
-                <select
-                  value={form.bedrooms}
-                  onChange={e => update("bedrooms", e.target.value)}
-                  className={selectClass}
-                >
-                  <option value="">Select bedrooms</option>
-                  {bedroomOptions.map(o => (
-                    <option key={o} value={o}>
-                      {o}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <SelectField
+                label="Monthly Budget"
+                placeholder="Select budget"
+                value={form.budget}
+                onChange={value => update("budget", value)}
+                options={budgetOptions}
+                labelClassName={labelClass}
+                selectClassName={selectClass}
+              />
+              <SelectField
+                label="Bedrooms"
+                placeholder="Select bedrooms"
+                value={form.bedrooms}
+                onChange={value => update("bedrooms", value)}
+                options={bedroomOptions}
+                labelClassName={labelClass}
+                selectClassName={selectClass}
+              />
             </div>
 
             {/* Move-in & Area */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className={labelClass}>Move-In Timeline</label>
-                <select
-                  value={form.moveIn}
-                  onChange={e => update("moveIn", e.target.value)}
-                  className={selectClass}
-                >
-                  <option value="">Select timeline</option>
-                  {moveInOptions.map(o => (
-                    <option key={o} value={o}>
-                      {o}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className={labelClass}>Preferred Area</label>
-                <select
-                  value={form.areas}
-                  onChange={e => update("areas", e.target.value)}
-                  className={selectClass}
-                >
-                  <option value="">Select area</option>
-                  {areaOptions.map(o => (
-                    <option key={o} value={o}>
-                      {o}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <SelectField
+                label="Move-In Timeline"
+                placeholder="Select timeline"
+                value={form.moveIn}
+                onChange={value => update("moveIn", value)}
+                options={moveInOptions}
+                labelClassName={labelClass}
+                selectClassName={selectClass}
+              />
+              <SelectField
+                label="Preferred Area"
+                placeholder="Select area"
+                value={form.areas}
+                onChange={value => update("areas", value)}
+                options={areaOptions}
+                labelClassName={labelClass}
+                selectClassName={selectClass}
+              />
             </div>
 
             {/* Pets */}
