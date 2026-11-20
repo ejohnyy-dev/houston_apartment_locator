@@ -6,49 +6,25 @@
 
 ---
 
-## What Changed
+## How delivery works (outbox)
 
-### 1. Enhanced Retry Logic (`server/index.ts`)
+`/api/leads` does not talk to the CRM inline. It writes the lead to a durable on-disk
+outbox and replies immediately; `server/leadQueue.ts` delivers in the background:
 
-The lead forwarding handler now includes:
-- ✅ **Automatic retries** on network failures (up to 3 attempts)
-- ✅ **Exponential backoff** (1s, 2s, 4s between retries)
-- ✅ **Better logging** with clear success/failure messages per attempt
-- ✅ **Smarter retry conditions** (retries on 5xx errors, stops on 4xx)
-- ✅ **Increased timeout** from 4s to 5s
-- ✅ **Non-blocking** — CRM sync never blocks form response to user
+- Visitor is told "saved" only after the lead is fsync'd to disk (503 only if the disk write fails).
+- 2xx → delivered. 5xx / 408 / 429 / network error → retried: 30s, 1m, 2m, 4m, 8m, then every 15 min, indefinitely.
+- Other 4xx (e.g. 400 bad payload) → **not** retried; moved to `dead/` for review.
+- Replayed automatically on server start; `CRM_WEBHOOK_URL` is read on every attempt, so changing it takes effect without losing queued leads.
+- Each request carries `Idempotency-Key` = sha256(email|phone)[:32] so replays can be deduped.
+- Spool location: `LEAD_SPOOL_DIR` (default `./data/lead-spool`) — mount a persistent volume in production.
 
-### 2. Environment Configuration
-
-Added `CRM_WEBHOOK_URL` to `.env`:
-```env
-CRM_WEBHOOK_URL=https://innocent-terrace-rides-superior.trycloudflare.com/api/leads
-```
-
-This URL points to the Cloudflare tunnel running the fb-marketplace-bot CRM server.
-
----
-
-## Flow Diagram
+Previously the form blocked up to ~1 min on CRM retries, retried 4xx errors, and dropped
+the lead if the CRM was down or `CRM_WEBHOOK_URL` was unset.
 
 ```
-[txaptfinder.com form submission]
-         ↓
-[POST /api/leads → CRM with retry]
-    ├─ Attempt 1 (immediate)
-    ├─ Attempt 2 (after 1s) [if 5xx or network error]
-    ├─ Attempt 3 (after 2s) [if 5xx or network error]
-    └─ Attempt 4 (after 4s) [if 5xx or network error]
-         ↓
-[CRM creates/updates lead in MySQL]
-         ↓
-[Send response to user] (form thanks message)
-         ↓
-[Log result to console]
+form → validate → outbox (disk) → 200 to visitor
+                       └→ worker → CRM  (retry/backoff; 4xx → dead/)
 ```
-
-**Note:** Form submission **blocks** until CRM responds. If all retries fail, user sees error message.
-This ensures no leads are silently lost.
 
 ---
 
@@ -131,32 +107,11 @@ All CRM forward attempts are logged to the server console:
 
 ## Error Scenarios
 
-### Scenario 1: CRM Server Offline
-- ✅ Form submission succeeds (user sees thank you)
-- ✅ Integration retries 3 times over 7 seconds
-- ⚠️ Lead doesn't appear in CRM until server comes back up and webhook is manually replayed
-- 📝 Error logged to console for investigation
-
-### Scenario 2: Network Timeout
-- ✅ First attempt times out after 5s
-- ✅ Retries automatically (1s, 2s, 4s delays)
-- ✅ If all retries fail, logged but doesn't break the user experience
-
-### Scenario 3: CRM API Returns 400 (Client Error)
-- ❌ Not retried (client error, not server error)
-- 📝 Full error logged for debugging
-
----
-
-## Configuration & Tuning
-
-To adjust retry behavior, edit `server/index.ts`:
-
-```typescript
-const maxRetries = 3;              // Change number of retries
-const timeout = 5000;              // Change timeout (ms)
-const delayMultiplier = 2;         // Change backoff factor (currently: 1s, 2s, 4s)
-```
+- **CRM / tunnel down:** visitor still sees success; the lead waits in the outbox and is delivered when the CRM is back.
+- **`CRM_WEBHOOK_URL` unset:** leads queue (logged each attempt) until it is set.
+- **CRM returns 400/401/403/404:** lead moved to `dead/` with `lastError`; fix the cause, then move the file back into the spool dir to replay.
+- **Disk write fails:** visitor gets 503 with "call or text Eric".
+- **Crash mid-delivery:** lead is still on disk; worst case it is delivered twice (hence the idempotency key).
 
 ---
 
@@ -181,11 +136,7 @@ const delayMultiplier = 2;         // Change backoff factor (currently: 1s, 2s, 
 
 ## Summary
 
-The integration is **complete and live**. All form submissions now:
-1. Post directly to your CRM (MySQL, primary system of record)
-2. Block the form response until CRM confirms (or retries exhaust)
-3. Retry automatically on network/server errors (3 attempts, exponential backoff)
-4. Log all attempts for debugging/monitoring
-5. Return clear error to user if all retries fail
-
-HubSpot integration has been **removed** — the CRM is now your only system of record for txaptfinder.com leads.
+All form submissions are saved to a durable outbox first, then delivered to the CRM
+(system of record; HubSpot removed) in the background with indefinite backoff. A CRM
+outage delays leads but does not lose them. Inspect `data/lead-spool/` (pending) and
+`dead/` (rejected) when a lead seems missing.

@@ -2,6 +2,7 @@ import express from "express";
 import { createServer } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
+import { enqueueLead, makeCrmDeliver, startLeadWorker } from "./leadQueue";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,14 +13,13 @@ async function startServer() {
 
   app.use(express.json({ limit: "1mb" }));
 
+  // Background CRM delivery. The URL is read per attempt so a rotated tunnel URL
+  // in the environment is picked up without losing queued leads.
+  const leadWorker = startLeadWorker((entry) =>
+    makeCrmDeliver(process.env.CRM_WEBHOOK_URL)(entry)
+  );
+
   app.post("/api/leads", async (req, res) => {
-    const crmUrl = process.env.CRM_WEBHOOK_URL;
-
-    if (!crmUrl) {
-      console.error("[Lead intake] CRM_WEBHOOK_URL not configured");
-      return res.status(500).json({ error: "CRM not configured" });
-    }
-
     const clean = (value: unknown) =>
       value === null || value === undefined ? "" : String(value).trim();
 
@@ -78,67 +78,17 @@ async function startServer() {
       source: "txaptfinder",
     };
 
-    // Retry logic: exponential backoff (1s, 2s, 4s)
-    const submitToCrm = async (retryCount = 0): Promise<void> => {
-      const maxRetries = 3;
-      const timeout = 5000;
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeout);
-
-      try {
-        const response = await fetch(crmUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(crmPayload),
-          signal: controller.signal,
-        });
-
-        clearTimeout(timer);
-
-        if (response.ok) {
-          const data = await response.json().catch(() => ({}));
-          console.log(`[Lead intake] ✓ Success for ${email} (leadId: ${data.leadId})`);
-          return;
-        } else if (response.status >= 500 && retryCount < maxRetries) {
-          // Server error — retry
-          console.warn(
-            `[Lead intake] Server error (${response.status}) — retrying (attempt ${retryCount + 2}/${maxRetries + 1})`
-          );
-          await new Promise((r) => setTimeout(r, Math.pow(2, retryCount) * 1000));
-          await submitToCrm(retryCount + 1);
-        } else {
-          // Client error (4xx) or max retries reached
-          const body = await response.json().catch(() => ({}));
-          throw new Error(
-            `CRM error ${response.status}: ${body.error || "unknown error"}`
-          );
-        }
-      } catch (error) {
-        clearTimeout(timer);
-
-        if (retryCount < maxRetries) {
-          console.warn(
-            `[Lead intake] Network error — retrying (attempt ${retryCount + 2}/${maxRetries + 1}):`,
-            error instanceof Error ? error.message : String(error)
-          );
-          await new Promise((r) => setTimeout(r, Math.pow(2, retryCount) * 1000));
-          await submitToCrm(retryCount + 1);
-        } else {
-          throw new Error(
-            `Failed after ${maxRetries} retries: ${error instanceof Error ? error.message : String(error)}`
-          );
-        }
-      }
-    };
-
+    // Persist first, deliver later: the visitor is only told "saved" once the lead
+    // is durably on disk. Delivery to the CRM (with backoff, replay after restarts)
+    // happens in the background worker – see server/leadQueue.ts.
     try {
-      await submitToCrm();
-      res.json({ ok: true, message: "Lead saved to CRM" });
+      const entry = enqueueLead(crmPayload);
+      console.log(`[Lead intake] queued ${entry.id} for ${email}`);
+      leadWorker.kick();
+      res.json({ ok: true, message: "Lead saved" });
     } catch (error) {
-      console.error(`[Lead intake] ✗ Failed for ${email}:`, error);
-      res.status(503).json({
-        error: error instanceof Error ? error.message : "Failed to save lead",
-      });
+      console.error(`[Lead intake] ✗ could not persist lead for ${email}:`, error);
+      res.status(503).json({ error: "Could not save your information. Please call or text Eric." });
     }
   });
 
